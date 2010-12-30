@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Add Expense Category</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <form action="{{ url_for('add_expense_category') }}" method=post>
+    <dl>
+      <dt>Name:
+      <dd><input type=text name=name>
+
+      <dd><input type=submit value=Add>
+    </dl>
+  </form>
+{% endblock %}

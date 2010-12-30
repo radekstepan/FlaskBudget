@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Expenses</h2>
+  <br />
+  <table class=entries>
+  {% for entry in entries %}
+    <tr>
+        <td>{{ entry.date }}</td>
+        <td>{{ entry.category }}</td>
+        <td>{{ entry.description }}</td>
+        <td>&pound;{{ entry.amount }}</td>
+    </tr>
+  {% else %}
+    No expenses yet.
+  {% endfor %}
+  </table>
+{% endblock %}

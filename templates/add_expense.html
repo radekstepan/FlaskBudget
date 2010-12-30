@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Add Expense</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <form action="{{ url_for('add_expense') }}" method=post>
+    <dl>
+      <dt>Date:
+      <dd><input type=text name=date>
+
+      <dt>Category:
+      <dd>
+      <select name=category>
+        {% for category in categories %}
+          <option value="{{ category.id }}">{{ category.name }}</option>
+        {% endfor %}
+      </select>
+
+      <dt>Description:
+      <dd><input type=text name=description>
+
+      <dt>Amount:
+      <dd><input type=text name=amount>
+
+      <dd><input type=submit value=Add>
+    </dl>
+  </form>
+{% endblock %}
