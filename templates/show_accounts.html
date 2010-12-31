@@ -12,4 +12,17 @@
     No accounts yet.
   {% endfor %}
   </table>
+  <br />
+  <table class=entries>
+  {% for transfer in transfers %}
+    <tr>
+        <td>{{ transfer.0.date }}</td>
+        <td>{{ transfer.1 }}</td>
+        <td>{{ transfer.2 }}</td>
+        <td>&pound;{{ transfer.0.amount }}</td>
+    </tr>
+  {% else %}
+    No account transfers yet.
+  {% endfor %}
+  </table>
 {% endblock %}

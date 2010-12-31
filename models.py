@@ -30,6 +30,25 @@ class Account(Base):
         self.name = name
         self.balance = balance
 
+class AccountTransfer(Base):
+    """A transfer to/from the account"""
+
+    __tablename__ = 'account_transfers'
+    id = Column(Integer, primary_key=True)
+    user = Column('user_id', Integer, ForeignKey('users.id'))
+    date = Column(Integer)
+    from_account = Column('from_id', Integer, ForeignKey('accounts.id'))
+    to_account = Column('to_id', Integer, ForeignKey('accounts.id'))
+    amount = Column(Float(precision=2))
+
+    def __init__(self, user=None, date=None, from_account=None, to_account=None, amount=None):
+        self.user = user
+        # convert from datetime into timestamp
+        self.date = datetime.strptime(date, "%Y-%m-%d")
+        self.from_account = from_account
+        self.to_account = to_account
+        self.amount = amount
+
 class IncomeCategory(Base):
     """Income category of a user"""
 

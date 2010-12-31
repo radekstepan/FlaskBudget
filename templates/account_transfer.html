@@ -4,6 +4,9 @@
   {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
   <form action="{{ url_for('account_transfer') }}" method=post>
     <dl>
+      <dt>Date:
+      <dd><input type=text name=date>
+
       <dt>From Account:
       <dd><select name=deduct_from>
         {% for account in accounts %}

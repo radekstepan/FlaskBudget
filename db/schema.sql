@@ -48,3 +48,13 @@ create table accounts (
   name string not null,
   balance string not null
 );
+
+drop table if exists account_transfers;
+create table account_transfers (
+  id integer primary key autoincrement,
+  user_id integer not null,
+  date integer not null,
+  from_id integer not null,
+  to_id integer not null,
+  amount integer not null
+);

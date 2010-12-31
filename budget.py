@@ -1,9 +1,10 @@
 # framework
 from __future__ import with_statement
 from flask import Flask, request, session, redirect, url_for, abort, render_template, flash
+from sqlalchemy.sql.expression import desc
+from sqlalchemy.orm import aliased
 
 # models
-from sqlalchemy.sql.expression import desc
 from db.database import db_session
 from models import *
 
@@ -34,8 +35,20 @@ def dashboard():
 @app.route('/accounts')
 @login_required
 def show_accounts():
-    return render_template('show_accounts.html',
-                           accounts=Account.query.filter(Account.user == session.get('logged_in_user')))
+    accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
+
+    # table referred to twice, create alias
+    from_account_alias = aliased(Account)
+    to_account_alias = aliased(Account)
+    # fetch account transfers
+    transfers=AccountTransfer.query.filter(AccountTransfer.user == session.get('logged_in_user'))\
+    .order_by(desc(AccountTransfer.date))\
+    .join(
+            (from_account_alias, (AccountTransfer.from_account == from_account_alias.id)),\
+            (to_account_alias, (AccountTransfer.to_account == to_account_alias.id)))\
+    .add_columns(from_account_alias.name, to_account_alias.name)
+
+    return render_template('show_accounts.html', **locals())
 
 @app.route('/account/add', methods=['GET', 'POST'])
 @login_required
@@ -53,6 +66,12 @@ def add_account():
 def account_transfer():
     error = None
     if request.method == 'POST':
+        # add a new transfer row
+        t = AccountTransfer(session.get('logged_in_user'), request.form['date'], request.form['deduct_from'],
+                            request.form['credit_to'], request.form['amount'])
+        db_session.add(t)
+
+        # modify accounts
         a1 = Account.query.\
         filter(Account.user == session.get('logged_in_user'))\
         .filter(Account.id == request.form['deduct_from']).first()
