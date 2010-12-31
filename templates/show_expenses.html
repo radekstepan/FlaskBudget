@@ -5,10 +5,10 @@
   <table class=entries>
   {% for entry in entries %}
     <tr>
-        <td>{{ entry.date }}</td>
-        <td>{{ entry.category }}</td>
-        <td>{{ entry.description }}</td>
-        <td>&pound;{{ entry.amount }}</td>
+        <td>{{ entry.0.date }}</td>
+        <td>{{ entry.1 }}</td>
+        <td>{{ entry.0.description }}</td>
+        <td>&pound;{{ entry.0.amount }}</td>
     </tr>
   {% else %}
     No expenses yet.

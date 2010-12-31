@@ -3,6 +3,7 @@ from __future__ import with_statement
 from flask import Flask, request, session, redirect, url_for, abort, render_template, flash
 
 # models
+from sqlalchemy.sql.expression import desc
 from db.database import db_session
 from models import *
 
@@ -29,25 +30,57 @@ def shutdown_session(response):
 def dashboard():
     return redirect(url_for('show_expenses'))
 
+''' Accounts '''
+@app.route('/accounts')
+@login_required
+def show_accounts():
+    return render_template('show_accounts.html', accounts=Account.query)
+
+@app.route('/account/add', methods=['GET', 'POST'])
+@login_required
+def add_account():
+    error = None
+    if request.method == 'POST':
+        a = Account(session.get('logged_in_user'), request.form['name'], request.form['balance'])
+        db_session.add(a)
+        db_session.commit()
+        flash('Account added')
+    return render_template('add_account.html', error=error)
+
 ''' Expenses '''
 @app.route('/expenses/')
 @login_required
 def show_expenses():
     return render_template('show_expenses.html', entries=Expense.query
-    .filter(Expense.user == session.get('logged_in_user')))
+    .filter(Expense.user == session.get('logged_in_user'))
+    .join(ExpenseCategory)
+    .add_columns(ExpenseCategory.name)
+    .order_by(desc(Expense.date)))
 
 @app.route('/expense/add', methods=['GET', 'POST'])
 @login_required
 def add_expense():
     error = None
     if request.method == 'POST':
+        # add new expense
         e = Expense(session.get('logged_in_user'), request.form['date'], request.form['category'],
-                    request.form['description'], request.form['amount'])
+                    request.form['description'], request.form['deduct_from'], request.form['amount'])
         db_session.add(e)
+
+        # debit from account
+        a = Account.query.\
+        filter(Account.user == session.get('logged_in_user'))\
+        .filter(Account.id == request.form['deduct_from']).first()
+        a.balance -= float(request.form['amount'])
+        db_session.add(a)
+
         db_session.commit()
         flash('Expense added')
+
+    # fetch user's categories and accounts
     categories = ExpenseCategory.query.filter(ExpenseCategory.user == session.get('logged_in_user'))\
     .order_by(ExpenseCategory.name)
+    accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
     return render_template('add_expense.html', **locals())
 
 @app.route('/expense/category/add', methods=['GET', 'POST'])

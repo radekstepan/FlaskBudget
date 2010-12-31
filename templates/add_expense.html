@@ -18,6 +18,13 @@
       <dt>Description:
       <dd><input type=text name=description>
 
+      <dt>From Account:
+      <dd><select name=deduct_from>
+        {% for account in accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+        {% endfor %}
+      </select>
+
       <dt>Amount:
       <dd><input type=text name=amount>
 

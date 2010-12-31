@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Accounts</h2>
+  <br />
+  <table class=entries>
+  {% for account in accounts %}
+    <tr>
+        <td>{{ account.name }}</td>
+        <td>&pound;{{ account.balance }}</td>
+    </tr>
+  {% else %}
+    No accounts yet.
+  {% endfor %}
+  </table>
+{% endblock %}
