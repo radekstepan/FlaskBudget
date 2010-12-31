@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Account Transfer</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <form action="{{ url_for('account_transfer') }}" method=post>
+    <dl>
+      <dt>From Account:
+      <dd><select name=deduct_from>
+        {% for account in accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+        {% endfor %}
+      </select>
+
+      <dt>To Account:
+      <dd><select name=credit_to>
+        {% for account in accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+        {% endfor %}
+      </select>
+
+      <dt>Amount:
+      <dd><input type=text name=amount>
+
+      <dd><input type=submit value=Transfer>
+    </dl>
+  </form>
+{% endblock %}

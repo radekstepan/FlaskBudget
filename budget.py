@@ -34,7 +34,8 @@ def dashboard():
 @app.route('/accounts')
 @login_required
 def show_accounts():
-    return render_template('show_accounts.html', accounts=Account.query)
+    return render_template('show_accounts.html',
+                           accounts=Account.query.filter(Account.user == session.get('logged_in_user')))
 
 @app.route('/account/add', methods=['GET', 'POST'])
 @login_required
@@ -46,6 +47,28 @@ def add_account():
         db_session.commit()
         flash('Account added')
     return render_template('add_account.html', error=error)
+
+@app.route('/account/transfer', methods=['GET', 'POST'])
+@login_required
+def account_transfer():
+    error = None
+    if request.method == 'POST':
+        a1 = Account.query.\
+        filter(Account.user == session.get('logged_in_user'))\
+        .filter(Account.id == request.form['deduct_from']).first()
+        a1.balance -= float(request.form['amount'])
+        db_session.add(a1)
+
+        a2 = Account.query.\
+        filter(Account.user == session.get('logged_in_user'))\
+        .filter(Account.id == request.form['credit_to']).first()
+        a2.balance += float(request.form['amount'])
+        db_session.add(a2)
+
+        db_session.commit()
+        flash('Monies transferred')
+    accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
+    return render_template('account_transfer.html', **locals())
 
 ''' Income '''
 @app.route('/income/')
