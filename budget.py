@@ -12,8 +12,6 @@ from models import *
 from auth import login_required
 
 DEBUG = True
-#USERNAME = 'radek'
-#PASSWORD = 'radek'
 
 # create our little application :)
 app = Flask(__name__)
@@ -42,7 +40,7 @@ def show_accounts():
     to_account_alias = aliased(Account)
     # fetch account transfers
     transfers=AccountTransfer.query.filter(AccountTransfer.user == session.get('logged_in_user'))\
-    .order_by(desc(AccountTransfer.date))\
+    .order_by(desc(AccountTransfer.date)).order_by(desc(AccountTransfer.id))\
     .join(
             (from_account_alias, (AccountTransfer.from_account == from_account_alias.id)),\
             (to_account_alias, (AccountTransfer.to_account == to_account_alias.id)))\
@@ -108,7 +106,7 @@ def show_income():
     .filter(Income.user == session.get('logged_in_user'))
     .join(IncomeCategory)
     .add_columns(IncomeCategory.name)
-    .order_by(desc(Income.date)))
+    .order_by(desc(Income.date)).order_by(desc(Income.id)))
 
 @app.route('/income/add', methods=['GET', 'POST'])
 @login_required
@@ -155,21 +153,55 @@ def show_expenses():
     .filter(Expense.user == session.get('logged_in_user'))
     .join(ExpenseCategory)
     .add_columns(ExpenseCategory.name)
-    .order_by(desc(Expense.date)))
+    .order_by(desc(Expense.date)).order_by(desc(Expense.id)))
 
 @app.route('/expense/add', methods=['GET', 'POST'])
 @login_required
 def add_expense():
     error = None
     if request.method == 'POST':
-        # add new expense
-        e = Expense(session.get('logged_in_user'), request.form['date'], request.form['category'],
-                    request.form['description'], request.form['deduct_from'], request.form['amount'])
-        db_session.add(e)
+        # is it a shared expense?
+        if 'is_shared' in request.form:\
+            # figure out percentage split
+            loaned_amount = (float(request.form['amount'])*(100-float(request.form['split'])))/100
+            # create a loan
+            l = Loan(session.get('logged_in_user'), request.form['user'], request.form['date'],
+                     request.form['deduct_from'], request.form['description'], loaned_amount)
+            db_session.add(l)
+            flash('Loan given')
+
+            # add new expense (loaner)
+            e1 = Expense(session.get('logged_in_user'), request.form['date'], request.form['category'],
+                        request.form['description'], request.form['deduct_from'],
+                        float(request.form['amount']) - loaned_amount)
+            db_session.add(e1)
+
+            # add "uncategorized" category if not already present (for the borrower to sort out)
+            c = ExpenseCategory.query\
+            .filter(ExpenseCategory.user == request.form['user'])\
+            .filter(ExpenseCategory.name == "Uncategorized").first()
+            if not c:
+                c = ExpenseCategory(request.form['user'], "Uncategorized")
+                db_session.add(c)
+                db_session.commit()
+
+            # fetch default category (for the borrower)
+            a = Account.query.filter(Account.user == request.form['user']).order_by(asc(Account.id)).first()
+            deduct_from = a.id
+
+            # add new expense (borrower)
+            e2 = Expense(request.form['user'], request.form['date'], c.id, request.form['description'],
+                         deduct_from, loaned_amount)
+            db_session.add(e2)
+        else:
+            # add new expense
+            e = Expense(session.get('logged_in_user'), request.form['date'], request.form['category'],
+                        request.form['description'], request.form['deduct_from'], request.form['amount'])
+            db_session.add(e)
 
         # debit from account
-        a = Account.query.\
-        filter(Account.user == session.get('logged_in_user'))\
+        a = Account.query\
+        .filter(Account.user == session.get('logged_in_user'))\
         .filter(Account.id == request.form['deduct_from']).first()
         a.balance -= float(request.form['amount'])
         db_session.add(a)
@@ -177,10 +209,11 @@ def add_expense():
         db_session.commit()
         flash('Expense added')
 
-    # fetch user's categories and accounts
+    # fetch user's categories, accounts and users
     categories = ExpenseCategory.query.filter(ExpenseCategory.user == session.get('logged_in_user'))\
     .order_by(ExpenseCategory.name)
     accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
+    users = User.query.filter(User.associated_with == session.get('logged_in_user'))
     return render_template('add_expense.html', **locals())
 
 @app.route('/expense/category/add', methods=['GET', 'POST'])
@@ -206,7 +239,7 @@ def show_loans():
     # fetch loans
     loans=Loan.query\
     .filter(or_(Loan.from_user == session.get('logged_in_user'), Loan.to_user == session.get('logged_in_user')))\
-    .order_by(desc(Loan.date))\
+    .order_by(desc(Loan.date)).order_by(desc(Loan.id))\
     .join(
             (from_user_alias, (Loan.from_user == from_user_alias.id)),\
             (to_user_alias, (Loan.to_user == to_user_alias.id)))\

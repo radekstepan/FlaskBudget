@@ -28,6 +28,19 @@
       <dt>Amount:
       <dd><input type=text name=amount>
 
+      <dt>Shared Expense?:
+      <dd><input type=checkbox name=is_shared>
+
+      <dt>With User:
+      <dd><select name=user>
+        {% for user in users %}
+          <option value="{{ user.id }}">{{ user.name }}</option>
+        {% endfor %}
+      </select>
+
+      <dt>% Split:
+      <dd><input type=text name=split>
+
       <dd><input type=submit value=Add>
     </dl>
   </form>
