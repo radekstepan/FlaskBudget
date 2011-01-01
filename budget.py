@@ -1,7 +1,7 @@
 # framework
 from __future__ import with_statement
 from flask import Flask, request, session, redirect, url_for, abort, render_template, flash
-from sqlalchemy.sql.expression import desc
+from sqlalchemy.sql.expression import desc, asc
 from sqlalchemy.orm import aliased
 
 # models
@@ -72,22 +72,33 @@ def account_transfer():
         db_session.add(t)
 
         # modify accounts
-        a1 = Account.query.\
-        filter(Account.user == session.get('logged_in_user'))\
-        .filter(Account.id == request.form['deduct_from']).first()
-        a1.balance -= float(request.form['amount'])
-        db_session.add(a1)
-
-        a2 = Account.query.\
-        filter(Account.user == session.get('logged_in_user'))\
-        .filter(Account.id == request.form['credit_to']).first()
-        a2.balance += float(request.form['amount'])
-        db_session.add(a2)
+        __account_transfer(session.get('logged_in_user'), session.get('logged_in_user'),
+                           request.form['amount'], request.form['deduct_from'], request.form['credit_to'])
 
         db_session.commit()
         flash('Monies transferred')
+
     accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
     return render_template('account_transfer.html', **locals())
+
+def __account_transfer(from_user, to_user, amount, from_account=None, to_account=None):
+    # fetch first user's account if not provided (default)
+    if not from_account:
+        a = Account.query.filter(Account.user == from_user).order_by(asc(Account.id)).first()
+        from_account = a.id
+    if not to_account:
+        a = Account.query.filter(Account.user == to_user).order_by(asc(Account.id)).first()
+        to_account = a.id
+
+    # deduct
+    a1 = Account.query.filter(Account.user == from_user).filter(Account.id == from_account).first()
+    a1.balance -= float(amount)
+    db_session.add(a1)
+
+    # credit
+    a2 = Account.query.filter(Account.user == to_user).filter(Account.id == to_account).first()
+    a2.balance += float(amount)
+    db_session.add(a2)
 
 ''' Income '''
 @app.route('/income/')
@@ -183,6 +194,47 @@ def add_expense_category():
         flash('Expense category added')
     return render_template('add_expense_category.html', error=error)
 
+''' Loans '''
+@app.route('/loan/get', methods=['GET', 'POST'])
+@login_required
+def get_loan():
+    if request.method == 'POST':
+        l = Loan(request.form['user'], session.get('logged_in_user'), request.form['date'],
+                 request.form['credit_to'], request.form['description'], request.form['amount'])
+        db_session.add(l)
+
+        # transfer money
+        __account_transfer(from_user=request.form['user'], to_user=session.get('logged_in_user'),
+                           amount=request.form['amount'], to_account=request.form['deduct_from'])
+
+        db_session.commit()
+        flash('Loan received')
+
+    # user's users ;) and accounts
+    users = User.query.filter(User.associated_with == session.get('logged_in_user'))
+    accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
+    return render_template('get_loan.html', **locals())
+
+@app.route('/loan/give', methods=['GET', 'POST'])
+@login_required
+def give_loan():
+    if request.method == 'POST':
+        l = Loan(session.get('logged_in_user'), request.form['user'], request.form['date'],
+                 request.form['deduct_from'], request.form['description'], request.form['amount'])
+        db_session.add(l)
+
+        # transfer money
+        __account_transfer(from_user=session.get('logged_in_user'), to_user=request.form['user'],
+                           amount=request.form['amount'], from_account=request.form['deduct_from'])
+
+        db_session.commit()
+        flash('Loan given')
+
+    # user's users ;) and accounts
+    users = User.query.filter(User.associated_with == session.get('logged_in_user'))
+    accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
+    return render_template('give_loan.html', **locals())
+
 ''' Users '''
 @app.route('/user/add/private', methods=['GET', 'POST'])
 @login_required
@@ -191,6 +243,12 @@ def add_private_user():
         # create new private user associated with the current user
         u = User(request.form['name'], session.get('logged_in_user'), True)
         db_session.add(u)
+        db_session.commit()
+
+        # give the user a default account so we can do loans
+        a = Account(u.id, "Default", 0)
+        db_session.add(a)
+
         db_session.commit()
         flash('Private user added')
     return render_template('add_private_user.html')

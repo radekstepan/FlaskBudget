@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Get Loan</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <form action="{{ url_for('get_loan') }}" method=post>
+    <dl>
+      <dt>From User:
+      <dd><select name=user>
+        {% for user in users %}
+          <option value="{{ user.id }}">{{ user.name }}</option>
+        {% endfor %}
+      </select>
+
+      <dt>Date:
+      <dd><input type=text name=date>
+
+      <dt>To Account:
+      <dd><select name=credit_to>
+        {% for account in accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+        {% endfor %}
+      </select>
+
+      <dt>Description:
+      <dd><input type=text name=description>
+
+      <dt>Amount:
+      <dd><input type=text name=amount>
+
+      <dd><input type=submit value=Borrow>
+    </dl>
+  </form>
+{% endblock %}

@@ -61,3 +61,14 @@ create table account_transfers (
   to_id integer not null,
   amount integer not null
 );
+
+drop table if exists loans;
+create table loans (
+  id integer primary key autoincrement,
+  from_user_id integer not null,
+  to_user_id integer not null,
+  date integer not null,
+  account_id integer not null,
+  description string not null,
+  amount integer not null
+);
