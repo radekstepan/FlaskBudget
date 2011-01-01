@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Loans</h2>
+  <br />
+  <table class=entries>
+  {% for loan in loans %}
+    <tr>
+        <td>{{ loan.0.date }}</td>
+        <td>{{ loan.1 }}</td>
+        <td>to</td>
+        <td>{{ loan.2 }}</td>
+        <td>{{ loan.0.description }}</td>
+        <td>&pound;{{ loan.0.amount }}</td>
+    </tr>
+  {% else %}
+    No loans yet.
+  {% endfor %}
+  </table>
+{% endblock %}

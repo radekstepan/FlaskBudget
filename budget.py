@@ -1,7 +1,7 @@
 # framework
 from __future__ import with_statement
 from flask import Flask, request, session, redirect, url_for, abort, render_template, flash
-from sqlalchemy.sql.expression import desc, asc
+from sqlalchemy.sql.expression import desc, asc, or_
 from sqlalchemy.orm import aliased
 
 # models
@@ -195,6 +195,25 @@ def add_expense_category():
     return render_template('add_expense_category.html', error=error)
 
 ''' Loans '''
+@app.route('/loans')
+@login_required
+def show_loans():
+    accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
+
+    # table referred to twice, create alias
+    from_user_alias = aliased(User)
+    to_user_alias = aliased(User)
+    # fetch loans
+    loans=Loan.query\
+    .filter(or_(Loan.from_user == session.get('logged_in_user'), Loan.to_user == session.get('logged_in_user')))\
+    .order_by(desc(Loan.date))\
+    .join(
+            (from_user_alias, (Loan.from_user == from_user_alias.id)),\
+            (to_user_alias, (Loan.to_user == to_user_alias.id)))\
+    .add_columns(from_user_alias.name, to_user_alias.name)
+
+    return render_template('show_loans.html', **locals())
+
 @app.route('/loan/get', methods=['GET', 'POST'])
 @login_required
 def get_loan():
@@ -205,7 +224,7 @@ def get_loan():
 
         # transfer money
         __account_transfer(from_user=request.form['user'], to_user=session.get('logged_in_user'),
-                           amount=request.form['amount'], to_account=request.form['deduct_from'])
+                           amount=request.form['amount'], to_account=request.form['credit_to'])
 
         db_session.commit()
         flash('Loan received')
