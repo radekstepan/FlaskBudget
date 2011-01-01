@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, Float, String
+from sqlalchemy import Column, ForeignKey, Integer, Float, String, Boolean
 from db.database import Base
 
 # utils
@@ -9,10 +9,16 @@ class User(Base):
 
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
+    name = Column(String(50))
+    associated_with = Column('associated_user_id', Integer, ForeignKey('users.id'))
+    is_private = Column(Boolean)
     username = Column(String(20))
     password = Column(String(20))
 
-    def __init__(self, username=None, password=None):
+    def __init__(self, name=None, associated_with=None, is_private=None, username=None, password=None):
+        self.name = name
+        self.associated_with = associated_with
+        self.is_private = is_private
         self.username = username
         self.password = password
 

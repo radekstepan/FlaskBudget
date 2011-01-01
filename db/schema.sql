@@ -1,8 +1,11 @@
 drop table if exists users;
 create table users (
   id integer primary key autoincrement,
-  username string not null,
-  password string not null
+  name string not null,
+  associated_user_id integer,
+  is_private integer not null,
+  username string,
+  password string
 );
 
 drop table if exists income_categories;

@@ -183,6 +183,18 @@ def add_expense_category():
         flash('Expense category added')
     return render_template('add_expense_category.html', error=error)
 
+''' Users '''
+@app.route('/user/add/private', methods=['GET', 'POST'])
+@login_required
+def add_private_user():
+    if request.method == 'POST':
+        # create new private user associated with the current user
+        u = User(request.form['name'], session.get('logged_in_user'), True)
+        db_session.add(u)
+        db_session.commit()
+        flash('Private user added')
+    return render_template('add_private_user.html')
+
 ''' Auth '''
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -190,7 +202,9 @@ def login():
     if request.method == 'POST':
         u = User.query\
         .filter(User.username == request.form['username'])\
-        .filter(User.password == request.form['password']).first()
+        .filter(User.password == request.form['password'])\
+        .filter(User.is_private == False)\
+        .first()
         if u:
             session['logged_in_user'] = u.id
             flash('You were logged in')
@@ -198,13 +212,6 @@ def login():
         else:
             error = 'Invalid username and/or password'
     return render_template('login.html', error=error)
-
-@app.route('/add/user/<username>')
-def add_user(username):
-    u = User(username, username)
-    db_session.add(u)
-    db_session.commit()
-    return redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
