@@ -1,6 +1,6 @@
 /* main */
 body { background:#456981; font-family:'Trebuchet MS',sans-serif; }
-#wrapper { margin:0 auto; width:800px; position:relative; }
+#wrapper { margin:0 auto; width:1000px; position:relative; }
 
 /* header */
 header.main { ; }
@@ -41,3 +41,36 @@ section.container { background:#FFF; min-height:100px; padding-top:10px; }
     section.container article { padding:20px; font-size:15px; }
     footer.foot { border-top:1px solid #0D334E; color:#FFF; background:url('../img/footerbg.png') repeat-x left bottom;
         font-size:11px; padding:10px 0; }
+    section.container h2 { color:#222E4B; font-family:'Georgia',serif; font-weight:normal; font-size:22px;
+        margin-bottom:16px; letter-spacing:-1px; }
+
+/* custom */
+ul.list_1 { margin-bottom:20px; }
+ul.list_1 li { border-width:1px 0 0 0; border-style:solid; font-size:13px; padding:6px 10px; }
+    ul.list_1 span.amount { float:right; text-align:right; }
+    ul.list_1 li p { margin-bottom:4px; }
+    ul.list_1 li div.actions { text-align:right; }
+        ul.list_1 li div.date { float:left; font-size:11px; }
+        ul.list_1 li div.actions a { font-size:11px; }
+        ul.list_1 li div.actions ul li { border:0; padding:0 3px; display:inline; }
+        ul.list_1 li div.actions ul li.first { padding-left:0; }
+    ul.list_1 li.last { border-bottom-width:1px; }
+
+    ul.list_1 li.sum { border:0; }
+        ul.list_1 li.sum span.amount { font-size:14px; }
+
+ul.list_1 li.red { border-color:#E8B5B5; background:#FCF7F7; }
+    ul.list_1 li.red a { color:#B44242; }
+    ul.list_1 li.red div.actions ul li { border-color:#8F3E4B; }
+ul.list_1 li.green { border-color:#B5E8B9; background:#F7FCF7; }
+    ul.list_1 li.green a { color:#2F771D; }
+    ul.list_1 li.green div.actions ul li { border-color:#244E19; }
+ul.list_1 li.blue { border-color:#B4D2E7; background:#F7FAFD; }
+    ul.list_1 li.blue a { color:#316182; }
+    ul.list_1 li.blue div.actions ul li { border-color:#24475F; }
+ul.list_1 li.gray { border-color:#CCC; background:#FFF; }
+    ul.list_1 li.gray a { color:#444; }
+    ul.list_1 li.gray div.actions ul li { border-color:#333; }
+ul.list_1 li.orange { border-color:#FA9D23; background:#FFEFDA; }
+    ul.list_1 li.orange a { color:#975325; }
+    ul.list_1 li.orange div.actions ul li { border-color:#8F3E4B; }
