@@ -1,6 +1,6 @@
 # framework
 from __future__ import with_statement
-from flask import Flask, request, session, redirect, url_for, abort, render_template, flash
+from flask import Flask, request, session, url_for, redirect, render_template, flash
 from sqlalchemy.sql.expression import desc, asc, or_
 from sqlalchemy.orm import aliased
 
@@ -27,7 +27,35 @@ def shutdown_session(response):
 @app.route('/')
 @login_required
 def dashboard():
-    return redirect(url_for('show_expenses'))
+    # get latest expenses
+    latest_expenses = Expense.query.filter(Account.user == session.get('logged_in_user'))\
+    .join(ExpenseCategory).add_columns(ExpenseCategory.name).order_by(desc(Expense.date)).limit(5)
+
+    # get accounts
+    accounts=Account.query.filter(Account.user == session.get('logged_in_user'))\
+    .filter(Account.balance != 0)\
+    .outerjoin((User, Account.name == User.id))\
+    .add_columns(User.name)\
+    .order_by(asc(Account.type)).order_by(asc(Account.id))
+
+    # split, get totals
+    assets, liabilities, loans, assets_total, liabilities_total = [], [], [], 0, 0
+    for a in accounts:
+        if a[0].type == 'asset':
+            assets.append(a)
+            assets_total += float(a[0].balance)
+        elif a[0].type == 'liability':
+            liabilities.append(a)
+            liabilities_total += float(a[0].balance)
+        elif a[0].type == 'loan':
+            # if we owe someone, it is our liability
+            if (float(a[0].balance) < 0):
+                liabilities.append(a)
+                liabilities_total += float(a[0].balance)
+            else:
+                assets.append(a)
+
+    return render_template('admin_dashboard.html', **locals())
 
 ''' Accounts '''
 @app.route('/accounts')
@@ -53,11 +81,11 @@ def show_accounts():
 def add_account():
     error = None
     if request.method == 'POST':
-        a = Account(session.get('logged_in_user'), request.form['name'], request.form['balance'])
+        a = Account(session.get('logged_in_user'), request.form['name'], request.form['type'], request.form['balance'])
         db_session.add(a)
         db_session.commit()
         flash('Account added')
-    return render_template('add_account.html', error=error)
+    return render_template('admin_add_account.html', error=error)
 
 @app.route('/account/transfer', methods=['GET', 'POST'])
 @login_required
@@ -259,6 +287,31 @@ def get_loan():
         __account_transfer(from_user=request.form['user'], to_user=session.get('logged_in_user'),
                            amount=request.form['amount'], to_account=request.form['credit_to'])
 
+        # update/create loan type account (us & them)
+        a1 = Account.query.filter(Account.user == session.get('logged_in_user'))\
+        .filter(Account.type == 'loan')\
+        .filter(Account.name == request.form['user']).first()
+        if not a1:
+            # initial
+            a1 = Account(session.get('logged_in_user'), request.form['user'], 'loan', -float(request.form['amount']))
+            db_session.add(a1)
+        else:
+            # update
+            a1.balance -= float(request.form['amount'])
+            db_session.add(a1)
+
+        a2 = Account.query.filter(Account.user == request.form['user'])\
+        .filter(Account.type == 'loan')\
+        .filter(Account.name == session.get('logged_in_user')).first()
+        if not a2:
+            # initial
+            a2 = Account(request.form['user'], session.get('logged_in_user'), 'loan', request.form['amount'])
+            db_session.add(a2)
+        else:
+            # update
+            a2.balance += float(request.form['amount'])
+            db_session.add(a2)
+
         db_session.commit()
         flash('Loan received')
 
@@ -279,6 +332,31 @@ def give_loan():
         __account_transfer(from_user=session.get('logged_in_user'), to_user=request.form['user'],
                            amount=request.form['amount'], from_account=request.form['deduct_from'])
 
+        # update/create loan type account (us & them)
+        a1 = Account.query.filter(Account.user == request.form['user'])\
+        .filter(Account.type == 'loan')\
+        .filter(Account.name == session.get('logged_in_user')).first()
+        if not a1:
+            # initial
+            a1 = Account(request.form['user'], session.get('logged_in_user'), 'loan', -float(request.form['amount']))
+            db_session.add(a1)
+        else:
+            # update
+            a1.balance -= float(request.form['amount'])
+            db_session.add(a1)
+
+        a2 = Account.query.filter(Account.user == session.get('logged_in_user'))\
+        .filter(Account.type == 'loan')\
+        .filter(Account.name == request.form['user']).first()
+        if not a2:
+            # initial
+            a2 = Account(session.get('logged_in_user'), request.form['user'], 'loan', request.form['amount'])
+            db_session.add(a2)
+        else:
+            # update
+            a2.balance += float(request.form['amount'])
+            db_session.add(a2)
+
         db_session.commit()
         flash('Loan given')
 
@@ -298,7 +376,7 @@ def add_private_user():
         db_session.commit()
 
         # give the user a default account so we can do loans
-        a = Account(u.id, "Default", 0)
+        a = Account(u.id, "Default", 'private', 0)
         db_session.add(a)
 
         db_session.commit()
@@ -317,6 +395,7 @@ def login():
         .first()
         if u:
             session['logged_in_user'] = u.id
+            session['user_name'] = u.name
             flash('You were logged in')
             return redirect(url_for('show_expenses'))
         else:

@@ -29,11 +29,13 @@ class Account(Base):
     id = Column(Integer, primary_key=True)
     user = Column('user_id', Integer, ForeignKey('users.id'))
     name = Column(String(100))
+    type = Column(String(100))
     balance = Column(Float(precision=2))
 
-    def __init__(self, user=None, name=None, balance=None):
+    def __init__(self, user=None, name=None, type=None, balance=None):
         self.user = user
         self.name = name
+        self.type = type
         self.balance = balance
 
 class AccountTransfer(Base):

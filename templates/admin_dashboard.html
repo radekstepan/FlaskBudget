@@ -1,0 +1,85 @@
+{% extends "admin_layout.html" %}
+{% block nav %}
+<nav class="nav">
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}" class="active white">Dashboard</a></li>
+        <li><a href="{{ url_for('show_expenses') }}">Expenses</a></li>
+        <li><a href="{{ url_for('show_income') }}">Income</a></li>
+        <li><a href="{{ url_for('show_loans') }}">Loans</a></li>
+        <li><a href="{{ url_for('add_account') }}">Accounts</a></li>
+        <li><a href="{{ url_for('add_private_user') }}">Users</a></li>
+    </ul>
+</nav>
+{% endblock %}
+{% block body %}
+<header><h1>Dashboard</h1></header>
+<article class="container_12">
+    <div class="left grid_6">
+        <h2>Latest Expenses</h2>
+        <ul class="list_1">
+            {% for entry in latest_expenses %}
+                <li class="blue {% if loop.last %}last{% endif %}">
+                    <p>
+                        <span class="amount">&pound;{{entry.0.amount}}</span>
+                        {{entry.0.description}} in <a href="">{{entry.1}}</a>
+                    </p>
+                    <div class="date">{{entry.0.date}}</div>
+                    <div class="actions">
+                        <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="right grid_6">
+        {% for account in assets %}
+            {% if loop.first %}
+            <h2>Assets</h2>
+            <ul class="list_1">
+                {% endif %}
+                {% if account.0.type == "asset" %}
+                    <li class="green {% if loop.last %}last{% endif %}">
+                        <span class="amount">&pound;{{ account.0.balance }}</span>
+                        <a href="">{{account.0.name}}</a>
+                    </li>
+                {% else %}
+                    <li class="gray {% if loop.last %}last{% endif %}">
+                        <span class="amount">&pound;{{ account.0.balance }}</span>
+                        Loaned to <a href="">{{account.1}}</a>
+                    </li>
+                {% endif %}
+                {% if loop.last %}
+                <li class="sum">
+                    <span class="amount"><strong>&pound;{{ assets_total }}</strong></span>
+                </li>
+            </ul>
+            {% endif %}
+        {% endfor %}
+
+        {% for account in liabilities %}
+            {% if loop.first %}
+            <h2>Liabilities</h2>
+            <ul class="list_1">
+                {% endif %}
+                {% if account.0.type == "liability" %}
+                    <li class="red {% if loop.last %}last{% endif %}">
+                        <span class="amount">&minus; &pound;{{ account.0.balance|abs }}</span>
+                        <a href="">{{account.0.name}}</a>
+                    </li>
+                {% else %}
+                    <li class="red {% if loop.last %}last{% endif %}">
+                        <span class="amount">&minus; &pound;{{ account.0.balance|abs }}</span>
+                        Loaned from <a href="">{{account.1}}</a>
+                    </li>
+                {% endif %}
+                {% if loop.last %}
+                <li class="sum">
+                    <span class="amount"><strong>&minus; &pound;{{ liabilities_total|abs }}</strong></span>
+                </li>
+            </ul>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="clear"></div>
+</article>
+{% endblock %}

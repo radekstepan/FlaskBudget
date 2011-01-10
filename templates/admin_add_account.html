@@ -1,0 +1,45 @@
+{% extends "admin_layout.html" %}
+{% block nav %}
+<nav class="nav">
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('show_expenses') }}">Expenses</a></li>
+        <li><a href="{{ url_for('show_income') }}">Income</a></li>
+        <li><a href="{{ url_for('show_loans') }}">Loans</a></li>
+        <li><a href="{{ url_for('add_account') }}" class="active">Accounts</a></li>
+        <li><a href="{{ url_for('add_private_user') }}">Users</a></li>
+    </ul>
+</nav>
+<nav class="subnav">
+    <ul>
+        <li><a href="{{ url_for('add_account') }}" class="active">Add Account</a></li>
+    </ul>
+</nav>
+{% endblock %}
+{% block body %}
+<header><h1>Dashboard</h1></header>
+<article class="container_12">
+    <div class="left grid_6">
+        <h2>Add Account</h2>
+        {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+        <form action="{{ url_for('add_account') }}" method=post>
+            <dl>
+                <dt>Name:
+                <dd><input type=text name=name>
+
+                <dt>Type:
+                <dd><select name=type>
+                        <option value="asset">Asset</option>
+                        <option value="liability">Liability</option>
+                    </select>
+
+                <dt>Balance:
+                <dd><input type=text name=balance>
+
+                <dd><input type=submit value=Add>
+            </dl>
+        </form>
+    </div>
+    <div class="clear"></div>
+</article>
+{% endblock %}
