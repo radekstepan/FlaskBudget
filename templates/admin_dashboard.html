@@ -15,21 +15,45 @@
 <header><h1>Dashboard</h1></header>
 <article class="container_12">
     <div class="left grid_6">
+        {% for entry in uncategorized_expenses %}
+        {% if loop.first %}
+        <h2>Uncategorized Expenses</h2>
+        <ul class="list_1">
+            {% endif %}
+            <li class="orange {% if loop.last %}last{% endif %}">
+                <p>
+                    <span class="amount">&minus; &pound;{{ entry.0.amount }}</span>
+                    {{ entry.0.description }} in <a href="">{{ entry.1 }}</a>
+                </p>
+                <div class="date">{{ entry.0.date|datetimeformat }}</div>
+                <div class="actions">
+                    <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
+                </div>
+            </li>
+            {% if loop.last %}
+        </ul>
+        {% endif %}
+        {% endfor %}
+
+        {% for entry in latest_expenses %}
+        {% if loop.first %}
         <h2>Latest Expenses</h2>
         <ul class="list_1">
-            {% for entry in latest_expenses %}
-                <li class="blue {% if loop.last %}last{% endif %}">
-                    <p>
-                        <span class="amount">&pound;{{entry.0.amount}}</span>
-                        {{entry.0.description}} in <a href="">{{entry.1}}</a>
-                    </p>
-                    <div class="date">{{entry.0.date}}</div>
-                    <div class="actions">
-                        <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
-                    </div>
-                </li>
-            {% endfor %}
+            {% endif %}
+            <li class="blue {% if loop.last %}last{% endif %}">
+                <p>
+                    <span class="amount">&minus; &pound;{{ entry.0.amount }}</span>
+                    {{ entry.0.description }} in <a href="">{{ entry.1 }}</a>
+                </p>
+                <div class="date">{{ entry.0.date|datetimeformat }}</div>
+                <div class="actions">
+                    <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
+                </div>
+            </li>
+            {% if loop.last %}
         </ul>
+        {% endif %}
+        {% endfor %}
     </div>
     <div class="right grid_6">
         {% for account in assets %}
@@ -40,12 +64,12 @@
                 {% if account.0.type == "asset" %}
                     <li class="green {% if loop.last %}last{% endif %}">
                         <span class="amount">&pound;{{ account.0.balance }}</span>
-                        <a href="">{{account.0.name}}</a>
+                        <a href="">{{ account.0.name }}</a>
                     </li>
                 {% else %}
                     <li class="gray {% if loop.last %}last{% endif %}">
                         <span class="amount">&pound;{{ account.0.balance }}</span>
-                        Loaned to <a href="">{{account.1}}</a>
+                        Loaned to <a href="">{{ account.1 }}</a>
                     </li>
                 {% endif %}
                 {% if loop.last %}
@@ -64,12 +88,12 @@
                 {% if account.0.type == "liability" %}
                     <li class="red {% if loop.last %}last{% endif %}">
                         <span class="amount">&minus; &pound;{{ account.0.balance|abs }}</span>
-                        <a href="">{{account.0.name}}</a>
+                        <a href="">{{ account.0.name }}</a>
                     </li>
                 {% else %}
                     <li class="red {% if loop.last %}last{% endif %}">
                         <span class="amount">&minus; &pound;{{ account.0.balance|abs }}</span>
-                        Loaned from <a href="">{{account.1}}</a>
+                        Loaned from <a href="">{{ account.1 }}</a>
                     </li>
                 {% endif %}
                 {% if loop.last %}

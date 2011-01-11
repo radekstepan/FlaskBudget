@@ -11,6 +11,9 @@ from models import *
 # authentication
 from auth import login_required
 
+# utils
+from datetime import date, timedelta
+
 DEBUG = True
 
 # create our little application :)
@@ -27,8 +30,13 @@ def shutdown_session(response):
 @app.route('/')
 @login_required
 def dashboard():
+    # get uncategorized expenses
+    uncategorized_expenses = Expense.query.filter(Expense.user == session.get('logged_in_user'))\
+    .join(ExpenseCategory).add_columns(ExpenseCategory.name)\
+    .filter(ExpenseCategory.name == 'Uncategorized').order_by(desc(Expense.date))
+
     # get latest expenses
-    latest_expenses = Expense.query.filter(Account.user == session.get('logged_in_user'))\
+    latest_expenses = Expense.query.filter(Expense.user == session.get('logged_in_user'))\
     .join(ExpenseCategory).add_columns(ExpenseCategory.name).order_by(desc(Expense.date)).limit(5)
 
     # get accounts
@@ -407,6 +415,15 @@ def logout():
     session.pop('logged_in_user', None)
     flash('You were logged out')
     return redirect(url_for('login'))
+
+@app.template_filter('datetimeformat')
+def datetimeformat(value):
+    if date.today() == value:
+        return 'Today'
+    elif date.today() - timedelta(1) == value:
+        return 'Yesterday'
+    else:
+        return value
 
 if __name__ == '__main__':
     app.run()

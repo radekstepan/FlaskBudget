@@ -1,0 +1,120 @@
+--
+-- MySQL 5.1.49
+-- Mon, 10 Jan 2011 23:56:42 +0000
+--
+
+CREATE TABLE `account_transfers` (
+   `id` int(11),
+   `user_id` int(11),
+   `date` date,
+   `from_id` int(11),
+   `to_id` int(11),
+   `amount` float,
+   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET utf8;
+
+-- [Table `account_transfers` is empty]
+
+CREATE TABLE `accounts` (
+   `id` int(11),
+   `user_id` int(11),
+   `type` varchar(100),
+   `name` varchar(255),
+   `balance` float,
+   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET utf8;
+
+INSERT INTO `accounts` (`id`, `user_id`, `type`, `name`, `balance`) VALUES
+('1', '1', 'asset', 'HSBC International Student', '1152'),
+('2', '1', 'asset', 'CitiBank Internet Saver Issue 7', '700'),
+('3', '1', 'liability', 'Barclaycard Initial Credit Card', '-120'),
+('4', '2', 'private', 'Default', '-200'),
+('5', '1', 'loan', '2', '-200'),
+('6', '2', 'loan', '1', '200'),
+('7', '3', 'private', 'Default', '100'),
+('8', '3', 'loan', '1', '-100'),
+('9', '1', 'loan', '3', '100');
+
+CREATE TABLE `expense_categories` (
+   `id` int(11),
+   `name` varchar(255),
+   `user_id` int(11),
+   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET utf8;
+
+INSERT INTO `expense_categories` (`id`, `name`, `user_id`) VALUES
+('1', 'Groceries', '1'),
+('2', 'Household', '1'),
+('3', 'Uncategorized', '2');
+
+CREATE TABLE `expenses` (
+   `id` int(11),
+   `user_id` int(11),
+   `date` date,
+   `category_id` int(11),
+   `description` varchar(255),
+   `account_id` int(11),
+   `amount` float,
+   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET utf8;
+
+INSERT INTO `expenses` (`id`, `user_id`, `date`, `category_id`, `description`, `account_id`, `amount`) VALUES
+('1', '1', '2010-12-09', '1', 'Tesco', '1', '33'),
+('2', '1', '2010-12-09', '2', 'B&Q', '3', '20'),
+('3', '1', '2010-12-30', '1', 'Sainsbury\'s', '1', '4.5'),
+('4', '2', '2010-12-28', '3', 'Sainsbury\'s', '4', '10.5');
+
+CREATE TABLE `income` (
+   `id` int(11),
+   `user_id` int(11),
+   `date` date,
+   `category_id` int(11),
+   `description` varchar(255),
+   `account_id` int(11),
+   `amount` float,
+   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET utf8;
+
+INSERT INTO `income` (`id`, `user_id`, `date`, `category_id`, `description`, `account_id`, `amount`) VALUES
+('2', '1', '2010-12-05', '1', 'December', '1', '500');
+
+CREATE TABLE `income_categories` (
+   `id` int(11),
+   `name` varchar(255),
+   `user_id` int(11),
+   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET utf8;
+
+INSERT INTO `income_categories` (`id`, `name`, `user_id`) VALUES
+('1', 'Salary', '1');
+
+CREATE TABLE `loans` (
+   `id` int(11),
+   `from_user_id` int(11),
+   `to_user_id` int(11),
+   `date` date,
+   `account_id` int(11),
+   `description` varchar(255),
+   `amount` float,
+   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET utf8;
+
+INSERT INTO `loans` (`id`, `from_user_id`, `to_user_id`, `date`, `account_id`, `description`, `amount`) VALUES
+('1', '2', '1', '2010-12-28', '2', 'Some money', '200'),
+('2', '1', '2', '2011-01-01', '1', 'Sainsbury\'s', '10.5'),
+('3', '1', '3', '2010-12-08', '1', 'Some such', '100');
+
+CREATE TABLE `users` (
+   `id` int(11),
+   `name` varchar(255),
+   `associated_user_id` int(11),
+   `is_private` tinyint(1),
+   `username` varchar(255),
+   `password` varchar(255),
+   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET utf8;
+
+INSERT INTO `users` (`id`, `name`, `associated_user_id`, `is_private`, `username`, `password`) VALUES
+('1', 'Radek', '', '0', 'radek', 'radek'),
+('2', 'Barb', '1', '1', '', ''),
+('3', 'Testiculus', '1', '1', '', '');

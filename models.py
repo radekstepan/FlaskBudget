@@ -51,8 +51,7 @@ class AccountTransfer(Base):
 
     def __init__(self, user=None, date=None, from_account=None, to_account=None, amount=None):
         self.user = user
-        # convert from datetime into timestamp
-        self.date = datetime.strptime(date, "%Y-%m-%d")
+        self.date = date
         self.from_account = from_account
         self.to_account = to_account
         self.amount = amount
@@ -83,8 +82,7 @@ class Income(Base):
 
     def __init__(self, user=None, date=None, category=None, description=None, credit_to=None, amount=None):
         self.user = user
-        # convert from datetime into timestamp
-        self.date = datetime.strptime(date, "%Y-%m-%d")
+        self.date = date
         self.category = category
         self.description = description
         self.credit_to = credit_to
@@ -116,8 +114,7 @@ class Expense(Base):
 
     def __init__(self, user=None, date=None, category=None, description=None, deduct_from=None, amount=None):
         self.user = user
-        # convert from datetime into timestamp
-        self.date = datetime.strptime(date, "%Y-%m-%d")
+        self.date = date
         self.category = category
         self.description = description
         self.deduct_from = deduct_from
@@ -138,8 +135,7 @@ class Loan(Base):
     def __init__(self, from_user=None, to_user=None, date=None, account=None, description=None, amount=None):
         self.from_user = from_user
         self.to_user = to_user
-        # convert from datetime into timestamp
-        self.date = datetime.strptime(date, "%Y-%m-%d")
+        self.date = date
         self.account = account
         self.description = description
         self.amount = amount
