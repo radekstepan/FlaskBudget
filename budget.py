@@ -1,6 +1,6 @@
 # framework
 from __future__ import with_statement
-from flask import Flask
+from flask import Flask, session
 
 # presenters
 from presenters.dashboard import dashboard
@@ -40,13 +40,17 @@ def shutdown_session(response):
 
 # template filters
 @app.template_filter('datetimeformat')
-def datetimeformat(value):
+def date_time_format(value):
     if date.today() == value:
         return 'Today'
     elif date.today() - timedelta(1) == value:
         return 'Yesterday'
     else:
         return value
+
+@app.template_filter('isloggeduserid')
+def id_logged_user_id(value):
+    return value == session.get('logged_in_user')
 
 if __name__ == '__main__':
     app.run()

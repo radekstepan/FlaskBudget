@@ -17,8 +17,6 @@ loans = Module(__name__)
 @loans.route('/loans')
 @login_required
 def index():
-    accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
-
     # table referred to twice, create alias
     from_user_alias = aliased(User)
     to_user_alias = aliased(User)
@@ -31,7 +29,7 @@ def index():
             (to_user_alias, (Loan.to_user == to_user_alias.id)))\
     .add_columns(from_user_alias.name, to_user_alias.name)
 
-    return render_template('show_loans.html', **locals())
+    return render_template('admin_show_loans.html', **locals())
 
 @loans.route('/loan/get', methods=['GET', 'POST'])
 @login_required
@@ -76,7 +74,7 @@ def get():
     # user's users ;) and accounts
     users = User.query.filter(User.associated_with == session.get('logged_in_user'))
     accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
-    return render_template('get_loan.html', **locals())
+    return render_template('admin_get_loan.html', **locals())
 
 @loans.route('/loan/give', methods=['GET', 'POST'])
 @login_required
@@ -121,4 +119,4 @@ def give():
     # user's users ;) and accounts
     users = User.query.filter(User.associated_with == session.get('logged_in_user'))
     accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
-    return render_template('give_loan.html', **locals())
+    return render_template('admin_give_loan.html', **locals())

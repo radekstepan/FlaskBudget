@@ -15,7 +15,7 @@ income = Module(__name__)
 @income.route('/income/')
 @login_required
 def index():
-    return render_template('show_income.html', entries=Income.query
+    return render_template('admin_show_income.html', entries=Income.query
     .filter(Income.user == session.get('logged_in_user'))
     .join(IncomeCategory)
     .add_columns(IncomeCategory.name)
@@ -45,7 +45,7 @@ def add():
     categories = IncomeCategory.query.filter(IncomeCategory.user == session.get('logged_in_user'))\
     .order_by(IncomeCategory.name)
     accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
-    return render_template('add_income.html', **locals())
+    return render_template('admin_add_income.html', **locals())
 
 @income.route('/income/category/add', methods=['GET', 'POST'])
 @login_required
@@ -56,4 +56,4 @@ def add_category():
         db_session.add(c)
         db_session.commit()
         flash('Income category added')
-    return render_template('add_income_category.html', error=error)
+    return render_template('admin_add_income_category.html', error=error)

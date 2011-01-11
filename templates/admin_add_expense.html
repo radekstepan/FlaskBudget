@@ -1,0 +1,69 @@
+{% extends "admin_layout.html" %}
+{% block nav %}
+<nav class="nav">
+    <ul>
+        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('expenses.index') }}" class="active">Expenses</a></li>
+        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
+        <li><a href="{{ url_for('accounts.add') }}">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
+    </ul>
+</nav>
+<nav class="subnav">
+    <ul>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
+        <li><a href="{{ url_for('expenses.add') }}" class="active">Add Expense</a></li>
+        <li><a href="{{ url_for('expenses.add_category') }}">Add Expense Category</a></li>
+    </ul>
+</nav>
+{% endblock %}
+
+{% block header %}<h1>Add Expense</h1>{% endblock %}
+
+{% block body %}
+<div class="left grid_6">
+    <form action="{{ url_for('expenses.add') }}" method=post class="form_1">
+        <dl>
+            <dt>Date:
+            <dd><input type=text name=date>
+
+            <dt>Category:
+            <dd>
+                <select name=category>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+
+            <dt>Description:
+            <dd><input type=text name=description>
+
+            <dt>From Account:
+            <dd><select name=deduct_from>
+                {% for account in accounts %}
+                <option value="{{ account.id }}">{{ account.name }}</option>
+                {% endfor %}
+            </select>
+
+            <dt>Amount:
+            <dd><input type=text name=amount>
+
+            <dt>Shared Expense?:
+            <dd><input type=checkbox name=is_shared>
+
+            <dt>With User:
+            <dd><select name=user>
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.name }}</option>
+                {% endfor %}
+            </select>
+
+            <dt>% Split:
+            <dd><input type=text name=split>
+
+            <dd><input type=submit value=Add>
+        </dl>
+    </form>
+</div>
+{% endblock %}

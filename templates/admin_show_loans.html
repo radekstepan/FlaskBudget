@@ -1,0 +1,54 @@
+{% extends "admin_layout.html" %}
+{% block nav %}
+<nav class="nav">
+    <ul>
+        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
+        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('loans.index') }}" class="active">Loans</a></li>
+        <li><a href="{{ url_for('accounts.add') }}">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
+    </ul>
+</nav>
+<nav class="subnav">
+    <ul>
+        <li><a href="{{ url_for('loans.index') }}" class="active">Loans</a></li>
+        <li><a href="{{ url_for('loans.give') }}">Give Loan</a></li>
+        <li><a href="{{ url_for('loans.get') }}">Get Loan</a></li>
+    </ul>
+</nav>
+{% endblock %}
+
+{% block header %}<h1>Loans</h1>{% endblock %}
+
+{% block body %}
+<div class="left grid_6">
+    {% for loan in loans %}
+    {% if loop.first %}
+    <ul class="list_1">
+        {% endif %}
+        {% if loan.0.from_user|isloggeduserid %}
+        <li class="gray {% if loop.last %}last{% endif %}">
+            <p>
+                <span class="amount">&minus; &pound;{{ loan.0.amount }}</span>
+                {{ loan.0.description }}
+            </p>
+            <div class="date">to <a href="#">{{ loan.2 }}</a> {{ loan.0.date|datetimeformat }}</div>
+        {% else %}
+        <li class="red {% if loop.last %}last{% endif %}">
+            <p>
+                <span class="amount">&pound;{{ loan.0.amount }}</span>
+                {{ loan.0.description }}
+            </p>
+            <div class="date">from <a href="#">{{ loan.1 }}</a> {{ loan.0.date|datetimeformat }}</div>
+        {% endif %}
+            <div class="actions">
+                <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
+            </div>
+        </li>
+        {% if loop.last %}
+    </ul>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endblock %}

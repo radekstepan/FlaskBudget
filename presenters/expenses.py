@@ -15,7 +15,7 @@ expenses = Module(__name__)
 @expenses.route('/expenses/')
 @login_required
 def index():
-    return render_template('show_expenses.html', entries=Expense.query
+    return render_template('admin_show_expenses.html', entries=Expense.query
     .filter(Expense.user == session.get('logged_in_user'))
     .join(ExpenseCategory)
     .add_columns(ExpenseCategory.name)
@@ -80,7 +80,7 @@ def add():
     .order_by(ExpenseCategory.name)
     accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
     users = User.query.filter(User.associated_with == session.get('logged_in_user'))
-    return render_template('add_expense.html', **locals())
+    return render_template('admin_add_expense.html', **locals())
 
 @expenses.route('/expense/category/add', methods=['GET', 'POST'])
 @login_required
@@ -91,4 +91,4 @@ def add_category():
         db_session.add(c)
         db_session.commit()
         flash('Expense category added')
-    return render_template('add_expense_category.html', error=error)
+    return render_template('admin_add_expense_category.html', error=error)

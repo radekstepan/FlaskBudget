@@ -100,3 +100,18 @@ form.form_1 { ; }
     form.form_1 input[name="save"] { font-weight:bold; }
     form.form_1 dt { color:#686868; font-weight:bold; margin-bottom:5px; }
     form.form_1 dd { margin:0 0 10px 30px; }
+
+/* login */
+body.login{background:#316182 url('../img/dialogbg.png') repeat-x;}
+div.login-box{position:absolute;z-index:80;width:400px;top:60%;left:50%;-moz-border-radius:20px;-webkit-border-radius:20px;border-radius:20px;margin:-210px 0 0 -232px;padding:32px;}
+div.login-box form{text-align:center;}
+div.login-box dl{margin:20px 0 30px;padding:0;}
+div.login-box dt{color:#FFF;font-weight:700;margin:5px 0;padding:0;}
+div.login-box dd{margin:0;padding:0 20px;}
+div.login-box input{color:#FFF;background:#222e4b;border:1px solid #4f849d;font-family:Georgia, serif;font-size:20px;width:340px;-moz-border-radius:3px;-webkit-border-radius:3px;border-radius:3px;padding:3px;}
+div.login-box input:focus{background:url('../img/dialogbg.png') repeat-x 0 -30px;}
+div.login-box input[type="checkbox"]{width:18px;height:18px;}
+div.login-box label{color:#FFF;}
+div.login-box input[type="submit"]{display:block;background-color:#ebf0f3;width:130px;color:#246;border:1px solid #ccc;-moz-border-radius:5px;-webkit-border-radius:5px;border-radius:5px;cursor:pointer;margin:20px auto 0;}
+div.login-box input[type="submit"]:hover{background-color:#FFF;}
+div.login-box input[type="submit"]:focus{background:#D3E4EB;}

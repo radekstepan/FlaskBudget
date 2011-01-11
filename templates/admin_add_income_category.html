@@ -4,26 +4,28 @@
     <ul>
         <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
         <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
-        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('income.index') }}" class="active">Income</a></li>
         <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
         <li><a href="{{ url_for('accounts.add') }}">Accounts</a></li>
-        <li><a href="{{ url_for('users.add_private') }}" class="active">Users</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
 <nav class="subnav">
     <ul>
-        <li><a href="{{ url_for('users.add_private') }}" class="active">Add Private User</a></li>
+        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('income.add') }}">Add Income</a></li>
+        <li><a href="{{ url_for('income.add_category') }}" class="active">Add Income Category</a></li>
     </ul>
 </nav>
 {% endblock %}
 
-{% block header %}<h1>Add Private User</h1>{% endblock %}
+{% block header %}<h1>Add Income Category</h1>{% endblock %}
 
 {% block body %}
 <div class="left grid_6">
-    <form action="{{ url_for('users.add_private') }}" method=post class="form_1">
+    <form action="{{ url_for('income.add_category') }}" method=post class="form_1">
         <dl>
-            <dt>Name
+            <dt>Name:
             <dd><input type=text name=name>
 
             <dd><input type=submit value=Add>

@@ -16,6 +16,7 @@ accounts = Module(__name__)
 @accounts.route('/accounts')
 @login_required
 def index():
+    pass
     accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
 
     # table referred to twice, create alias

@@ -3,7 +3,7 @@ from flask import Module, session, render_template, redirect, request, flash, ur
 from functools import wraps
 
 # models
-from models import *
+from models import User
 
 auth = Module(__name__)
 
@@ -21,7 +21,7 @@ def login():
             session['logged_in_user'] = u.id
             session['user_name'] = u.name
             flash('You were logged in')
-            return redirect(url_for('show_expenses'))
+            return redirect(url_for('dashboard.index'))
         else:
             error = 'Invalid username and/or password'
     return render_template('login.html', error=error)
@@ -36,6 +36,6 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('logged_in_user'):
-            return redirect(url_for('login', next=request.url))
+            return redirect(url_for('auth.login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function

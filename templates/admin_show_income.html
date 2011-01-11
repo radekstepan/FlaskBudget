@@ -1,0 +1,45 @@
+{% extends "admin_layout.html" %}
+{% block nav %}
+<nav class="nav">
+    <ul>
+        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
+        <li><a href="{{ url_for('income.index') }}" class="active">Income</a></li>
+        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
+        <li><a href="{{ url_for('accounts.add') }}">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
+    </ul>
+</nav>
+<nav class="subnav">
+    <ul>
+        <li><a href="{{ url_for('income.index') }}" class="active">Income</a></li>
+        <li><a href="{{ url_for('income.add') }}">Add Income</a></li>
+        <li><a href="{{ url_for('income.add_category') }}">Add Income Category</a></li>
+    </ul>
+</nav>
+{% endblock %}
+
+{% block header %}<h1>Income</h1>{% endblock %}
+
+{% block body %}
+<div class="left grid_6">
+    {% for entry in entries %}
+    {% if loop.first %}
+    <ul class="list_1">
+        {% endif %}
+        <li class="green {% if loop.last %}last{% endif %}">
+            <p>
+                <span class="amount">&minus; &pound;{{ entry.0.amount }}</span>
+                {{ entry.0.description }} in <a href="">{{ entry.1 }}</a>
+            </p>
+            <div class="date">{{ entry.0.date|datetimeformat }}</div>
+            <div class="actions">
+                <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
+            </div>
+        </li>
+        {% if loop.last %}
+    </ul>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endblock %}
