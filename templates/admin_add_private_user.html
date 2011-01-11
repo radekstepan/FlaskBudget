@@ -6,34 +6,25 @@
         <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
         <li><a href="{{ url_for('income.index') }}">Income</a></li>
         <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
-        <li><a href="{{ url_for('accounts.add') }}" class="active">Accounts</a></li>
-        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
+        <li><a href="{{ url_for('accounts.add') }}">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}" class="active">Users</a></li>
     </ul>
 </nav>
 <nav class="subnav">
     <ul>
-        <li><a href="{{ url_for('accounts.add') }}" class="active">Add Account</a></li>
+        <li><a href="{{ url_for('users.add_private') }}" class="active">Add Private Account</a></li>
     </ul>
 </nav>
 {% endblock %}
 
-{% block header %}<h1>Add Account</h1>{% endblock %}
+{% block header %}<h1>Add Private User</h1>{% endblock %}
 
 {% block body %}
 <div class="left grid_6">
-    <form action="{{ url_for('accounts.add') }}" method=post class="form_1">
+    <form action="{{ url_for('users.add_private') }}" method=post class="form_1">
         <dl>
             <dt>Name
             <dd><input type=text name=name>
-
-            <dt>Type
-            <dd><select name=type>
-                <option value="asset">Asset</option>
-                <option value="liability">Liability</option>
-            </select>
-
-            <dt>Balance
-            <dd><input type=text name=balance>
 
             <dd><input type=submit value=Add>
         </dl>

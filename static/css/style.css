@@ -76,3 +76,27 @@ ul.list_1 li.gray { border-color:#CCC; background:#FFF; }
 ul.list_1 li.orange { border-color:#FA9D23; background:#FFEFDA; }
     ul.list_1 li.orange a { color:#975325; }
     ul.list_1 li.orange div.actions ul li { border-color:#8F3E4B; }
+
+form.form_1 { ; }
+    form.form_1 input, form.form_1 select, form.form_1 textarea { border-color:#999 #CCC #CCC #999; border-style:solid;
+        border-width:1px; }
+    form.form_1 input, form.form_1 select { font-family:'Georgia',sans-serif; padding:3px; }
+    form.form_1 textarea { font-family:'Consolas','Bitstream Vera Sans Mono','Monaco',monospace; padding:4px;
+        width:99%; }
+    form.form_1 input:focus, form.form_1 textarea:focus, form.form_1 select:focus { border:1px solid #B4D2E7;
+        outline:1px solid #729AB6; }
+    form.form_1 input[type="submit"], form.form_1 input[type="button"], form.form_1 input[type="reset"] {
+        background:#F7FAFD; color:#224466; border:1px solid #CCC; -moz-border-radius:3px; -webkit-border-radius:3px;
+        border-radius:3px; cursor:pointer; }
+    form.form_1 input[type="submit"]:active, form.form_1 input[type="button"]:active,
+    form.form_1 input[type="reset"]:active { border-color:#A5C3DA #6595B9 #A5C3DA #6595B9; background:#F2F2F2;
+        outline:none; }
+    form.form_1 input[type="submit"]:focus, form.form_1 input[type="button"]:focus,
+    form.form_1 input[type="reset"]:focus { outline:none; }
+    form.form_1 input[type="submit"]:hover, form.form_1 input[type="button"]:hover,
+    form.form_1 input[type="reset"]:hover { border-color:#B4D2E7; background:#FFF; }
+    form.form_1 input[type="checkbox"]:focus, form.form_1 input[type="radio"]:focus { outline:none; border:none; }
+    form.form_1 input[name="delete"]:hover { background:#D00; color:#FFF; }
+    form.form_1 input[name="save"] { font-weight:bold; }
+    form.form_1 dt { color:#686868; font-weight:bold; margin-bottom:5px; }
+    form.form_1 dd { margin:0 0 10px 30px; }

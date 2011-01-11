@@ -26,4 +26,4 @@ def add_private():
 
         db_session.commit()
         flash('Private user added')
-    return render_template('add_private_user.html')
+    return render_template('admin_add_private_user.html')
