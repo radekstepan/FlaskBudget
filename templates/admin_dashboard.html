@@ -2,12 +2,12 @@
 {% block nav %}
 <nav class="nav">
     <ul>
-        <li><a href="{{ url_for('dashboard') }}" class="active white">Dashboard</a></li>
-        <li><a href="{{ url_for('show_expenses') }}">Expenses</a></li>
-        <li><a href="{{ url_for('show_income') }}">Income</a></li>
-        <li><a href="{{ url_for('show_loans') }}">Loans</a></li>
-        <li><a href="{{ url_for('add_account') }}">Accounts</a></li>
-        <li><a href="{{ url_for('add_private_user') }}">Users</a></li>
+        <li><a href="{{ url_for('dashboard.index') }}" class="active white">Dashboard</a></li>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
+        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
+        <li><a href="{{ url_for('accounts.add') }}">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
 {% endblock %}

@@ -2,17 +2,17 @@
 {% block nav %}
 <nav class="nav">
     <ul>
-        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-        <li><a href="{{ url_for('show_expenses') }}">Expenses</a></li>
-        <li><a href="{{ url_for('show_income') }}">Income</a></li>
-        <li><a href="{{ url_for('show_loans') }}">Loans</a></li>
-        <li><a href="{{ url_for('add_account') }}" class="active">Accounts</a></li>
-        <li><a href="{{ url_for('add_private_user') }}">Users</a></li>
+        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
+        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
+        <li><a href="{{ url_for('accounts.add') }}" class="active">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
 <nav class="subnav">
     <ul>
-        <li><a href="{{ url_for('add_account') }}" class="active">Add Account</a></li>
+        <li><a href="{{ url_for('accounts.add') }}" class="active">Add Account</a></li>
     </ul>
 </nav>
 {% endblock %}
@@ -21,8 +21,12 @@
 <article class="container_12">
     <div class="left grid_6">
         <h2>Add Account</h2>
-        {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
-        <form action="{{ url_for('add_account') }}" method=post>
+        {% if error %}
+            <ul class="list_1">
+                <li class="orange last">{{ error }}</li>
+            </ul>
+        {% endif %}
+        <form action="{{ url_for('accounts.add') }}" method=post>
             <dl>
                 <dt>Name:
                 <dd><input type=text name=name>
