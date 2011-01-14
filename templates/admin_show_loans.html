@@ -30,14 +30,14 @@
         {% if loan.0.from_user|isloggeduserid %}
         <li class="gray {% if loop.last %}last{% endif %}">
             <p>
-                <span class="amount">&minus; &pound;{{ loan.0.amount }}</span>
+                <span class="amount">&minus; &pound;{{ loan.0.amount|currencyformat }}</span>
                 {{ loan.0.description }}
             </p>
             <div class="date">to <a href="#">{{ loan.2 }}</a> {{ loan.0.date|datetimeformat }}</div>
         {% else %}
         <li class="red {% if loop.last %}last{% endif %}">
             <p>
-                <span class="amount">&pound;{{ loan.0.amount }}</span>
+                <span class="amount">&pound;{{ loan.0.amount|currencyformat }}</span>
                 {{ loan.0.description }}
             </p>
             <div class="date">from <a href="#">{{ loan.1 }}</a> {{ loan.0.date|datetimeformat }}</div>

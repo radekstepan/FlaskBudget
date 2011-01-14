@@ -14,9 +14,6 @@ from presenters.users import users
 # models
 from db.database import db_session
 
-# utils
-from datetime import date, timedelta
-
 DEBUG = True
 
 # create our little application :)
@@ -41,12 +38,21 @@ def shutdown_session(response):
 # template filters
 @app.template_filter('datetimeformat')
 def date_time_format(value):
+    from datetime import date, timedelta
+
     if date.today() == value:
         return 'Today'
     elif date.today() - timedelta(1) == value:
         return 'Yesterday'
     else:
         return value
+
+@app.template_filter('currencyformat')
+def currency_format(value):
+    import locale
+    locale.setlocale(locale.LC_ALL, '')
+
+    return locale.format("%.2f", value, grouping=True).rstrip('0').rstrip('.')
 
 @app.template_filter('isloggeduserid')
 def id_logged_user_id(value):

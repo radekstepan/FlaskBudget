@@ -30,7 +30,7 @@
         <li class="gray {% if loop.last %}last{% endif %}">
             <p>
                 From <a href="#">{{ transfer.1 }}</a> to <a href="#">{{ transfer.2 }}</a>
-                <span class="amount">&pound;{{ transfer.0.amount }}</span>
+                <span class="amount">&pound;{{ transfer.0.amount|currencyformat }}</span>
             </p>
             <div class="date">{{ transfer.0.date|datetimeformat }}</div>
             <div class="actions">
