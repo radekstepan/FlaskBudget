@@ -8,6 +8,8 @@ create table users (
   password string
 );
 
+insert into users (name, is_private, username, password) values ('Radek', '0', 'radek', 'radek');
+
 drop table if exists income_categories;
 create table income_categories (
   id integer primary key autoincrement,

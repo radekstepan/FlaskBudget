@@ -4,6 +4,7 @@ from sqlalchemy.sql.expression import desc, asc
 
 # presenters
 from presenters.auth import login_required
+from presenters.loans import __make_loan
 
 # models
 from db.database import db_session
@@ -59,6 +60,9 @@ def add():
             e2 = Expense(request.form['user'], request.form['date'], c.id, request.form['description'],
                          deduct_from, loaned_amount)
             db_session.add(e2)
+
+            # add loan account types
+            __make_loan(session.get('logged_in_user'), request.form['user'], loaned_amount)
         else:
             # add new expense
             e = Expense(session.get('logged_in_user'), request.form['date'], request.form['category'],

@@ -1,9 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, Float, String, Boolean
 from db.database import Base
 
-# utils
-from datetime import datetime
-
 class User(Base):
     """User account"""
 

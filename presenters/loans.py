@@ -44,31 +44,8 @@ def get():
                            amount=request.form['amount'], to_account=request.form['credit_to'])
 
         # update/create loan type account (us & them)
-        a1 = Account.query.filter(Account.user == session.get('logged_in_user'))\
-        .filter(Account.type == 'loan')\
-        .filter(Account.name == request.form['user']).first()
-        if not a1:
-            # initial
-            a1 = Account(session.get('logged_in_user'), request.form['user'], 'loan', -float(request.form['amount']))
-            db_session.add(a1)
-        else:
-            # update
-            a1.balance -= float(request.form['amount'])
-            db_session.add(a1)
+        __make_loan(request.form['user'], session.get('logged_in_user'), request.form['amount'])
 
-        a2 = Account.query.filter(Account.user == request.form['user'])\
-        .filter(Account.type == 'loan')\
-        .filter(Account.name == session.get('logged_in_user')).first()
-        if not a2:
-            # initial
-            a2 = Account(request.form['user'], session.get('logged_in_user'), 'loan', request.form['amount'])
-            db_session.add(a2)
-        else:
-            # update
-            a2.balance += float(request.form['amount'])
-            db_session.add(a2)
-
-        db_session.commit()
         flash('Loan received')
 
     # user's users ;) and accounts
@@ -89,34 +66,39 @@ def give():
                            amount=request.form['amount'], from_account=request.form['deduct_from'])
 
         # update/create loan type account (us & them)
-        a1 = Account.query.filter(Account.user == request.form['user'])\
-        .filter(Account.type == 'loan')\
-        .filter(Account.name == session.get('logged_in_user')).first()
-        if not a1:
-            # initial
-            a1 = Account(request.form['user'], session.get('logged_in_user'), 'loan', -float(request.form['amount']))
-            db_session.add(a1)
-        else:
-            # update
-            a1.balance -= float(request.form['amount'])
-            db_session.add(a1)
+        __make_loan(session.get('logged_in_user'), request.form['user'], request.form['amount'])
 
-        a2 = Account.query.filter(Account.user == session.get('logged_in_user'))\
-        .filter(Account.type == 'loan')\
-        .filter(Account.name == request.form['user']).first()
-        if not a2:
-            # initial
-            a2 = Account(session.get('logged_in_user'), request.form['user'], 'loan', request.form['amount'])
-            db_session.add(a2)
-        else:
-            # update
-            a2.balance += float(request.form['amount'])
-            db_session.add(a2)
-
-        db_session.commit()
         flash('Loan given')
 
     # user's users ;) and accounts
     users = User.query.filter(User.associated_with == session.get('logged_in_user'))
     accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
     return render_template('admin_give_loan.html', **locals())
+
+def __make_loan(from_user, to_user, amount):
+    # update/create loan type account (us & them)
+    a1 = Account.query.filter(Account.user == to_user)\
+    .filter(Account.type == 'loan')\
+    .filter(Account.name == from_user).first()
+    if not a1:
+    # initial
+        a1 = Account(to_user, from_user, 'loan', -float(amount))
+        db_session.add(a1)
+    else:
+    # update
+        a1.balance -= float(amount)
+        db_session.add(a1)
+
+    a2 = Account.query.filter(Account.user == from_user)\
+    .filter(Account.type == 'loan')\
+    .filter(Account.name == to_user).first()
+    if not a2:
+    # initial
+        a2 = Account(from_user, to_user, 'loan', float(amount))
+        db_session.add(a2)
+    else:
+    # update
+        a2.balance += float(amount)
+        db_session.add(a2)
+
+    db_session.commit()
