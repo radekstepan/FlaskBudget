@@ -46,6 +46,12 @@ section.container { background:#FFF; min-height:100px; padding-top:10px; }
     section.container h2 { color:#222E4B; font-family:'Georgia',serif; font-weight:normal; font-size:22px;
         margin-bottom:16px; letter-spacing:-1px; }
 
+/* messages */
+section.container ul.messages { margin:0 0 20px 10px; }
+section.container ul.messages li { padding-left:20px; line-height:25px; }
+section.container ul.messages li.error { background:#FCF7F7 url('../img/error.png') no-repeat left; border-color:#E8B5B5; }
+section.container ul.messages li.ok { background:url('../img/ok.png') no-repeat left; }
+
 /* custom */
 ul.list_1 { margin-bottom:20px; }
 ul.list_1 li { border-width:1px 0 0 0; border-style:solid; font-size:13px; padding:6px 10px; }
