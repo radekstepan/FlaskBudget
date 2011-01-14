@@ -10,6 +10,9 @@ from presenters.auth import login_required
 from db.database import db_session
 from models import *
 
+# utils
+from utils import *
+
 accounts = Module(__name__)
 
 ''' Accounts '''
@@ -36,11 +39,38 @@ def index():
 def add():
     error = None
     if request.method == 'POST':
-        a = Account(session.get('logged_in_user'), request.form['name'], request.form['type'], request.form['balance'])
-        db_session.add(a)
-        db_session.commit()
-        flash('Account added')
-    return render_template('admin_add_account.html', error=error)
+        new_account_name, account_type, account_balance, current_user_id =\
+        request.form['name'], request.form['type'], request.form['balance'], session.get('logged_in_user')
+
+        # blank name?
+        if new_account_name:
+            # type?
+            if account_type == 'asset' or account_type == 'liability':\
+                # if balance blank, pass in 0
+                if not account_balance: account_balance = 0
+                # is balance a valid float?
+                if is_float(account_balance):
+                    # already exists?
+                    if not Account.query\
+                        .filter(Account.user == current_user_id)\
+                        .filter(Account.name == new_account_name).first():
+
+                        # create new account
+                        a = Account(current_user_id, new_account_name, account_type, account_balance)
+                        db_session.add(a)
+                        db_session.commit()
+                        flash('Account added')
+
+                    else:
+                        error = 'You already have an account under that name'
+                else:
+                    error = 'The initial balance needs to be a floating number'
+            else:
+                error = 'The account needs to either be an asset or a liability'
+        else:
+            error = 'You need to provide a name for the account'
+
+    return render_template('admin_add_account.html', **locals())
 
 @accounts.route('/account/transfer', methods=['GET', 'POST'])
 @login_required
