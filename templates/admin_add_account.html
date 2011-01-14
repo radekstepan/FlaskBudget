@@ -6,13 +6,15 @@
         <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
         <li><a href="{{ url_for('income.index') }}">Income</a></li>
         <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
-        <li><a href="{{ url_for('accounts.add') }}" class="active">Accounts</a></li>
+        <li><a href="{{ url_for('accounts.index') }}" class="active">Accounts</a></li>
         <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
 <nav class="subnav">
     <ul>
+        <li><a href="{{ url_for('accounts.index') }}">Transfers</a></li>
         <li><a href="{{ url_for('accounts.add') }}" class="active">Add Account</a></li>
+        <li><a href="{{ url_for('accounts.transfer') }}">Account Transfer</a></li>
     </ul>
 </nav>
 {% endblock %}

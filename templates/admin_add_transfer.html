@@ -5,35 +5,35 @@
         <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
         <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
         <li><a href="{{ url_for('income.index') }}">Income</a></li>
-        <li><a href="{{ url_for('loans.index') }}" class="active">Loans</a></li>
-        <li><a href="{{ url_for('accounts.index') }}">Accounts</a></li>
+        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
+        <li><a href="{{ url_for('accounts.index') }}" class="active">Accounts</a></li>
         <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
 <nav class="subnav">
     <ul>
-        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
-        <li><a href="{{ url_for('loans.give') }}">Give Loan</a></li>
-        <li><a href="{{ url_for('loans.get') }}" class="active">Get Loan</a></li>
+        <li><a href="{{ url_for('accounts.index') }}">Transfers</a></li>
+        <li><a href="{{ url_for('accounts.add') }}">Add Account</a></li>
+        <li><a href="{{ url_for('accounts.transfer') }}" class="active">Account Transfer</a></li>
     </ul>
 </nav>
 {% endblock %}
 
-{% block header %}<h1>Get Loan</h1>{% endblock %}
+{% block header %}<h1>Account Transfer</h1>{% endblock %}
 
 {% block body %}
 <div class="left grid_6">
-    <form action="{{ url_for('loans.get') }}" method=post class="form_1">
+    <form action="{{ url_for('accounts.transfer') }}" method=post class="form_1">
         <dl>
-            <dt>From User:
-            <dd><select name=user>
-                {% for user in users %}
-                <option value="{{ user.id }}">{{ user.name }}</option>
-                {% endfor %}
-            </select>
-
             <dt>Date:
             <dd><input type=text name=date>
+
+            <dt>From Account:
+            <dd><select name=deduct_from>
+                {% for account in accounts %}
+                <option value="{{ account.id }}">{{ account.name }}</option>
+                {% endfor %}
+            </select>
 
             <dt>To Account:
             <dd><select name=credit_to>
@@ -42,13 +42,10 @@
                 {% endfor %}
             </select>
 
-            <dt>Description:
-            <dd><input type=text name=description>
-
             <dt>Amount:
             <dd><input type=text name=amount>
 
-            <dd><input type=submit value=Borrow>
+            <dd><input type=submit value=Transfer>
         </dl>
     </form>
 </div>

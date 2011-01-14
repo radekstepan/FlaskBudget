@@ -3,36 +3,36 @@
 <nav class="nav">
     <ul>
         <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
-        <li><a href="{{ url_for('expenses.index') }}" class="active">Expenses</a></li>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
         <li><a href="{{ url_for('income.index') }}">Income</a></li>
         <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
-        <li><a href="{{ url_for('accounts.index') }}">Accounts</a></li>
+        <li><a href="{{ url_for('accounts.index') }}" class="active">Accounts</a></li>
         <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
 <nav class="subnav">
     <ul>
-        <li><a href="{{ url_for('expenses.index') }}" class="active">Expenses</a></li>
-        <li><a href="{{ url_for('expenses.add') }}">Add Expense</a></li>
-        <li><a href="{{ url_for('expenses.add_category') }}">Add Expense Category</a></li>
+        <li><a href="{{ url_for('accounts.index') }}" class="active">Transfers</a></li>
+        <li><a href="{{ url_for('accounts.add') }}">Add Account</a></li>
+        <li><a href="{{ url_for('accounts.transfer') }}">Account Transfer</a></li>
     </ul>
 </nav>
 {% endblock %}
 
-{% block header %}<h1>Expenses</h1>{% endblock %}
+{% block header %}<h1>Transfers</h1>{% endblock %}
 
 {% block body %}
 <div class="left grid_6">
-    {% for entry in entries %}
+    {% for transfer in transfers %}
     {% if loop.first %}
     <ul class="list_1">
         {% endif %}
-        <li class="blue {% if loop.last %}last{% endif %}">
+        <li class="gray {% if loop.last %}last{% endif %}">
             <p>
-                <span class="amount">&minus; &pound;{{ entry.0.amount }}</span>
-                {{ entry.0.description }} in <a href="">{{ entry.1 }}</a>
+                From <a href="#">{{ transfer.1 }}</a> to <a href="#">{{ transfer.2 }}</a>
+                <span class="amount">&pound;{{ transfer.0.amount }}</span>
             </p>
-            <div class="date">{{ entry.0.date|datetimeformat }}</div>
+            <div class="date">{{ transfer.0.date|datetimeformat }}</div>
             <div class="actions">
                 <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
             </div>

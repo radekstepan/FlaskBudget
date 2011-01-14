@@ -16,7 +16,6 @@ accounts = Module(__name__)
 @accounts.route('/accounts')
 @login_required
 def index():
-    pass
     accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
 
     # table referred to twice, create alias
@@ -30,7 +29,7 @@ def index():
             (to_account_alias, (AccountTransfer.to_account == to_account_alias.id)))\
     .add_columns(from_account_alias.name, to_account_alias.name)
 
-    return render_template('show_accounts.html', **locals())
+    return render_template('admin_show_transfers.html', **locals())
 
 @accounts.route('/account/add', methods=['GET', 'POST'])
 @login_required
@@ -61,7 +60,7 @@ def transfer():
         flash('Monies transferred')
 
     accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
-    return render_template('account_transfer.html', **locals())
+    return render_template('admin_add_transfer.html', **locals())
 
 def __account_transfer(from_user, to_user, amount, from_account=None, to_account=None):
     # fetch first user's account if not provided (default)
