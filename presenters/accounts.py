@@ -16,21 +16,32 @@ from utils import *
 accounts = Module(__name__)
 
 ''' Accounts '''
-@accounts.route('/accounts')
+@accounts.route('/account-transfers/')
+@accounts.route('/account-transfers/for/<date>')
 @login_required
-def index():
-    accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
+def index(date=None):
+    current_user_id = session.get('logged_in_user')
+
+    accounts = Account.query.filter(Account.user == current_user_id)
 
     # table referred to twice, create alias
     from_account_alias = aliased(Account)
     to_account_alias = aliased(Account)
     # fetch account transfers
-    transfers=AccountTransfer.query.filter(AccountTransfer.user == session.get('logged_in_user'))\
+    transfers = AccountTransfer.query.filter(AccountTransfer.user == current_user_id)\
     .order_by(desc(AccountTransfer.date)).order_by(desc(AccountTransfer.id))\
     .join(
             (from_account_alias, (AccountTransfer.from_account == from_account_alias.id)),\
             (to_account_alias, (AccountTransfer.to_account == to_account_alias.id)))\
     .add_columns(from_account_alias.name, to_account_alias.name)
+
+    # provided a date range?
+    date_range = translate_date_range(date)
+    if date_range:
+        transfers = transfers\
+        .filter(AccountTransfer.date >= date_range['low']).filter(AccountTransfer.date <= date_range['high'])
+    # date ranges for the template
+    date_ranges = get_date_ranges()
 
     return render_template('admin_show_transfers.html', **locals())
 

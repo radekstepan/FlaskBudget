@@ -45,7 +45,7 @@
 <div class="right grid_2">
     {% for range in date_ranges %}
     {% if loop.first %}
-    <h2>Date</h2>
+    <h2>Time Period</h2>
     <ul class="list_2">
         <li class="push">{% if date %}<a href="{{ url_for('expenses.index', category=category) }}">All dates</a>
         {% else %}All dates{% endif %}</li>

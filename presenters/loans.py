@@ -18,11 +18,15 @@ loans = Module(__name__)
 
 ''' Loans '''
 @loans.route('/loans/')
+@loans.route('/loans/made/<direction>')
 @loans.route('/loans/with/<user>')
 @loans.route('/loans/for/<date>')
+@loans.route('/loans/made/<direction>/with/<user>')
+@loans.route('/loans/made/<direction>/for/<date>')
 @loans.route('/loans/with/<user>/for/<date>')
+@loans.route('/loans/made/<direction>/with/<user>/for/<date>')
 @login_required
-def index(user=None, date=None):
+def index(direction=None, user=None, date=None):
     current_user_id = session.get('logged_in_user')
 
     # table referred to twice, create alias
@@ -56,6 +60,13 @@ def index(user=None, date=None):
         loans = loans.filter(Loan.date >= date_range['low']).filter(Loan.date <= date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
+
+    # provided a direction?
+    if direction:
+        if direction == 'to-us':
+            loans = loans.filter(Loan.to_user == current_user_id)
+        elif direction == 'to-them':
+            loans = loans.filter(Loan.from_user == current_user_id)
 
     return render_template('admin_show_loans.html', **locals())
 

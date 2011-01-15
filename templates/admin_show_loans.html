@@ -54,13 +54,13 @@
 <div class="right grid_2">
     {% for range in date_ranges %}
     {% if loop.first %}
-    <h2>Date</h2>
+    <h2>Time Period</h2>
     <ul class="list_2">
-        <li class="push">{% if date %}<a href="{{ url_for('loans.index', user=user) }}">All dates</a>
+        <li class="push">{% if date %}<a href="{{ url_for('loans.index', direction=direction, user=user) }}">All dates</a>
         {% else %}All dates{% endif %}</li>
         {% endif %}
         <li class="{% if loop.last %}last{% endif %}">{% if date == range.slug %}{{ range.name }}
-            {% else %}<a href="{{ url_for('loans.index', user=user, date=range.slug) }}">{{ range.name }}</a>
+            {% else %}<a href="{{ url_for('loans.index', direction=direction, user=user, date=range.slug) }}">{{ range.name }}</a>
             {% endif %}</li>
         {% if loop.last %}
     </ul>
@@ -71,15 +71,27 @@
     {% if loop.first %}
     <h2>With Users</h2>
     <ul class="list_2">
-        <li class="push">{% if user %}<a href="{{ url_for('loans.index', date=date) }}">All users</a>
+        <li class="push">{% if user %}<a href="{{ url_for('loans.index', direction=direction, date=date) }}">All users</a>
         {% else %}All users{% endif %}</li>
         {% endif %}
         <li class="{% if loop.last %}last{% endif %}">{% if user == usr.slug %}{{ usr.name }}
-            {% else %}<a href="{{ url_for('loans.index', user=usr.slug, date=date) }}">{{ usr.name }}</a>
+            {% else %}<a href="{{ url_for('loans.index', direction=direction, user=usr.slug, date=date) }}">{{ usr.name }}</a>
             {% endif %}</li>
         {% if loop.last %}
     </ul>
     {% endif %}
     {% endfor %}
+
+    <h2>Direction</h2>
+    <ul class="list_2">
+        <li class="push">{% if direction %}<a href="{{ url_for('loans.index', user=user, date=date) }}">Both ways</a>
+        {% else %}Both ways{% endif %}</li>
+        <li>{% if direction == 'to-us' %}To us
+            {% else %}<a href="{{ url_for('loans.index', direction='to-us', user=user, date=date) }}">To us</a>
+            {% endif %}</li>
+        <li class="last">{% if direction == 'to-them' %}To them
+            {% else %}<a href="{{ url_for('loans.index', direction='to-them', user=user, date=date) }}">To them</a>
+            {% endif %}</li>
+    </ul>
 </div>
 {% endblock %}
