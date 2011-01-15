@@ -61,14 +61,10 @@ def add():
                         db_session.commit()
                         flash('Account added')
 
-                    else:
-                        error = 'You already have an account under that name'
-                else:
-                    error = 'The initial balance needs to be a floating number'
-            else:
-                error = 'The account needs to either be an asset or a liability'
-        else:
-            error = 'You need to provide a name for the account'
+                    else: error = 'You already have an account under that name'
+                else: error = 'The initial balance needs to be a floating number'
+            else: error = 'The account needs to either be an asset or a liability'
+        else: error = 'You need to provide a name for the account'
 
     return render_template('admin_add_account.html', **locals())
 
@@ -76,20 +72,44 @@ def add():
 @login_required
 def transfer():
     error = None
-    if request.method == 'POST':
-        # add a new transfer row
-        t = AccountTransfer(session.get('logged_in_user'), request.form['date'], request.form['deduct_from'],
-                            request.form['credit_to'], request.form['amount'])
-        db_session.add(t)
+    current_user_id = session.get('logged_in_user')
 
-        # modify accounts
-        __account_transfer(session.get('logged_in_user'), session.get('logged_in_user'),
-                           request.form['amount'], request.form['deduct_from'], request.form['credit_to'])
+    if request.method == 'POST':\
+        # fetch values and check they are actually provided
+        if 'date' in request.form: date = request.form['date']
+        else: error = 'You need to provide a date'
+        if 'amount' in request.form: amount = request.form['amount']
+        else: error = 'You need to provide an amount'
+        if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
+        else: error = 'You need to provide an account to deduct from'
+        if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
+        else: error = 'You need to provide an account to credit to'
 
-        db_session.commit()
-        flash('Monies transferred')
+        # 'heavier' checks
+        if not error:
+            # source and target the same?
+            if not deduct_from_account == credit_to_account:\
+                # valid amount?
+                if is_float(amount):
+                    # valid date?
+                    if is_date(date):
 
-    accounts=Account.query.filter(Account.user == session.get('logged_in_user'))
+                        # add a new transfer row
+                        t = AccountTransfer(current_user_id, date, deduct_from_account, credit_to_account, amount)
+                        db_session.add(t)
+
+                        # modify accounts
+                        __account_transfer(current_user_id, current_user_id, amount, deduct_from_account, credit_to_account)
+
+                        db_session.commit()
+                        flash('Monies transferred')
+
+                    else: error = 'Not a valid date'
+                else: error = 'Not a valid amount'
+            else: error = 'Source and target accounts cannot be the same'
+
+    accounts=Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+
     return render_template('admin_add_transfer.html', **locals())
 
 def __account_transfer(from_user, to_user, amount, from_account=None, to_account=None):

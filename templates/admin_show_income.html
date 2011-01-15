@@ -29,7 +29,7 @@
         {% endif %}
         <li class="green {% if loop.last %}last{% endif %}">
             <p>
-                <span class="amount">&minus; &pound;{{ entry.0.amount|currencyformat }}</span>
+                <span class="amount">&pound;{{ entry.0.amount|currencyformat }}</span>
                 {{ entry.0.description }} in <a href="">{{ entry.1 }}</a>
             </p>
             <div class="date">{{ entry.0.date|datetimeformat }}</div>
