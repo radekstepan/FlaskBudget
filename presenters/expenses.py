@@ -91,8 +91,24 @@ def add():
 def add_category():
     error = None
     if request.method == 'POST':
-        c = ExpenseCategory(session.get('logged_in_user'), request.form['name'])
-        db_session.add(c)
-        db_session.commit()
-        flash('Expense category added')
+        new_category_name, current_user_id = request.form['name'], session.get('logged_in_user')
+
+        # blank name?
+        if new_category_name:
+            # already exists?
+            if not ExpenseCategory.query\
+                .filter(ExpenseCategory.user == current_user_id)\
+                .filter(ExpenseCategory.name == new_category_name).first():
+
+                # create category
+                c = ExpenseCategory(current_user_id, new_category_name)
+                db_session.add(c)
+                db_session.commit()
+                flash('Expense category added')
+
+            else:
+                error = 'You already have a category under that name'
+        else:
+            error = 'You need to provide a name'
+
     return render_template('admin_add_expense_category.html', error=error)
