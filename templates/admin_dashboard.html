@@ -24,7 +24,7 @@
         <li class="orange {% if loop.last %}last{% endif %}">
             <p>
                 <span class="amount">&minus; &pound;{{ entry.0.amount|currencyformat }}</span>
-                {{ entry.0.description }} in <a href="">{{ entry.1 }}</a>
+                {{ entry.0.description }} in <a href="{{ url_for('expenses.index', category=entry.2) }}">{{ entry.1 }}</a>
             </p>
             <div class="date">{{ entry.0.date|datetimeformat }}</div>
             <div class="actions">
@@ -44,7 +44,7 @@
         <li class="blue {% if loop.last %}last{% endif %}">
             <p>
                 <span class="amount">&minus; &pound;{{ entry.0.amount|currencyformat }}</span>
-                {{ entry.0.description }} in <a href="">{{ entry.1 }}</a>
+                {{ entry.0.description }} in <a href="{{ url_for('expenses.index', category=entry.2) }}">{{ entry.1 }}</a>
             </p>
             <div class="date">{{ entry.0.date|datetimeformat }}</div>
             <div class="actions">
@@ -65,12 +65,12 @@
         {% if account.0.type == "asset" %}
         <li class="green {% if loop.last %}last{% endif %}">
             <span class="amount">&pound;{{ account.0.balance|currencyformat }}</span>
-            <a href="">{{ account.0.name }}</a>
+            <a>{{ account.0.name }}</a>
         </li>
         {% else %}
         <li class="gray {% if loop.last %}last{% endif %}">
             <span class="amount">&pound;{{ account.0.balance|currencyformat }}</span>
-            Loaned to <a href="">{{ account.1 }}</a>
+            Loaned to <a href="{{ url_for('loans.index', user=account.2) }}">{{ account.1 }}</a>
         </li>
         {% endif %}
         {% if loop.last %}
@@ -89,12 +89,12 @@
         {% if account.0.type == "liability" %}
         <li class="red {% if loop.last %}last{% endif %}">
             <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
-            <a href="">{{ account.0.name }}</a>
+            <a>{{ account.0.name }}</a>
         </li>
         {% else %}
         <li class="red {% if loop.last %}last{% endif %}">
             <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
-            Loaned from <a href="">{{ account.1 }}</a>
+            Loaned from <a href="{{ url_for('loans.index', user=account.2) }}">{{ account.1 }}</a>
         </li>
         {% endif %}
         {% if loop.last %}

@@ -30,7 +30,7 @@
         <li class="blue {% if loop.last %}last{% endif %}">
             <p>
                 <span class="amount">&minus; &pound;{{ entry.0.amount|currencyformat }}</span>
-                {{ entry.0.description }} in <a href="">{{ entry.1 }}</a>
+                {{ entry.0.description }} in <a href="{{ url_for('expenses.index', category=entry.2) }}">{{ entry.1 }}</a>
             </p>
             <div class="date">{{ entry.0.date|datetimeformat }}</div>
             <div class="actions">

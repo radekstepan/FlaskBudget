@@ -16,18 +16,18 @@ dashboard = Module(__name__)
 def index():
     # get uncategorized expenses
     uncategorized_expenses = Expense.query.filter(Expense.user == session.get('logged_in_user'))\
-    .join(ExpenseCategory).add_columns(ExpenseCategory.name)\
+    .join(ExpenseCategory).add_columns(ExpenseCategory.name, ExpenseCategory.slug)\
     .filter(ExpenseCategory.name == 'Uncategorized').order_by(desc(Expense.date))
 
     # get latest expenses
     latest_expenses = Expense.query.filter(Expense.user == session.get('logged_in_user'))\
-    .join(ExpenseCategory).add_columns(ExpenseCategory.name).order_by(desc(Expense.date)).limit(5)
+    .join(ExpenseCategory).add_columns(ExpenseCategory.name, ExpenseCategory.slug).order_by(desc(Expense.date)).limit(5)
 
     # get accounts
     accounts=Account.query.filter(Account.user == session.get('logged_in_user'))\
     .filter(Account.balance != 0)\
     .outerjoin((User, Account.name == User.id))\
-    .add_columns(User.name)\
+    .add_columns(User.name, User.slug)\
     .order_by(asc(Account.type)).order_by(asc(Account.id))
 
     # split, get totals

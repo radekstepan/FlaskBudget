@@ -29,7 +29,8 @@
         {% endif %}
         <li class="gray {% if loop.last %}last{% endif %}">
             <p>
-                From <a href="#">{{ transfer.1 }}</a> to <a href="#">{{ transfer.2 }}</a>
+                From <a href="{{ url_for('accounts.index', account=transfer.2) }}">{{ transfer.1 }}</a>
+                to <a href="{{ url_for('accounts.index', account=transfer.4) }}">{{ transfer.3 }}</a>
                 <span class="amount">&pound;{{ transfer.0.amount|currencyformat }}</span>
             </p>
             <div class="date">{{ transfer.0.date|datetimeformat }}</div>

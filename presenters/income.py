@@ -27,7 +27,7 @@ def index(date=None, category=None):
     entries=Income.query\
     .filter(Income.user == current_user_id)\
     .join(IncomeCategory)\
-    .add_columns(IncomeCategory.name)\
+    .add_columns(IncomeCategory.name, IncomeCategory.slug)\
     .order_by(desc(Income.date)).order_by(desc(Income.id))
 
     # categories

@@ -39,7 +39,7 @@ def index(direction=None, user=None, date=None):
     .join(
             (from_user_alias, (Loan.from_user == from_user_alias.id)),\
             (to_user_alias, (Loan.to_user == to_user_alias.id)))\
-    .add_columns(from_user_alias.name, to_user_alias.name)
+    .add_columns(from_user_alias.name, from_user_alias.slug, to_user_alias.name, to_user_alias.slug)
 
     # user's users
     users = User.query.filter(User.associated_with == current_user_id)

@@ -33,7 +33,7 @@ def index(account=None, date=None):
     .join(
             (from_account_alias, (AccountTransfer.from_account == from_account_alias.id)),\
             (to_account_alias, (AccountTransfer.to_account == to_account_alias.id)))\
-    .add_columns(from_account_alias.name, to_account_alias.name)
+    .add_columns(from_account_alias.name, from_account_alias.slug, to_account_alias.name, to_account_alias.slug)
 
     # provided a date range?
     date_range = translate_date_range(date)
@@ -51,8 +51,7 @@ def index(account=None, date=None):
         # search for the slug
         for acc in accounts:
             if acc.slug == account:
-                transfers = transfers.add_columns(from_account_alias.slug, to_account_alias.slug)\
-                .filter(or_(from_account_alias.slug == account, to_account_alias.slug == account))
+                transfers = transfers.filter(or_(from_account_alias.slug == account, to_account_alias.slug == account))
                 break
 
     return render_template('admin_show_transfers.html', **locals())

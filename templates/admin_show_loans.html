@@ -33,14 +33,16 @@
                 <span class="amount">&minus; &pound;{{ loan.0.amount|currencyformat }}</span>
                 {{ loan.0.description }}
             </p>
-            <div class="date">to <a href="#">{{ loan.2 }}</a> {{ loan.0.date|datetimeformat }}</div>
+            <div class="date">to <a href="{{ url_for('loans.index', user=loan.4) }}">{{ loan.3 }}</a>
+                {{ loan.0.date|datetimeformat }}</div>
         {% else %}
         <li class="red {% if loop.last %}last{% endif %}">
             <p>
                 <span class="amount">&pound;{{ loan.0.amount|currencyformat }}</span>
                 {{ loan.0.description }}
             </p>
-            <div class="date">from <a href="#">{{ loan.1 }}</a> {{ loan.0.date|datetimeformat }}</div>
+            <div class="date">from <a href="{{ url_for('loans.index', user=loan.2) }}">{{ loan.1 }}</a>
+                {{ loan.0.date|datetimeformat }}</div>
         {% endif %}
             <div class="actions">
                 <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>

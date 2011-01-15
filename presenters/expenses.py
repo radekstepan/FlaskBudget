@@ -28,7 +28,7 @@ def index(date=None, category=None):
     entries=Expense.query\
     .filter(Expense.user == current_user_id)\
     .join(ExpenseCategory)\
-    .add_columns(ExpenseCategory.name)\
+    .add_columns(ExpenseCategory.name, ExpenseCategory.slug)\
     .order_by(desc(Expense.date)).order_by(desc(Expense.id))
 
     # categories
