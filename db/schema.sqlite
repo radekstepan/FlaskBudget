@@ -15,6 +15,7 @@ create table income_categories (
   id integer primary key autoincrement,
   user_id integer not null,
   name string not null
+  slug string not null
 );
 
 drop table if exists income;
@@ -33,6 +34,7 @@ create table expense_categories (
   id integer primary key autoincrement,
   user_id integer not null,
   name string not null
+  slug string not null
 );
 
 drop table if exists expenses;

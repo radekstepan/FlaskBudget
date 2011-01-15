@@ -17,13 +17,38 @@ expenses = Module(__name__)
 
 ''' Expenses '''
 @expenses.route('/expenses/')
+@expenses.route('/expenses/for/<date>')
+@expenses.route('/expenses/in/<category>')
+@expenses.route('/expenses/for/<date>/in/<category>')
 @login_required
-def index():
-    return render_template('admin_show_expenses.html', entries=Expense.query
-    .filter(Expense.user == session.get('logged_in_user'))
-    .join(ExpenseCategory)
-    .add_columns(ExpenseCategory.name)
-    .order_by(desc(Expense.date)).order_by(desc(Expense.id)))
+def index(date=None, category=None):
+    current_user_id = session.get('logged_in_user')
+
+    # fetch entries
+    entries=Expense.query\
+    .filter(Expense.user == current_user_id)\
+    .join(ExpenseCategory)\
+    .add_columns(ExpenseCategory.name)\
+    .order_by(desc(Expense.date)).order_by(desc(Expense.id))
+
+    # categories
+    categories = ExpenseCategory.query.filter(ExpenseCategory.user == current_user_id).order_by(ExpenseCategory.name)
+    # provided category?
+    if category:
+        # search for the slug
+        for cat in categories:
+            if cat.slug == category:
+                entries = entries.filter(Expense.category == cat.id)
+                break
+
+    # provided a date range?
+    date_range = translate_date_range(date)
+    if date_range:
+        entries = entries.filter(Expense.date >= date_range['low']).filter(Expense.date <= date_range['high'])
+    # date ranges for the template
+    date_ranges = get_date_ranges()
+
+    return render_template('admin_show_expenses.html', **locals())
 
 @expenses.route('/expense/add', methods=['GET', 'POST'])
 @login_required

@@ -83,6 +83,11 @@ ul.list_1 li.orange { border-color:#FA9D23; background:#FFEFDA; }
     ul.list_1 li.orange a { color:#975325; }
     ul.list_1 li.orange div.actions ul li { border-color:#8F3E4B; }
 
+ul.list_2 { margin-bottom:30px; }
+    ul.list_2 li { font-size:13px; line-height:18px; font-weight:bold; }
+    ul.list_2 li.push { margin-bottom:5px; }
+    ul.list_2 a { color:#316182; font-weight:normal; }
+
 form.form_1 { ; }
     form.form_1 input, form.form_1 select, form.form_1 textarea { border-color:#999 #CCC #CCC #999; border-style:solid;
         border-width:1px; }

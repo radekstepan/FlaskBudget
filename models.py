@@ -1,5 +1,11 @@
+# orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String, Boolean
+
+# db
 from db.database import Base
+
+# utils
+from utils import *
 
 class User(Base):
     """User account"""
@@ -60,10 +66,12 @@ class IncomeCategory(Base):
     id = Column(Integer, primary_key=True)
     user = Column('user_id', Integer, ForeignKey('users.id'))
     name = Column(String(50))
+    slug = Column(String(50))
 
     def __init__(self, user=None, name=None):
         self.user = user
         self.name = name
+        self.slug = slugify(name)
 
 class Income(Base):
     """Listing of incomes of various users"""
@@ -92,10 +100,12 @@ class ExpenseCategory(Base):
     id = Column(Integer, primary_key=True)
     user = Column('user_id', Integer, ForeignKey('users.id'))
     name = Column(String(50))
+    slug = Column(String(50))
 
     def __init__(self, user=None, name=None):
         self.user = user
         self.name = name
+        self.slug = slugify(name)
 
 class Expense(Base):
     """Listing of expenses of various users"""

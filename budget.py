@@ -58,5 +58,12 @@ def currency_format(value):
 def id_logged_user_id(value):
     return value == session.get('logged_in_user')
 
+@app.template_filter('slugify')
+def slugify(value):
+    import unicodedata, re
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
+    return re.sub('[-\s]+', '-', value)
+
 if __name__ == '__main__':
     app.run()
