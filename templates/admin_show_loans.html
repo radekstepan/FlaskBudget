@@ -6,7 +6,7 @@
         <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
         <li><a href="{{ url_for('income.index') }}">Income</a></li>
         <li><a href="{{ url_for('loans.index') }}" class="active">Loans</a></li>
-        <li><a href="{{ url_for('accounts.index') }}">Accounts</a></li>
+        <li><a href="{{ url_for('accounts.show_transfers') }}">Accounts</a></li>
         <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
@@ -22,7 +22,7 @@
 {% block header %}<h1>Loans</h1>{% endblock %}
 
 {% block body %}
-<div class="left grid_10">
+<div class="left grid_9">
     {% for loan in loans %}
     {% if loop.first %}
     <ul class="list_1">
@@ -53,7 +53,7 @@
     {% endif %}
     {% endfor %}
 </div>
-<div class="right grid_2">
+<div class="right grid_3">
     {% for range in date_ranges %}
     {% if loop.first %}
     <h2>Time Period</h2>

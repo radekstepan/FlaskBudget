@@ -1,6 +1,6 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash, url_for
-from sqlalchemy.sql.expression import asc, desc, or_
+from sqlalchemy.sql.expression import asc, desc, or_, and_
 from sqlalchemy.orm import aliased
 
 # presenters
@@ -21,7 +21,7 @@ accounts = Module(__name__)
 @accounts.route('/account-transfers/with/<account>')
 @accounts.route('/account-transfers/with/<account>/for/<date>')
 @login_required
-def index(account=None, date=None):
+def show_transfers(account=None, date=None):
     current_user_id = session.get('logged_in_user')
 
     # table referred to twice, create alias
@@ -58,7 +58,7 @@ def index(account=None, date=None):
 
 @accounts.route('/account/add', methods=['GET', 'POST'])
 @login_required
-def add():
+def add_account():
     error = None
     if request.method == 'POST':
         new_account_name, account_type, account_balance, current_user_id =\
@@ -92,7 +92,7 @@ def add():
 
 @accounts.route('/account/transfer', methods=['GET', 'POST'])
 @login_required
-def transfer():
+def add_transfer():
     error = None
     current_user_id = session.get('logged_in_user')
 
@@ -149,6 +149,11 @@ def transfer():
     accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
 
     return render_template('admin_add_transfer.html', **locals())
+
+@accounts.route('/account/transfer/edit/<transfer_id>', methods=['GET', 'POST'])
+@login_required
+def edit_transfer(transfer_id):
+    pass
 
 def __account_transfer(from_user, to_user, amount, from_account=None, to_account=None):
     # fetch first user's account if not provided (default)

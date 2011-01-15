@@ -6,15 +6,15 @@
         <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
         <li><a href="{{ url_for('income.index') }}">Income</a></li>
         <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
-        <li><a href="{{ url_for('accounts.index') }}" class="active">Accounts</a></li>
+        <li><a href="{{ url_for('accounts.show_transfers') }}" class="active">Accounts</a></li>
         <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
 <nav class="subnav">
     <ul>
-        <li><a href="{{ url_for('accounts.index') }}">Transfers</a></li>
-        <li><a href="{{ url_for('accounts.add') }}">Add Account</a></li>
-        <li><a href="{{ url_for('accounts.transfer') }}" class="active">Account Transfer</a></li>
+        <li><a href="{{ url_for('accounts.show_transfers') }}">Transfers</a></li>
+        <li><a href="{{ url_for('accounts.add_account') }}">Add Account</a></li>
+        <li><a href="{{ url_for('accounts.add_transfer') }}" class="active">Account Transfer</a></li>
     </ul>
 </nav>
 {% endblock %}
@@ -23,7 +23,7 @@
 
 {% block body %}
 <div class="left grid_6">
-    <form action="{{ url_for('accounts.transfer') }}" method=post class="form_1">
+    <form action="{{ url_for('accounts.add_transfer') }}" method=post class="form_1">
         <dl>
             <dt>Date:
             <dd><input type=text name=date>

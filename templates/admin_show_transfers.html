@@ -6,15 +6,15 @@
         <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
         <li><a href="{{ url_for('income.index') }}">Income</a></li>
         <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
-        <li><a href="{{ url_for('accounts.index') }}" class="active">Accounts</a></li>
+        <li><a href="{{ url_for('accounts.show_transfers') }}" class="active">Accounts</a></li>
         <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
     </ul>
 </nav>
 <nav class="subnav">
     <ul>
-        <li><a href="{{ url_for('accounts.index') }}" class="active">Transfers</a></li>
-        <li><a href="{{ url_for('accounts.add') }}">Add Account</a></li>
-        <li><a href="{{ url_for('accounts.transfer') }}">Account Transfer</a></li>
+        <li><a href="{{ url_for('accounts.show_transfers') }}" class="active">Transfers</a></li>
+        <li><a href="{{ url_for('accounts.add_account') }}">Add Account</a></li>
+        <li><a href="{{ url_for('accounts.add_transfer') }}">Account Transfer</a></li>
     </ul>
 </nav>
 {% endblock %}
@@ -29,13 +29,16 @@
         {% endif %}
         <li class="gray {% if loop.last %}last{% endif %}">
             <p>
-                From <a href="{{ url_for('accounts.index', account=transfer.2) }}">{{ transfer.1 }}</a>
-                to <a href="{{ url_for('accounts.index', account=transfer.4) }}">{{ transfer.3 }}</a>
+                From <a href="{{ url_for('accounts.show_transfers', account=transfer.2) }}">{{ transfer.1 }}</a>
+                to <a href="{{ url_for('accounts.show_transfers', account=transfer.4) }}">{{ transfer.3 }}</a>
                 <span class="amount">&pound;{{ transfer.0.amount|currencyformat }}</span>
             </p>
             <div class="date">{{ transfer.0.date|datetimeformat }}</div>
             <div class="actions">
-                <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
+                <ul>
+                    <li class="first"><a href="{{ url_for('accounts.edit_transfer', transfer_id=transfer.0.id) }}">Edit</a></li>
+                    <li><a href="#">Delete</a></li>
+                </ul>
             </div>
         </li>
         {% if loop.last %}
@@ -48,11 +51,11 @@
     {% if loop.first %}
     <h2>Time Period</h2>
     <ul class="list_2">
-        <li class="push">{% if date %}<a href="{{ url_for('accounts.index', account=account) }}">All dates</a>
+        <li class="push">{% if date %}<a href="{{ url_for('accounts.show_transfers', account=account) }}">All dates</a>
         {% else %}All dates{% endif %}</li>
         {% endif %}
         <li class="{% if loop.last %}last{% endif %}">{% if date == range.slug %}{{ range.name }}
-            {% else %}<a href="{{ url_for('accounts.index', account=account, date=range.slug) }}">{{ range.name }}</a>
+            {% else %}<a href="{{ url_for('accounts.show_transfers', account=account, date=range.slug) }}">{{ range.name }}</a>
             {% endif %}</li>
         {% if loop.last %}
     </ul>
@@ -63,11 +66,11 @@
     {% if loop.first %}
     <h2>Accounts</h2>
     <ul class="list_2">
-        <li class="push">{% if account %}<a href="{{ url_for('accounts.index', date=date) }}">All accounts</a>
+        <li class="push">{% if account %}<a href="{{ url_for('accounts.show_transfers', date=date) }}">All accounts</a>
         {% else %}All accounts{% endif %}</li>
         {% endif %}
         <li class="{% if loop.last %}last{% endif %}">{% if account == acc.slug %}{{ acc.name }}
-            {% else %}<a href="{{ url_for('accounts.index', date=date, account=acc.slug) }}">{{ acc.name }}</a>
+            {% else %}<a href="{{ url_for('accounts.show_transfers', date=date, account=acc.slug) }}">{{ acc.name }}</a>
             {% endif %}</li>
         {% if loop.last %}
     </ul>
