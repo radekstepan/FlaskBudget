@@ -39,7 +39,7 @@ def add():
         else: error = 'Not a valid date'
         if 'deduct_from' in request.form: account_id = request.form['deduct_from']
         else: error = 'You need to provide an account'
-        if 'description' in request.form: description = request.form['description']
+        if 'description' in request.form and request.form['description']: description = request.form['description']
         else: error = 'You need to provide a description'
         if 'category' in request.form: category_id = request.form['category']
         else: error = 'You need to provide a category'

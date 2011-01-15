@@ -11,6 +11,9 @@ from presenters.accounts import __account_transfer
 from db.database import db_session
 from models import *
 
+# utils
+from utils import *
+
 loans = Module(__name__)
 
 ''' Loans '''
@@ -34,45 +37,112 @@ def index():
 @loans.route('/loan/get', methods=['GET', 'POST'])
 @login_required
 def get():
+    error = None
+    current_user_id = session.get('logged_in_user')
+
     if request.method == 'POST':
-        l = Loan(request.form['user'], session.get('logged_in_user'), request.form['date'],
-                 request.form['credit_to'], request.form['description'], request.form['amount'])
-        db_session.add(l)
+        # fetch values and check they are actually provided
+        if 'user' in request.form: from_user = request.form['user']
+        else: error = 'You need to specify from whom to borrow'
+        if 'date' in request.form: date = request.form['date']
+        else: error = 'You need to provide a date'
+        if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
+        else: error = 'You need to provide an account to credit to'
+        if 'amount' in request.form: amount = request.form['amount']
+        else: error = 'You need to provide an amount'
+        if 'description' in request.form and request.form['description']: description = request.form['description']
+        else: error = 'You need to provide a description'
 
-        # transfer money
-        __account_transfer(from_user=request.form['user'], to_user=session.get('logged_in_user'),
-                           amount=request.form['amount'], to_account=request.form['credit_to'])
+        # 'heavier' checks
+        if not error:
+            # valid amount?
+            if is_float(amount):
+                # valid date?
+                if is_date(date):
+                    # valid account?
+                    a = Account.query\
+                    .filter(Account.user == current_user_id)\
+                    .filter(Account.type != 'loan')\
+                    .filter(Account.id == credit_to_account).first()
+                    if a:
 
-        # update/create loan type account (us & them)
-        __make_loan(request.form['user'], session.get('logged_in_user'), request.form['amount'])
+                        l = Loan(from_user, current_user_id, date, credit_to_account, description, amount)
+                        db_session.add(l)
 
-        flash('Loan received')
+                        # transfer money
+                        __account_transfer(from_user=from_user, to_user=current_user_id, amount=amount,
+                                           to_account=credit_to_account)
+
+                        # update/create loan type account (us & them)
+                        __make_loan(from_user, current_user_id, amount)
+
+                        flash('Loan received')
+
+                    else: error = 'Not a valid target account'
+                else: error = 'Not a valid date'
+            else: error = 'Not a valid amount'
 
     # user's users ;) and accounts
-    users = User.query.filter(User.associated_with == session.get('logged_in_user'))
-    accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
+    users = User.query.filter(User.associated_with == current_user_id)
+
+    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+
     return render_template('admin_get_loan.html', **locals())
 
 @loans.route('/loan/give', methods=['GET', 'POST'])
 @login_required
 def give():
+    error = None
+    current_user_id = session.get('logged_in_user')
+
     if request.method == 'POST':
-        l = Loan(session.get('logged_in_user'), request.form['user'], request.form['date'],
-                 request.form['deduct_from'], request.form['description'], request.form['amount'])
-        db_session.add(l)
+        # fetch values and check they are actually provided
+        if 'user' in request.form: to_user = request.form['user']
+        else: error = 'You need to specify to whom to loan'
+        if 'date' in request.form: date = request.form['date']
+        else: error = 'You need to provide a date'
+        if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
+        else: error = 'You need to provide an account to deduct from'
+        if 'amount' in request.form: amount = request.form['amount']
+        else: error = 'You need to provide an amount'
+        if 'description' in request.form and request.form['description']: description = request.form['description']
+        else: error = 'You need to provide a description'
 
-        # transfer money
-        __account_transfer(from_user=session.get('logged_in_user'), to_user=request.form['user'],
-                           amount=request.form['amount'], from_account=request.form['deduct_from'])
+        # 'heavier' checks
+        if not error:
+            # valid amount?
+            if is_float(amount):
+                # valid date?
+                if is_date(date):
+                    # valid account?
+                    a = Account.query\
+                    .filter(Account.user == current_user_id)\
+                    .filter(Account.type != 'loan')\
+                    .filter(Account.id == deduct_from_account).first()
+                    if a:
 
-        # update/create loan type account (us & them)
-        __make_loan(session.get('logged_in_user'), request.form['user'], request.form['amount'])
+                        l = Loan(current_user_id, to_user, date,
+                                 deduct_from_account, description, amount)
+                        db_session.add(l)
 
-        flash('Loan given')
+                        # transfer money
+                        __account_transfer(from_user=current_user_id, to_user=to_user,
+                                           amount=amount, from_account=deduct_from_account)
+
+                        # update/create loan type account (us & them)
+                        __make_loan(current_user_id, to_user, amount)
+
+                        flash('Loan given')
+
+                    else: error = 'Not a valid source account'
+                else: error = 'Not a valid date'
+            else: error = 'Not a valid amount'
 
     # user's users ;) and accounts
-    users = User.query.filter(User.associated_with == session.get('logged_in_user'))
-    accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
+    users = User.query.filter(User.associated_with == current_user_id)
+
+    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+
     return render_template('admin_give_loan.html', **locals())
 
 def __make_loan(from_user, to_user, amount):

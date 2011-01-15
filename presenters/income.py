@@ -38,7 +38,7 @@ def add():
         else: error = 'You need to provide a category'
         if 'credit_to' in request.form: account_id = request.form['credit_to']
         else: error = 'You need to provide an account'
-        if 'description' in request.form: description = request.form['description']
+        if 'description' in request.form and request.form['description']: description = request.form['description']
         else: error = 'You need to provide a description'
         if 'amount' in request.form: amount = request.form['amount']
         else: error = 'You need to provide an amount'

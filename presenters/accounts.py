@@ -74,7 +74,7 @@ def transfer():
     error = None
     current_user_id = session.get('logged_in_user')
 
-    if request.method == 'POST':\
+    if request.method == 'POST':
         # fetch values and check they are actually provided
         if 'date' in request.form: date = request.form['date']
         else: error = 'You need to provide a date'
@@ -88,22 +88,38 @@ def transfer():
         # 'heavier' checks
         if not error:
             # source and target the same?
-            if not deduct_from_account == credit_to_account:\
+            if not deduct_from_account == credit_to_account:
                 # valid amount?
                 if is_float(amount):
                     # valid date?
                     if is_date(date):
+                        # valid debit account?
+                        debit_a = Account.query\
+                        .filter(Account.user == current_user_id)\
+                        .filter(Account.type != 'loan')\
+                        .filter(Account.id == deduct_from_account).first()
+                        if debit_a:
+                            # valid credit account?
+                            credit_a = Account.query\
+                            .filter(Account.user == current_user_id)\
+                            .filter(Account.type != 'loan')\
+                            .filter(Account.id == credit_to_account).first()
+                            if credit_a:
 
-                        # add a new transfer row
-                        t = AccountTransfer(current_user_id, date, deduct_from_account, credit_to_account, amount)
-                        db_session.add(t)
+                                # add a new transfer row
+                                t = AccountTransfer(current_user_id, date, deduct_from_account, credit_to_account,
+                                                    amount)
+                                db_session.add(t)
 
-                        # modify accounts
-                        __account_transfer(current_user_id, current_user_id, amount, deduct_from_account, credit_to_account)
+                                # modify accounts
+                                __account_transfer(current_user_id, current_user_id, amount, deduct_from_account,
+                                                   credit_to_account)
 
-                        db_session.commit()
-                        flash('Monies transferred')
+                                db_session.commit()
+                                flash('Monies transferred')
 
+                            else: error = 'Not a valid target account'
+                        else: error = 'Not a valid source account'
                     else: error = 'Not a valid date'
                 else: error = 'Not a valid amount'
             else: error = 'Source and target accounts cannot be the same'
