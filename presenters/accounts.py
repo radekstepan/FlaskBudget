@@ -1,6 +1,6 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash, url_for
-from sqlalchemy.sql.expression import asc, desc
+from sqlalchemy.sql.expression import asc, desc, or_
 from sqlalchemy.orm import aliased
 
 # presenters
@@ -18,11 +18,11 @@ accounts = Module(__name__)
 ''' Accounts '''
 @accounts.route('/account-transfers/')
 @accounts.route('/account-transfers/for/<date>')
+@accounts.route('/account-transfers/with/<account>')
+@accounts.route('/account-transfers/with/<account>/for/<date>')
 @login_required
-def index(date=None):
+def index(account=None, date=None):
     current_user_id = session.get('logged_in_user')
-
-    accounts = Account.query.filter(Account.user == current_user_id)
 
     # table referred to twice, create alias
     from_account_alias = aliased(Account)
@@ -42,6 +42,18 @@ def index(date=None):
         .filter(AccountTransfer.date >= date_range['low']).filter(AccountTransfer.date <= date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
+
+    # fetch accounts
+    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+
+    # provided an account?
+    if account:
+        # search for the slug
+        for acc in accounts:
+            if acc.slug == account:
+                transfers = transfers.add_columns(from_account_alias.slug, to_account_alias.slug)\
+                .filter(or_(from_account_alias.slug == account, to_account_alias.slug == account))
+                break
 
     return render_template('admin_show_transfers.html', **locals())
 
@@ -135,7 +147,7 @@ def transfer():
                 else: error = 'Not a valid amount'
             else: error = 'Source and target accounts cannot be the same'
 
-    accounts=Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
 
     return render_template('admin_add_transfer.html', **locals())
 

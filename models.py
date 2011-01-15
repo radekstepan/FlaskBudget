@@ -36,12 +36,15 @@ class Account(Base):
     name = Column(String(100))
     type = Column(String(100))
     balance = Column(Float(precision=2))
+    slug = Column(String(100))
 
     def __init__(self, user=None, name=None, type=None, balance=None):
         self.user = user
         self.name = name
         self.type = type
         self.balance = balance
+        # save slug on "normal" accounts
+        self.slug = slugify(name) if type == 'asset' or type == 'liability' else None
 
 class AccountTransfer(Base):
     """A transfer to/from the account"""

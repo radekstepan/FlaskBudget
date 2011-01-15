@@ -63,7 +63,7 @@
     <h2>Categories</h2>
     <ul class="list_2">
         <li class="push">{% if category %}<a href="{{ url_for('expenses.index', date=date) }}">All categories</a>
-        {% else %}All Categories{% endif %}</li>
+        {% else %}All categories{% endif %}</li>
         {% endif %}
         <li class="{% if loop.last %}last{% endif %}">{% if category == cat.slug %}{{ cat.name }}
             {% else %}<a href="{{ url_for('expenses.index', date=date, category=cat.slug) }}">{{ cat.name }}</a>
