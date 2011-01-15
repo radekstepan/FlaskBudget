@@ -22,7 +22,7 @@
 {% block header %}<h1>Income</h1>{% endblock %}
 
 {% block body %}
-<div class="left grid_6">
+<div class="left grid_10">
     {% for entry in entries %}
     {% if loop.first %}
     <ul class="list_1">
@@ -37,6 +37,37 @@
                 <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
             </div>
         </li>
+        {% if loop.last %}
+    </ul>
+    {% endif %}
+    {% endfor %}
+</div>
+<div class="right grid_2">
+    {% for range in date_ranges %}
+    {% if loop.first %}
+    <h2>Date</h2>
+    <ul class="list_2">
+        <li class="push">{% if date %}<a href="{{ url_for('income.index', category=category) }}">All dates</a>
+        {% else %}All dates{% endif %}</li>
+        {% endif %}
+        <li class="{% if loop.last %}last{% endif %}">{% if date == range.slug %}{{ range.name }}
+            {% else %}<a href="{{ url_for('income.index', date=range.slug, category=category) }}">{{ range.name }}</a>
+            {% endif %}</li>
+        {% if loop.last %}
+    </ul>
+    {% endif %}
+    {% endfor %}
+
+    {% for cat in categories %}
+    {% if loop.first %}
+    <h2>Categories</h2>
+    <ul class="list_2">
+        <li class="push">{% if category %}<a href="{{ url_for('income.index', date=date) }}">All categories</a>
+        {% else %}All Categories{% endif %}</li>
+        {% endif %}
+        <li class="{% if loop.last %}last{% endif %}">{% if category == cat.slug %}{{ cat.name }}
+            {% else %}<a href="{{ url_for('income.index', date=date, category=cat.slug) }}">{{ cat.name }}</a>
+            {% endif %}</li>
         {% if loop.last %}
     </ul>
     {% endif %}

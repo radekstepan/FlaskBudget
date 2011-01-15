@@ -5,7 +5,8 @@ create table users (
   associated_user_id integer,
   is_private integer not null,
   username string,
-  password string
+  password string,
+  slug string not null
 );
 
 insert into users (name, is_private, username, password) values ('Radek', '0', 'radek', 'radek');

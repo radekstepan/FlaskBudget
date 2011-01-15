@@ -17,6 +17,7 @@ class User(Base):
     is_private = Column(Boolean)
     username = Column(String(20))
     password = Column(String(20))
+    slug = Column(String(50))
 
     def __init__(self, name=None, associated_with=None, is_private=None, username=None, password=None):
         self.name = name
@@ -24,6 +25,7 @@ class User(Base):
         self.is_private = is_private
         self.username = username
         self.password = password
+        self.slug = slugify(name)
 
 class Account(Base):
     """Represents a user's account to/from which to add/deduct monies"""

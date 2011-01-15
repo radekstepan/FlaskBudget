@@ -16,13 +16,38 @@ income = Module(__name__)
 
 ''' Income '''
 @income.route('/income/')
+@income.route('/income/for/<date>')
+@income.route('/income/in/<category>')
+@income.route('/income/for/<date>/in/<category>')
 @login_required
-def index():
-    return render_template('admin_show_income.html', entries=Income.query
-    .filter(Income.user == session.get('logged_in_user'))
-    .join(IncomeCategory)
-    .add_columns(IncomeCategory.name)
-    .order_by(desc(Income.date)).order_by(desc(Income.id)))
+def index(date=None, category=None):
+    current_user_id = session.get('logged_in_user')
+
+    # fetch entries
+    entries=Income.query\
+    .filter(Income.user == current_user_id)\
+    .join(IncomeCategory)\
+    .add_columns(IncomeCategory.name)\
+    .order_by(desc(Income.date)).order_by(desc(Income.id))
+
+    # categories
+    categories = IncomeCategory.query.filter(IncomeCategory.user == current_user_id).order_by(IncomeCategory.name)
+    # provided category?
+    if category:
+        # search for the slug
+        for cat in categories:
+            if cat.slug == category:
+                entries = entries.filter(Income.category == cat.id)
+                break
+
+    # provided a date range?
+    date_range = translate_date_range(date)
+    if date_range:
+        entries = entries.filter(Income.date >= date_range['low']).filter(Income.date <= date_range['high'])
+    # date ranges for the template
+    date_ranges = get_date_ranges()
+
+    return render_template('admin_show_income.html', **locals())
 
 @income.route('/income/add', methods=['GET', 'POST'])
 @login_required

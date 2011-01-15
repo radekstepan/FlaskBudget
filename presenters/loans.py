@@ -1,6 +1,6 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash
-from sqlalchemy.sql.expression import desc, or_
+from sqlalchemy.sql.expression import desc, or_, and_
 from sqlalchemy.orm import aliased
 
 # presenters
@@ -17,20 +17,45 @@ from utils import *
 loans = Module(__name__)
 
 ''' Loans '''
-@loans.route('/loans')
+@loans.route('/loans/')
+@loans.route('/loans/with/<user>')
+@loans.route('/loans/for/<date>')
+@loans.route('/loans/with/<user>/for/<date>')
 @login_required
-def index():
+def index(user=None, date=None):
+    current_user_id = session.get('logged_in_user')
+
     # table referred to twice, create alias
     from_user_alias = aliased(User)
     to_user_alias = aliased(User)
     # fetch loans
     loans=Loan.query\
-    .filter(or_(Loan.from_user == session.get('logged_in_user'), Loan.to_user == session.get('logged_in_user')))\
+    .filter(or_(Loan.from_user == current_user_id, Loan.to_user == current_user_id))\
     .order_by(desc(Loan.date)).order_by(desc(Loan.id))\
     .join(
             (from_user_alias, (Loan.from_user == from_user_alias.id)),\
             (to_user_alias, (Loan.to_user == to_user_alias.id)))\
     .add_columns(from_user_alias.name, to_user_alias.name)
+
+    # user's users
+    users = User.query.filter(User.associated_with == current_user_id)
+    # provided category?
+    if user:
+        # search for the slug
+        for usr in users:
+            if usr.slug == user:
+                loans = loans.filter(or_(
+                        and_(Loan.from_user == current_user_id, Loan.to_user == usr.id),
+                        and_(Loan.from_user == usr.id, Loan.to_user == current_user_id)
+                        ))
+                break
+
+    # provided a date range?
+    date_range = translate_date_range(date)
+    if date_range:
+        loans = loans.filter(Loan.date >= date_range['low']).filter(Loan.date <= date_range['high'])
+    # date ranges for the template
+    date_ranges = get_date_ranges()
 
     return render_template('admin_show_loans.html', **locals())
 

@@ -22,7 +22,7 @@
 {% block header %}<h1>Loans</h1>{% endblock %}
 
 {% block body %}
-<div class="left grid_6">
+<div class="left grid_10">
     {% for loan in loans %}
     {% if loop.first %}
     <ul class="list_1">
@@ -46,6 +46,37 @@
                 <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
             </div>
         </li>
+        {% if loop.last %}
+    </ul>
+    {% endif %}
+    {% endfor %}
+</div>
+<div class="right grid_2">
+    {% for range in date_ranges %}
+    {% if loop.first %}
+    <h2>Date</h2>
+    <ul class="list_2">
+        <li class="push">{% if date %}<a href="{{ url_for('loans.index', user=user) }}">All dates</a>
+        {% else %}All dates{% endif %}</li>
+        {% endif %}
+        <li class="{% if loop.last %}last{% endif %}">{% if date == range.slug %}{{ range.name }}
+            {% else %}<a href="{{ url_for('loans.index', user=user, date=range.slug) }}">{{ range.name }}</a>
+            {% endif %}</li>
+        {% if loop.last %}
+    </ul>
+    {% endif %}
+    {% endfor %}
+
+    {% for usr in users %}
+    {% if loop.first %}
+    <h2>With Users</h2>
+    <ul class="list_2">
+        <li class="push">{% if user %}<a href="{{ url_for('loans.index', date=date) }}">All users</a>
+        {% else %}All users{% endif %}</li>
+        {% endif %}
+        <li class="{% if loop.last %}last{% endif %}">{% if user == usr.slug %}{{ usr.name }}
+            {% else %}<a href="{{ url_for('loans.index', user=usr.slug, date=date) }}">{{ usr.name }}</a>
+            {% endif %}</li>
         {% if loop.last %}
     </ul>
     {% endif %}
