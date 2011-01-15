@@ -10,6 +10,9 @@ from presenters.loans import __make_loan
 from db.database import db_session
 from models import *
 
+# utils
+from utils import *
+
 expenses = Module(__name__)
 
 ''' Expenses '''
@@ -26,64 +29,118 @@ def index():
 @login_required
 def add():
     error = None
+    current_user_id = session.get('logged_in_user')
+
     if request.method == 'POST':
-        # is it a shared expense?
-        if 'is_shared' in request.form:\
-            # figure out percentage split
-            loaned_amount = (float(request.form['amount'])*(100-float(request.form['split'])))/100
-            # create a loan
-            l = Loan(session.get('logged_in_user'), request.form['user'], request.form['date'],
-                     request.form['deduct_from'], request.form['description'], loaned_amount)
-            db_session.add(l)
-            flash('Loan given')
+        amount, date, account_id, description, category_id =\
+        request.form['amount'], request.form['date'], request.form['deduct_from'], request.form['description'],\
+        request.form['category']
 
-            # add new expense (loaner)
-            e1 = Expense(session.get('logged_in_user'), request.form['date'], request.form['category'],
-                        request.form['description'], request.form['deduct_from'],
-                        float(request.form['amount']) - loaned_amount)
-            db_session.add(e1)
+        # valid amount?
+        if is_float(amount):
+            # valid date?
+            if is_date(date):
+                # provided description?
+                if description:
+                    # valid account?
+                    if Account.query\
+                    .filter(Account.user == current_user_id)\
+                    .filter(Account.type != 'loan')\
+                    .filter(Account.id == account_id).first():\
+                        # valid category?
+                        if ExpenseCategory.query\
+                        .filter(ExpenseCategory.user == current_user_id)\
+                        .filter(ExpenseCategory.id == category_id)\
+                        .first():
+                            # is it a shared expense?
+                            if 'is_shared' in request.form:
+                                split, shared_with_user = request.form['split'], request.form['user']
 
-            # add "uncategorized" category if not already present (for the borrower to sort out)
-            c = ExpenseCategory.query\
-            .filter(ExpenseCategory.user == request.form['user'])\
-            .filter(ExpenseCategory.name == "Uncategorized").first()
-            if not c:
-                c = ExpenseCategory(request.form['user'], "Uncategorized")
-                db_session.add(c)
-                db_session.commit()
+                                # valid percentage split?
+                                if is_percentage(split):\
+                                    # valid user sharing with?
+                                    if User.query\
+                                    .filter(User.associated_with == current_user_id)\
+                                    .filter(User.id == shared_with_user).first():
 
-            # fetch default category (for the borrower)
-            a = Account.query.filter(Account.user == request.form['user']).order_by(asc(Account.id)).first()
-            deduct_from = a.id
+                                        # figure out percentage split
+                                        loaned_amount = (float(amount)*(100-float(split)))/100
+                                        # create a loan
+                                        l = Loan(current_user_id, shared_with_user, date, account_id, description,
+                                                 loaned_amount)
+                                        db_session.add(l)
+                                        flash('Loan given')
 
-            # add new expense (borrower)
-            e2 = Expense(request.form['user'], request.form['date'], c.id, request.form['description'],
-                         deduct_from, loaned_amount)
-            db_session.add(e2)
+                                        # add new expense (loaner)
+                                        e1 = Expense(current_user_id, date, category_id, description, account_id,
+                                                     float(amount) - loaned_amount)
+                                        db_session.add(e1)
 
-            # add loan account types
-            __make_loan(session.get('logged_in_user'), request.form['user'], loaned_amount)
+                                        # add "uncategorized" category if not already present (for the borrower to sort out)
+                                        c = ExpenseCategory.query\
+                                        .filter(ExpenseCategory.user == shared_with_user)\
+                                        .filter(ExpenseCategory.name == "Uncategorized").first()
+                                        if not c:
+                                            c = ExpenseCategory(shared_with_user, "Uncategorized")
+                                            db_session.add(c)
+                                            db_session.commit()
+
+                                        # fetch default category (for the borrower)
+                                        a = Account.query\
+                                        .filter(Account.user == shared_with_user).order_by(asc(Account.id)).first()
+                                        deduct_from = a.id
+
+                                        # add new expense (borrower)
+                                        e2 = Expense(shared_with_user, date, c.id, description, deduct_from,
+                                                     loaned_amount)
+                                        db_session.add(e2)
+
+                                        # add loan account types
+                                        __make_loan(current_user_id, shared_with_user, loaned_amount)
+
+                                    else:
+                                        error = 'Not a valid user sharing with'
+                                else:
+                                    error = 'Not a valid % split'
+                            else:
+                                # add new expense
+                                e = Expense(current_user_id, date, category_id, description, account_id, amount)
+                                db_session.add(e)
+
+                            if not error:
+                                # debit from account
+                                a = Account.query\
+                                .filter(Account.user == current_user_id).filter(Account.id == account_id).first()
+                                a.balance -= float(amount)
+                                db_session.add(a)
+
+                                db_session.commit()
+                                flash('Expense added')
+                        else:
+                            error = 'Not a valid category'
+                    else:
+                        error = 'Not a valid account'
+                else:
+                    error = 'You need to provide a description'
+            else:
+                error = 'Not a valid date'
         else:
-            # add new expense
-            e = Expense(session.get('logged_in_user'), request.form['date'], request.form['category'],
-                        request.form['description'], request.form['deduct_from'], request.form['amount'])
-            db_session.add(e)
-
-        # debit from account
-        a = Account.query\
-        .filter(Account.user == session.get('logged_in_user'))\
-        .filter(Account.id == request.form['deduct_from']).first()
-        a.balance -= float(request.form['amount'])
-        db_session.add(a)
-
-        db_session.commit()
-        flash('Expense added')
+            error = 'Not a valid amount'
 
     # fetch user's categories, accounts and users
-    categories = ExpenseCategory.query.filter(ExpenseCategory.user == session.get('logged_in_user'))\
+    categories = ExpenseCategory.query.filter(ExpenseCategory.user == current_user_id)\
     .order_by(ExpenseCategory.name)
-    accounts = Account.query.filter(Account.user == session.get('logged_in_user'))
-    users = User.query.filter(User.associated_with == session.get('logged_in_user'))
+    if not categories:
+        error = 'You need to define at least one category'
+
+    accounts = Account.query\
+    .filter(Account.user == current_user_id)\
+    .filter(Account.type != 'loan')
+    if not accounts:
+        error = 'You need to define at least one account'
+
+    users = User.query.filter(User.associated_with == current_user_id)
+
     return render_template('admin_add_expense.html', **locals())
 
 @expenses.route('/expense/category/add', methods=['GET', 'POST'])

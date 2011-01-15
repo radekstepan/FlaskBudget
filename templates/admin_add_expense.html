@@ -29,12 +29,11 @@
             <dd><input type=text name=date>
 
             <dt>Category:
-            <dd>
-                <select name=category>
-                    {% for category in categories %}
-                    <option value="{{ category.id }}">{{ category.name }}</option>
-                    {% endfor %}
-                </select>
+            <dd><select name=category>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
 
             <dt>Description:
             <dd><input type=text name=description>
