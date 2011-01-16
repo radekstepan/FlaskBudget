@@ -26,7 +26,7 @@ expenses = Module(__name__)
 @expenses.route('/expenses/in/<category>/page/<int:page>')
 @expenses.route('/expenses/for/<date>/in/<category>/page/<int:page>')
 @login_required
-def index(date=None, category=None, page=1, items_per_page=15):
+def index(date=None, category=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
     # fetch entries
@@ -131,7 +131,7 @@ def add_expense():
                                             .filter(ExpenseCategory.user == shared_with_user)\
                                             .filter(ExpenseCategory.name == "Uncategorized").first()
                                             if not c:
-                                                c = ExpenseCategory(shared_with_user, "Uncategorized")
+                                                c = ExpenseCategory(shared_with_user, u'Uncategorized')
                                                 db_session.add(c)
                                                 db_session.commit()
 

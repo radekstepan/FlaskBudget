@@ -35,7 +35,7 @@ loans = Module(__name__)
 @loans.route('/loans/made/<direction>/with/<user>/for/<date>')
 @loans.route('/loans/made/<direction>/with/<user>/for/<date>/page/<int:page>')
 @login_required
-def index(direction=None, user=None, date=None, page=1, items_per_page=15):
+def index(direction=None, user=None, date=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
     # table referred to twice, create alias
@@ -133,8 +133,9 @@ def get():
                 else: error = 'Not a valid date'
             else: error = 'Not a valid amount'
 
-    # user's users ;) and accounts
-    users = User.query.filter(User.associated_with == current_user_id)
+    # fetch users from connections from us
+    users = User.query.join((UserConnection, (User.id == UserConnection.to_user)))\
+    .filter(UserConnection.from_user == current_user_id)
 
     accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
 
@@ -189,8 +190,9 @@ def give():
                 else: error = 'Not a valid date'
             else: error = 'Not a valid amount'
 
-    # user's users ;) and accounts
-    users = User.query.filter(User.associated_with == current_user_id)
+    # fetch users from connections from us
+    users = User.query.join((UserConnection, (User.id == UserConnection.to_user)))\
+    .filter(UserConnection.from_user == current_user_id)
 
     accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
 

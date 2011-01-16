@@ -26,7 +26,7 @@ accounts = Module(__name__)
 @accounts.route('/account-transfers/with/<account>/for/<date>')
 @accounts.route('/account-transfers/with/<account>/for/<date>/page/<int:page>')
 @login_required
-def show_transfers(account=None, date=None, page=1, items_per_page=15):
+def show_transfers(account=None, date=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
     # table referred to twice, create alias

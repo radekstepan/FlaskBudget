@@ -25,7 +25,7 @@ income = Module(__name__)
 @income.route('/income/in/<category>/page/<int:page>')
 @income.route('/income/for/<date>/in/<category>/page/<int:page>')
 @login_required
-def index(date=None, category=None, page=1, items_per_page=15):
+def index(date=None, category=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
     # fetch entries
