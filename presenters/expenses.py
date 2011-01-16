@@ -1,6 +1,7 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash
 from sqlalchemy.sql.expression import desc, asc
+from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
@@ -19,9 +20,13 @@ expenses = Module(__name__)
 @expenses.route('/expenses/')
 @expenses.route('/expenses/for/<date>')
 @expenses.route('/expenses/in/<category>')
+@expenses.route('/expenses/page/<int:page>')
 @expenses.route('/expenses/for/<date>/in/<category>')
+@expenses.route('/expenses/for/<date>/page/<int:page>')
+@expenses.route('/expenses/in/<category>/page/<int:page>')
+@expenses.route('/expenses/for/<date>/in/<category>/page/<int:page>')
 @login_required
-def index(date=None, category=None):
+def index(date=None, category=None, page=1, items_per_page=15):
     current_user_id = session.get('logged_in_user')
 
     # fetch entries
@@ -47,6 +52,10 @@ def index(date=None, category=None):
         entries = entries.filter(Expense.date >= date_range['low']).filter(Expense.date <= date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
+
+    # build a paginator
+    paginator = Pagination(entries, page, items_per_page, entries.count(),
+                               entries.offset((page - 1) * items_per_page).limit(items_per_page))
 
     return render_template('admin_show_expenses.html', **locals())
 

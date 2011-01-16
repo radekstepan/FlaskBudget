@@ -2,6 +2,7 @@
 from flask import Module, session, render_template, redirect, request, flash
 from sqlalchemy.sql.expression import desc, or_, and_
 from sqlalchemy.orm import aliased
+from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
@@ -21,12 +22,20 @@ loans = Module(__name__)
 @loans.route('/loans/made/<direction>')
 @loans.route('/loans/with/<user>')
 @loans.route('/loans/for/<date>')
+@loans.route('/loans/page/<int:page>')
+@loans.route('/loans/made/<direction>/page/<int:page>')
+@loans.route('/loans/with/<user>/page/<int:page>')
+@loans.route('/loans/for/<date>/page/<int:page>')
 @loans.route('/loans/made/<direction>/with/<user>')
+@loans.route('/loans/made/<direction>/with/<user>/page/<int:page>')
 @loans.route('/loans/made/<direction>/for/<date>')
+@loans.route('/loans/made/<direction>/for/<date>/page/<int:page>')
 @loans.route('/loans/with/<user>/for/<date>')
+@loans.route('/loans/with/<user>/for/<date>/page/<int:page>')
 @loans.route('/loans/made/<direction>/with/<user>/for/<date>')
+@loans.route('/loans/made/<direction>/with/<user>/for/<date>/page/<int:page>')
 @login_required
-def index(direction=None, user=None, date=None):
+def index(direction=None, user=None, date=None, page=1, items_per_page=15):
     current_user_id = session.get('logged_in_user')
 
     # table referred to twice, create alias
@@ -67,6 +76,10 @@ def index(direction=None, user=None, date=None):
             loans = loans.filter(Loan.to_user == current_user_id)
         elif direction == 'to-them':
             loans = loans.filter(Loan.from_user == current_user_id)
+
+    # build a paginator
+    paginator = Pagination(loans, page, items_per_page, loans.count(),
+                           loans.offset((page - 1) * items_per_page).limit(items_per_page))
 
     return render_template('admin_show_loans.html', **locals())
 

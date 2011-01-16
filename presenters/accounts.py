@@ -2,6 +2,7 @@
 from flask import Module, session, render_template, redirect, request, flash, url_for
 from sqlalchemy.sql.expression import asc, desc, or_, and_
 from sqlalchemy.orm import aliased
+from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
@@ -17,11 +18,15 @@ accounts = Module(__name__)
 
 ''' Accounts '''
 @accounts.route('/account-transfers/')
+@accounts.route('/account-transfers/page/<int:page>')
 @accounts.route('/account-transfers/for/<date>')
+@accounts.route('/account-transfers/for/<date>/page/<int:page>')
 @accounts.route('/account-transfers/with/<account>')
+@accounts.route('/account-transfers/with/<account>/page/<int:page>')
 @accounts.route('/account-transfers/with/<account>/for/<date>')
+@accounts.route('/account-transfers/with/<account>/for/<date>/page/<int:page>')
 @login_required
-def show_transfers(account=None, date=None):
+def show_transfers(account=None, date=None, page=1, items_per_page=15):
     current_user_id = session.get('logged_in_user')
 
     # table referred to twice, create alias
@@ -53,6 +58,10 @@ def show_transfers(account=None, date=None):
             if acc.slug == account:
                 transfers = transfers.filter(or_(from_account_alias.slug == account, to_account_alias.slug == account))
                 break
+
+    # build a paginator
+    paginator = Pagination(transfers, page, items_per_page, transfers.count(),
+                           transfers.offset((page - 1) * items_per_page).limit(items_per_page))
 
     return render_template('admin_show_transfers.html', **locals())
 

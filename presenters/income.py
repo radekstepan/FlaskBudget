@@ -1,6 +1,7 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash
 from sqlalchemy.sql.expression import desc
+from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
@@ -18,9 +19,13 @@ income = Module(__name__)
 @income.route('/income/')
 @income.route('/income/for/<date>')
 @income.route('/income/in/<category>')
+@income.route('/income/page/<int:page>')
 @income.route('/income/for/<date>/in/<category>')
+@income.route('/income/for/<date>/page/<int:page>')
+@income.route('/income/in/<category>/page/<int:page>')
+@income.route('/income/for/<date>/in/<category>/page/<int:page>')
 @login_required
-def index(date=None, category=None):
+def index(date=None, category=None, page=1, items_per_page=15):
     current_user_id = session.get('logged_in_user')
 
     # fetch entries
@@ -46,6 +51,10 @@ def index(date=None, category=None):
         entries = entries.filter(Income.date >= date_range['low']).filter(Income.date <= date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
+
+    # build a paginator
+    paginator = Pagination(entries, page, items_per_page, entries.count(),
+                           entries.offset((page - 1) * items_per_page).limit(items_per_page))
 
     return render_template('admin_show_income.html', **locals())
 
