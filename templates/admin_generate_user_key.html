@@ -12,24 +12,17 @@
 </nav>
 <nav class="subnav">
     <ul>
-        <li><a href="{{ url_for('users.add_private') }}" class="active">Add Private User</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Add Private User</a></li>
         <li><a href="{{ url_for('users.connect_with_user') }}">Connect With User</a></li>
-        <li><a href="{{ url_for('users.generate_key') }}">Generate Key</a></li>
+        <li><a href="{{ url_for('users.generate_key') }}" class="active">Generate Key</a></li>
     </ul>
 </nav>
 {% endblock %}
 
-{% block header %}<h1>Add Private User</h1>{% endblock %}
+{% block header %}<h1>Your User Key</h1>{% endblock %}
 
 {% block body %}
 <div class="left grid_6">
-    <form action="{{ url_for('users.add_private') }}" method=post class="form_1">
-        <dl>
-            <dt>Name
-            <dd><input type=text name=name>
-
-            <dd><input type=submit value=Add>
-        </dl>
-    </form>
+<p>{{ key.key }}</p>
 </div>
 {% endblock %}

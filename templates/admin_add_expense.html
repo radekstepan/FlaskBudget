@@ -13,7 +13,7 @@
 <nav class="subnav">
     <ul>
         <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
-        <li><a href="{{ url_for('expenses.add') }}" class="active">Add Expense</a></li>
+        <li><a href="{{ url_for('expenses.add_expense') }}" class="active">Add Expense</a></li>
         <li><a href="{{ url_for('expenses.add_category') }}">Add Expense Category</a></li>
     </ul>
 </nav>
@@ -23,7 +23,7 @@
 
 {% block body %}
 <div class="left grid_6">
-    <form action="{{ url_for('expenses.add') }}" method=post class="form_1">
+    <form action="{{ url_for('expenses.add_expense') }}" method=post class="form_1">
         <dl>
             <dt>Date:
             <dd><input type=text name=date>

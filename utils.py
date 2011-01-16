@@ -51,6 +51,21 @@ def translate_date_range(value):
 
 def slugify(value):
     import unicodedata, re
+
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
     value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
     return re.sub('[-\s]+', '-', value)
+
+def generate_random_key():
+    import base64, hashlib, random
+
+    return base64.b64encode(hashlib.sha256(str(random.getrandbits(256))).digest(),
+                     random.choice(['rA','aZ','gQ','hH','hG','aR','DD'])).rstrip('==')
+
+def today_timestamp():
+    import time
+
+    return time.time()
+
+def tomorrow_timestamp():
+    return today_timestamp() + (60*60*24)

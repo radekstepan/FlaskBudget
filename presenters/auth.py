@@ -29,7 +29,6 @@ def login():
 @auth.route('/logout')
 def logout():
     session.pop('logged_in_user', None)
-    flash('You were logged out')
     return redirect(url_for('login'))
 
 def login_required(f):

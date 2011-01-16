@@ -47,6 +47,15 @@ def date_time_format(value):
     else:
         return value
 
+@app.template_filter('timestampformat')
+def timestamp_format(value):
+    from datetime import date
+
+    try:
+        return date.fromtimestamp(value)
+    except ValueError:
+        return value
+
 @app.template_filter('currencyformat')
 def currency_format(value):
     import locale

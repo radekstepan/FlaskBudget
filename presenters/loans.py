@@ -42,7 +42,7 @@ def index(direction=None, user=None, date=None, page=1, items_per_page=15):
     from_user_alias = aliased(User)
     to_user_alias = aliased(User)
     # fetch loans
-    loans=Loan.query\
+    loans = Loan.query\
     .filter(or_(Loan.from_user == current_user_id, Loan.to_user == current_user_id))\
     .order_by(desc(Loan.date)).order_by(desc(Loan.id))\
     .join(
@@ -50,9 +50,11 @@ def index(direction=None, user=None, date=None, page=1, items_per_page=15):
             (to_user_alias, (Loan.to_user == to_user_alias.id)))\
     .add_columns(from_user_alias.name, from_user_alias.slug, to_user_alias.name, to_user_alias.slug)
 
-    # user's users
-    users = User.query.filter(User.associated_with == current_user_id)
-    # provided category?
+    # fetch users from connections from us
+    users = User.query.join((UserConnection, (User.id == UserConnection.to_user)))\
+    .filter(UserConnection.from_user == current_user_id)
+
+    # provided user?
     if user:
         # search for the slug
         for usr in users:

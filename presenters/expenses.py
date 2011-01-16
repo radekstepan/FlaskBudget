@@ -1,6 +1,6 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash
-from sqlalchemy.sql.expression import desc, asc
+from sqlalchemy.sql.expression import desc, asc, and_
 from flaskext.sqlalchemy import Pagination
 
 # presenters
@@ -61,7 +61,7 @@ def index(date=None, category=None, page=1, items_per_page=15):
 
 @expenses.route('/expense/add', methods=['GET', 'POST'])
 @login_required
-def add():
+def add_expense():
     error = None
     current_user_id = session.get('logged_in_user')
 
@@ -109,9 +109,9 @@ def add():
                                     # valid percentage split?
                                     if is_percentage(split):
                                         # valid user sharing with?
-                                        if User.query\
-                                        .filter(User.associated_with == current_user_id)\
-                                        .filter(User.id == shared_with_user).first():
+                                        if UserConnection.query.filter(and_(
+                                                UserConnection.from_user == current_user_id,
+                                                UserConnection.to_user == shared_with_user)).first():
 
                                             # figure out percentage split
                                             loaned_amount = (float(amount)*(100-float(split)))/100
@@ -177,7 +177,9 @@ def add():
     accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
     if not accounts: error = 'You need to define at least one account'
 
-    users = User.query.filter(User.associated_with == current_user_id)
+    # fetch users from connections from us
+    users = User.query.join((UserConnection, (User.id == UserConnection.to_user)))\
+    .filter(UserConnection.from_user == current_user_id)
 
     return render_template('admin_add_expense.html', **locals())
 
