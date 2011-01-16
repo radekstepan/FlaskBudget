@@ -66,15 +66,19 @@ def connect_with_user():
             key = UserKey.query.filter(UserKey.key == key_value).filter(UserKey.expires > today_timestamp()).first()
             # valid key
             if key:
-                # create connections from us to them and back
-                c = UserConnection(current_user_id, new_user.id)
-                db_session.add(c)
-                c = UserConnection(new_user.id, current_user_id)
-                db_session.add(c)
+                # cannot connect to ourselves
+                if not key.user == current_user_id:
 
-                db_session.commit()
-                flash('Connection made')
+                    # create connections from us to them and back
+                    c = UserConnection(current_user_id, key.user)
+                    db_session.add(c)
+                    c = UserConnection(key.user, current_user_id)
+                    db_session.add(c)
 
+                    db_session.commit()
+                    flash('Connection made')
+
+                else: error = 'I can haz myself impossible'
             else: error = 'Invalid key'
         else: error = 'You need to provide a key'
 
