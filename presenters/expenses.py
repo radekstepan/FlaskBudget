@@ -9,7 +9,10 @@ from presenters.loans import __make_loan
 
 # models
 from db.database import db_session
-from models import *
+from models.expense import ExpenseCategoriesTable, ExpensesTable
+from models.account import AccountsTable
+from models.user import UsersConnectionsTable, UsersTable
+from models.loan import LoansTable
 
 # utils
 from utils import *
@@ -30,26 +33,26 @@ def index(date=None, category=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
     # fetch entries
-    entries=Expense.query\
-    .filter(Expense.user == current_user_id)\
-    .join(ExpenseCategory)\
-    .add_columns(ExpenseCategory.name, ExpenseCategory.slug)\
-    .order_by(desc(Expense.date)).order_by(desc(Expense.id))
+    entries=ExpensesTable.query\
+    .filter(ExpensesTable.user == current_user_id)\
+    .join(ExpenseCategoriesTable)\
+    .add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
+    .order_by(desc(ExpensesTable.date)).order_by(desc(ExpensesTable.id))
 
     # categories
-    categories = ExpenseCategory.query.filter(ExpenseCategory.user == current_user_id).order_by(ExpenseCategory.name)
+    categories = ExpenseCategoriesTable.query.filter(ExpenseCategoriesTable.user == current_user_id).order_by(ExpenseCategoriesTable.name)
     # provided category?
     if category:
         # search for the slug
         for cat in categories:
             if cat.slug == category:
-                entries = entries.filter(Expense.category == cat.id)
+                entries = entries.filter(ExpensesTable.category == cat.id)
                 break
 
     # provided a date range?
     date_range = translate_date_range(date)
     if date_range:
-        entries = entries.filter(Expense.date >= date_range['low']).filter(Expense.date <= date_range['high'])
+        entries = entries.filter(ExpensesTable.date >= date_range['low']).filter(ExpensesTable.date <= date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
 
@@ -85,15 +88,15 @@ def add_expense():
                 # valid date?
                 if is_date(date):
                 # valid account?
-                    debit_a = Account.query\
-                    .filter(Account.user == current_user_id)\
-                    .filter(Account.type != 'loan')\
-                    .filter(Account.id == account_id).first()
+                    debit_a = AccountsTable.query\
+                    .filter(AccountsTable.user == current_user_id)\
+                    .filter(AccountsTable.type != 'loan')\
+                    .filter(AccountsTable.id == account_id).first()
                     if debit_a:
                     # valid category?
-                        if ExpenseCategory.query\
-                        .filter(ExpenseCategory.user == current_user_id)\
-                        .filter(ExpenseCategory.id == category_id)\
+                        if ExpenseCategoriesTable.query\
+                        .filter(ExpenseCategoriesTable.user == current_user_id)\
+                        .filter(ExpenseCategoriesTable.id == category_id)\
                         .first():
 
                         # is it a shared expense?
@@ -109,40 +112,40 @@ def add_expense():
                                     # valid percentage split?
                                     if is_percentage(split):
                                         # valid user sharing with?
-                                        if UserConnection.query.filter(and_(
-                                                UserConnection.from_user == current_user_id,
-                                                UserConnection.to_user == shared_with_user)).first():
+                                        if UsersConnectionsTable.query.filter(and_(
+                                                UsersConnectionsTable.from_user == current_user_id,
+                                                UsersConnectionsTable.to_user == shared_with_user)).first():
 
                                             # figure out percentage split
                                             loaned_amount = (float(amount)*(100-float(split)))/100
                                             # create a loan
-                                            l = Loan(current_user_id, shared_with_user, date, account_id,
+                                            l = LoansTable(current_user_id, shared_with_user, date, account_id,
                                                      description, loaned_amount)
                                             db_session.add(l)
                                             flash('Loan given')
 
                                             # add new expense (loaner)
-                                            e1 = Expense(current_user_id, date, category_id, description,
+                                            e1 = ExpensesTable(current_user_id, date, category_id, description,
                                                          account_id, float(amount) - loaned_amount)
                                             db_session.add(e1)
 
                                             # add "uncategorized" category if not already present
-                                            c = ExpenseCategory.query\
-                                            .filter(ExpenseCategory.user == shared_with_user)\
-                                            .filter(ExpenseCategory.name == "Uncategorized").first()
+                                            c = ExpenseCategoriesTable.query\
+                                            .filter(ExpenseCategoriesTable.user == shared_with_user)\
+                                            .filter(ExpenseCategoriesTable.name == "Uncategorized").first()
                                             if not c:
-                                                c = ExpenseCategory(shared_with_user, u'Uncategorized')
+                                                c = ExpenseCategoriesTable(shared_with_user, u'Uncategorized')
                                                 db_session.add(c)
                                                 db_session.commit()
 
                                             # fetch default category (for the borrower)
-                                            a = Account.query\
-                                            .filter(Account.user == shared_with_user)\
-                                            .order_by(asc(Account.id)).first()
+                                            a = AccountsTable.query\
+                                            .filter(AccountsTable.user == shared_with_user)\
+                                            .order_by(asc(AccountsTable.id)).first()
                                             deduct_from = a.id
 
                                             # add new expense (borrower)
-                                            e2 = Expense(shared_with_user, date, c.id, description, deduct_from,
+                                            e2 = ExpensesTable(shared_with_user, date, c.id, description, deduct_from,
                                                          loaned_amount)
                                             db_session.add(e2)
 
@@ -154,7 +157,7 @@ def add_expense():
 
                             else:
                             # add new expense
-                                e = Expense(current_user_id, date, category_id, description, account_id, amount)
+                                e = ExpensesTable(current_user_id, date, category_id, description, account_id, amount)
                                 db_session.add(e)
 
                             if not error:
@@ -171,15 +174,15 @@ def add_expense():
             else: error = 'Not a valid amount'
 
     # fetch user's categories, accounts and users
-    categories = ExpenseCategory.query.filter(ExpenseCategory.user == current_user_id).order_by(ExpenseCategory.name)
+    categories = ExpenseCategoriesTable.query.filter(ExpenseCategoriesTable.user == current_user_id).order_by(ExpenseCategoriesTable.name)
     if not categories: error = 'You need to define at least one category'
 
-    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
     if not accounts: error = 'You need to define at least one account'
 
     # fetch users from connections from us
-    users = User.query.join((UserConnection, (User.id == UserConnection.to_user)))\
-    .filter(UserConnection.from_user == current_user_id)
+    users = UsersTable.query.join((UsersConnectionsTable, (UsersTable.id == UsersConnectionsTable.to_user)))\
+    .filter(UsersConnectionsTable.from_user == current_user_id)
 
     return render_template('admin_add_expense.html', **locals())
 
@@ -193,12 +196,12 @@ def add_category():
         # blank name?
         if new_category_name:
             # already exists?
-            if not ExpenseCategory.query\
-                .filter(ExpenseCategory.user == current_user_id)\
-                .filter(ExpenseCategory.name == new_category_name).first():
+            if not ExpenseCategoriesTable.query\
+                .filter(ExpenseCategoriesTable.user == current_user_id)\
+                .filter(ExpenseCategoriesTable.name == new_category_name).first():
 
                 # create category
-                c = ExpenseCategory(current_user_id, new_category_name)
+                c = ExpenseCategoriesTable(current_user_id, new_category_name)
                 db_session.add(c)
                 db_session.commit()
                 flash('Expense category added')

@@ -6,7 +6,8 @@ from presenters.auth import login_required
 
 # models
 from db.database import db_session
-from models import *
+from models.user import UsersConnectionsTable, UsersKeysTable, UsersTable
+from models.account import AccountsTable
 
 # utils
 from utils import *
@@ -24,23 +25,23 @@ def add_private():
         # blank name?
         if new_user_name:
             # already exists?
-            if not User.query\
-                .filter(User.associated_with == current_user_id)\
-                .filter(User.name == new_user_name).first():
+            if not UsersTable.query\
+                .filter(UsersTable.associated_with == current_user_id)\
+                .filter(UsersTable.name == new_user_name).first():
 
                 # create new private user
-                new_user = User(new_user_name, True)
+                new_user = UsersTable(new_user_name, True)
                 db_session.add(new_user)
                 db_session.commit()
 
                 # give the user a default account so we can do loans
-                a = Account(new_user.id, "Default", 'default', 0)
+                a = AccountsTable(new_user.id, "Default", 'default', 0)
                 db_session.add(a)
 
                 # create connections from us to them and back
-                c = UserConnection(current_user_id, new_user.id)
+                c = UsersConnectionsTable(current_user_id, new_user.id)
                 db_session.add(c)
-                c = UserConnection(new_user.id, current_user_id)
+                c = UsersConnectionsTable(new_user.id, current_user_id)
                 db_session.add(c)
 
                 db_session.commit()
@@ -63,16 +64,16 @@ def connect_with_user():
         # fetch values and check they are actually provided
         if 'key' in request.form:
             key_value = request.form['key']
-            key = UserKey.query.filter(UserKey.key == key_value).filter(UserKey.expires > today_timestamp()).first()
+            key = UsersKeysTable.query.filter(UsersKeysTable.key == key_value).filter(UsersKeysTable.expires > today_timestamp()).first()
             # valid key
             if key:
                 # cannot connect to ourselves
                 if not key.user == current_user_id:
 
                     # create connections from us to them and back
-                    c = UserConnection(current_user_id, key.user)
+                    c = UsersConnectionsTable(current_user_id, key.user)
                     db_session.add(c)
-                    c = UserConnection(key.user, current_user_id)
+                    c = UsersConnectionsTable(key.user, current_user_id)
                     db_session.add(c)
 
                     db_session.commit()
@@ -90,10 +91,10 @@ def generate_key():
     current_user_id = session.get('logged_in_user')
 
     # fetch key
-    key = UserKey.query.filter(UserKey.user == current_user_id).first()
+    key = UsersKeysTable.query.filter(UsersKeysTable.user == current_user_id).first()
     # generate key
     if not key:
-        key = UserKey(current_user_id)
+        key = UsersKeysTable(current_user_id)
         db_session.add(key)
         db_session.commit()
 

@@ -9,7 +9,7 @@ from presenters.auth import login_required
 
 # models
 from db.database import db_session
-from models import *
+from models.account import AccountsTable, AccountTransfersTable
 
 # utils
 from utils import *
@@ -30,26 +30,26 @@ def show_transfers(account=None, date=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
     # table referred to twice, create alias
-    from_account_alias = aliased(Account)
-    to_account_alias = aliased(Account)
+    from_account_alias = aliased(AccountsTable)
+    to_account_alias = aliased(AccountsTable)
     # fetch account transfers
-    transfers = AccountTransfer.query.filter(AccountTransfer.user == current_user_id)\
-    .order_by(desc(AccountTransfer.date)).order_by(desc(AccountTransfer.id))\
+    transfers = AccountTransfersTable.query.filter(AccountTransfersTable.user == current_user_id)\
+    .order_by(desc(AccountTransfersTable.date)).order_by(desc(AccountTransfersTable.id))\
     .join(
-            (from_account_alias, (AccountTransfer.from_account == from_account_alias.id)),\
-            (to_account_alias, (AccountTransfer.to_account == to_account_alias.id)))\
+            (from_account_alias, (AccountTransfersTable.from_account == from_account_alias.id)),\
+            (to_account_alias, (AccountTransfersTable.to_account == to_account_alias.id)))\
     .add_columns(from_account_alias.name, from_account_alias.slug, to_account_alias.name, to_account_alias.slug)
 
     # provided a date range?
     date_range = translate_date_range(date)
     if date_range:
         transfers = transfers\
-        .filter(AccountTransfer.date >= date_range['low']).filter(AccountTransfer.date <= date_range['high'])
+        .filter(AccountTransfersTable.date >= date_range['low']).filter(AccountTransfersTable.date <= date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
 
     # fetch accounts
-    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
 
     # provided an account?
     if account:
@@ -82,12 +82,12 @@ def add_account():
                 # is balance a valid float?
                 if is_float(account_balance):
                     # already exists?
-                    if not Account.query\
-                        .filter(Account.user == current_user_id)\
-                        .filter(Account.name == new_account_name).first():
+                    if not AccountsTable.query\
+                        .filter(AccountsTable.user == current_user_id)\
+                        .filter(AccountsTable.name == new_account_name).first():
 
                         # create new account
-                        a = Account(current_user_id, new_account_name, account_type, account_balance)
+                        a = AccountsTable(current_user_id, new_account_name, account_type, account_balance)
                         db_session.add(a)
                         db_session.commit()
                         flash('Account added')
@@ -125,20 +125,20 @@ def add_transfer():
                     # valid date?
                     if is_date(date):
                         # valid debit account?
-                        debit_a = Account.query\
-                        .filter(Account.user == current_user_id)\
-                        .filter(Account.type != 'loan')\
-                        .filter(Account.id == deduct_from_account).first()
+                        debit_a = AccountsTable.query\
+                        .filter(AccountsTable.user == current_user_id)\
+                        .filter(AccountsTable.type != 'loan')\
+                        .filter(AccountsTable.id == deduct_from_account).first()
                         if debit_a:
                             # valid credit account?
-                            credit_a = Account.query\
-                            .filter(Account.user == current_user_id)\
-                            .filter(Account.type != 'loan')\
-                            .filter(Account.id == credit_to_account).first()
+                            credit_a = AccountsTable.query\
+                            .filter(AccountsTable.user == current_user_id)\
+                            .filter(AccountsTable.type != 'loan')\
+                            .filter(AccountsTable.id == credit_to_account).first()
                             if credit_a:
 
                                 # add a new transfer row
-                                t = AccountTransfer(current_user_id, date, deduct_from_account, credit_to_account,
+                                t = AccountTransfersTable(current_user_id, date, deduct_from_account, credit_to_account,
                                                     amount)
                                 db_session.add(t)
 
@@ -155,7 +155,7 @@ def add_transfer():
                 else: error = 'Not a valid amount'
             else: error = 'Source and target accounts cannot be the same'
 
-    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
 
     return render_template('admin_add_transfer.html', **locals())
 
@@ -167,18 +167,18 @@ def edit_transfer(transfer_id):
 def __account_transfer(from_user, to_user, amount, from_account=None, to_account=None):
     # fetch first user's account if not provided (default)
     if not from_account:
-        a = Account.query.filter(Account.user == from_user).order_by(asc(Account.id)).first()
+        a = AccountsTable.query.filter(AccountsTable.user == from_user).order_by(asc(AccountsTable.id)).first()
         from_account = a.id
     if not to_account:
-        a = Account.query.filter(Account.user == to_user).order_by(asc(Account.id)).first()
+        a = AccountsTable.query.filter(AccountsTable.user == to_user).order_by(asc(AccountsTable.id)).first()
         to_account = a.id
 
     # deduct
-    a1 = Account.query.filter(Account.user == from_user).filter(Account.id == from_account).first()
+    a1 = AccountsTable.query.filter(AccountsTable.user == from_user).filter(AccountsTable.id == from_account).first()
     a1.balance -= float(amount)
     db_session.add(a1)
 
     # credit
-    a2 = Account.query.filter(Account.user == to_user).filter(Account.id == to_account).first()
+    a2 = AccountsTable.query.filter(AccountsTable.user == to_user).filter(AccountsTable.id == to_account).first()
     a2.balance += float(amount)
     db_session.add(a2)

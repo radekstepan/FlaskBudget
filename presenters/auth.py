@@ -3,7 +3,7 @@ from flask import Module, session, render_template, redirect, request, flash, ur
 from functools import wraps
 
 # models
-from models import User
+from models.user import UsersTable
 
 auth = Module(__name__)
 
@@ -12,10 +12,10 @@ auth = Module(__name__)
 def login():
     error = None
     if request.method == 'POST':
-        u = User.query\
-        .filter(User.username == request.form['username'])\
-        .filter(User.password == request.form['password'])\
-        .filter(User.is_private == False)\
+        u = UsersTable.query\
+        .filter(UsersTable.username == request.form['username'])\
+        .filter(UsersTable.password == request.form['password'])\
+        .filter(UsersTable.is_private == False)\
         .first()
         if u:
             session['logged_in_user'] = u.id

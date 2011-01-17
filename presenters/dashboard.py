@@ -6,7 +6,9 @@ from sqlalchemy.sql.expression import desc, asc
 from presenters.auth import login_required
 
 # models
-from models import *
+from models.expense import ExpensesTable, ExpenseCategoriesTable
+from models.account import AccountsTable
+from models.user import UsersTable
 
 dashboard = Module(__name__)
 
@@ -15,20 +17,20 @@ dashboard = Module(__name__)
 @login_required
 def index():
     # get uncategorized expenses
-    uncategorized_expenses = Expense.query.filter(Expense.user == session.get('logged_in_user'))\
-    .join(ExpenseCategory).add_columns(ExpenseCategory.name, ExpenseCategory.slug)\
-    .filter(ExpenseCategory.name == 'Uncategorized').order_by(desc(Expense.date))
+    uncategorized_expenses = ExpensesTable.query.filter(ExpensesTable.user == session.get('logged_in_user'))\
+    .join(ExpenseCategoriesTable).add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
+    .filter(ExpenseCategoriesTable.name == 'Uncategorized').order_by(desc(ExpensesTable.date))
 
     # get latest expenses
-    latest_expenses = Expense.query.filter(Expense.user == session.get('logged_in_user'))\
-    .join(ExpenseCategory).add_columns(ExpenseCategory.name, ExpenseCategory.slug).order_by(desc(Expense.date)).limit(5)
+    latest_expenses = ExpensesTable.query.filter(ExpensesTable.user == session.get('logged_in_user'))\
+    .join(ExpenseCategoriesTable).add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug).order_by(desc(ExpensesTable.date)).limit(5)
 
     # get accounts
-    accounts=Account.query.filter(Account.user == session.get('logged_in_user'))\
-    .filter(Account.balance != 0)\
-    .outerjoin((User, Account.name == User.id))\
-    .add_columns(User.name, User.slug)\
-    .order_by(asc(Account.type)).order_by(asc(Account.id))
+    accounts=AccountsTable.query.filter(AccountsTable.user == session.get('logged_in_user'))\
+    .filter(AccountsTable.balance != 0)\
+    .outerjoin((UsersTable, AccountsTable.name == UsersTable.id))\
+    .add_columns(UsersTable.name, UsersTable.slug)\
+    .order_by(asc(AccountsTable.type)).order_by(asc(AccountsTable.id))
 
     # split, get totals
     assets, liabilities, loans, assets_total, liabilities_total = [], [], [], 0, 0

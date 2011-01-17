@@ -10,7 +10,9 @@ from presenters.accounts import __account_transfer
 
 # models
 from db.database import db_session
-from models import *
+from models.user import UsersTable, UsersConnectionsTable
+from models.loan import LoansTable
+from models.account import AccountsTable
 
 # utils
 from utils import *
@@ -39,20 +41,20 @@ def index(direction=None, user=None, date=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
     # table referred to twice, create alias
-    from_user_alias = aliased(User)
-    to_user_alias = aliased(User)
+    from_user_alias = aliased(UsersTable)
+    to_user_alias = aliased(UsersTable)
     # fetch loans
-    loans = Loan.query\
-    .filter(or_(Loan.from_user == current_user_id, Loan.to_user == current_user_id))\
-    .order_by(desc(Loan.date)).order_by(desc(Loan.id))\
+    loans = LoansTable.query\
+    .filter(or_(LoansTable.from_user == current_user_id, LoansTable.to_user == current_user_id))\
+    .order_by(desc(LoansTable.date)).order_by(desc(LoansTable.id))\
     .join(
-            (from_user_alias, (Loan.from_user == from_user_alias.id)),\
-            (to_user_alias, (Loan.to_user == to_user_alias.id)))\
+            (from_user_alias, (LoansTable.from_user == from_user_alias.id)),\
+            (to_user_alias, (LoansTable.to_user == to_user_alias.id)))\
     .add_columns(from_user_alias.name, from_user_alias.slug, to_user_alias.name, to_user_alias.slug)
 
     # fetch users from connections from us
-    users = User.query.join((UserConnection, (User.id == UserConnection.to_user)))\
-    .filter(UserConnection.from_user == current_user_id)
+    users = UsersTable.query.join((UsersConnectionsTable, (UsersTable.id == UsersConnectionsTable.to_user)))\
+    .filter(UsersConnectionsTable.from_user == current_user_id)
 
     # provided user?
     if user:
@@ -60,24 +62,24 @@ def index(direction=None, user=None, date=None, page=1, items_per_page=10):
         for usr in users:
             if usr.slug == user:
                 loans = loans.filter(or_(
-                        and_(Loan.from_user == current_user_id, Loan.to_user == usr.id),
-                        and_(Loan.from_user == usr.id, Loan.to_user == current_user_id)
+                        and_(LoansTable.from_user == current_user_id, LoansTable.to_user == usr.id),
+                        and_(LoansTable.from_user == usr.id, LoansTable.to_user == current_user_id)
                         ))
                 break
 
     # provided a date range?
     date_range = translate_date_range(date)
     if date_range:
-        loans = loans.filter(Loan.date >= date_range['low']).filter(Loan.date <= date_range['high'])
+        loans = loans.filter(LoansTable.date >= date_range['low']).filter(LoansTable.date <= date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
 
     # provided a direction?
     if direction:
         if direction == 'to-us':
-            loans = loans.filter(Loan.to_user == current_user_id)
+            loans = loans.filter(LoansTable.to_user == current_user_id)
         elif direction == 'to-them':
-            loans = loans.filter(Loan.from_user == current_user_id)
+            loans = loans.filter(LoansTable.from_user == current_user_id)
 
     # build a paginator
     paginator = Pagination(loans, page, items_per_page, loans.count(),
@@ -111,13 +113,13 @@ def get():
                 # valid date?
                 if is_date(date):
                     # valid account?
-                    a = Account.query\
-                    .filter(Account.user == current_user_id)\
-                    .filter(Account.type != 'loan')\
-                    .filter(Account.id == credit_to_account).first()
+                    a = AccountsTable.query\
+                    .filter(AccountsTable.user == current_user_id)\
+                    .filter(AccountsTable.type != 'loan')\
+                    .filter(AccountsTable.id == credit_to_account).first()
                     if a:
 
-                        l = Loan(from_user, current_user_id, date, credit_to_account, description, amount)
+                        l = LoansTable(from_user, current_user_id, date, credit_to_account, description, amount)
                         db_session.add(l)
 
                         # transfer money
@@ -134,10 +136,10 @@ def get():
             else: error = 'Not a valid amount'
 
     # fetch users from connections from us
-    users = User.query.join((UserConnection, (User.id == UserConnection.to_user)))\
-    .filter(UserConnection.from_user == current_user_id)
+    users = UsersTable.query.join((UsersConnectionsTable, (UsersTable.id == UsersConnectionsTable.to_user)))\
+    .filter(UsersConnectionsTable.from_user == current_user_id)
 
-    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
 
     return render_template('admin_get_loan.html', **locals())
 
@@ -167,13 +169,13 @@ def give():
                 # valid date?
                 if is_date(date):
                     # valid account?
-                    a = Account.query\
-                    .filter(Account.user == current_user_id)\
-                    .filter(Account.type != 'loan')\
-                    .filter(Account.id == deduct_from_account).first()
+                    a = AccountsTable.query\
+                    .filter(AccountsTable.user == current_user_id)\
+                    .filter(AccountsTable.type != 'loan')\
+                    .filter(AccountsTable.id == deduct_from_account).first()
                     if a:
 
-                        l = Loan(current_user_id, to_user, date,
+                        l = LoansTable(current_user_id, to_user, date,
                                  deduct_from_account, description, amount)
                         db_session.add(l)
 
@@ -191,33 +193,33 @@ def give():
             else: error = 'Not a valid amount'
 
     # fetch users from connections from us
-    users = User.query.join((UserConnection, (User.id == UserConnection.to_user)))\
-    .filter(UserConnection.from_user == current_user_id)
+    users = UsersTable.query.join((UsersConnectionsTable, (UsersTable.id == UsersConnectionsTable.to_user)))\
+    .filter(UsersConnectionsTable.from_user == current_user_id)
 
-    accounts = Account.query.filter(Account.user == current_user_id).filter(Account.type != 'loan')
+    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
 
     return render_template('admin_give_loan.html', **locals())
 
 def __make_loan(from_user, to_user, amount):
     # update/create loan type account (us & them)
-    a1 = Account.query.filter(Account.user == to_user)\
-    .filter(Account.type == 'loan')\
-    .filter(Account.name == from_user).first()
+    a1 = AccountsTable.query.filter(AccountsTable.user == to_user)\
+    .filter(AccountsTable.type == 'loan')\
+    .filter(AccountsTable.name == from_user).first()
     if not a1:
     # initial
-        a1 = Account(to_user, from_user, 'loan', -float(amount))
+        a1 = AccountsTable(to_user, from_user, 'loan', -float(amount))
         db_session.add(a1)
     else:
     # update
         a1.balance -= float(amount)
         db_session.add(a1)
 
-    a2 = Account.query.filter(Account.user == from_user)\
-    .filter(Account.type == 'loan')\
-    .filter(Account.name == to_user).first()
+    a2 = AccountsTable.query.filter(AccountsTable.user == from_user)\
+    .filter(AccountsTable.type == 'loan')\
+    .filter(AccountsTable.name == to_user).first()
     if not a2:
     # initial
-        a2 = Account(from_user, to_user, 'loan', float(amount))
+        a2 = AccountsTable(from_user, to_user, 'loan', float(amount))
         db_session.add(a2)
     else:
     # update
