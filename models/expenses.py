@@ -6,6 +6,24 @@ from db.database import Base
 
 # utils
 from utils import *
+from sqlalchemy.sql.expression import desc
+
+class Expenses():
+
+    user_id = None
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+
+    def get_uncategorized(self):
+        return ExpensesTable.query.filter(ExpensesTable.user == self.user_id)\
+        .join(ExpenseCategoriesTable).add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
+        .filter(ExpenseCategoriesTable.name == 'Uncategorized').order_by(desc(ExpensesTable.date))
+
+    def get_latest(self):
+        return ExpensesTable.query.filter(ExpensesTable.user == self.user_id)\
+        .join(ExpenseCategoriesTable).add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
+        .order_by(desc(ExpensesTable.date)).limit(5)
 
 class ExpenseCategoriesTable(Base):
     """Expense category of a user"""

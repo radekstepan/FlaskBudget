@@ -9,7 +9,7 @@ from presenters.auth import login_required
 
 # models
 from db.database import db_session
-from models.account import AccountsTable, AccountTransfersTable
+from models.accounts import AccountsTable, AccountTransfersTable
 
 # utils
 from utils import *

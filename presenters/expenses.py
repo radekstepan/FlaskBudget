@@ -9,10 +9,10 @@ from presenters.loans import __make_loan
 
 # models
 from db.database import db_session
-from models.expense import ExpenseCategoriesTable, ExpensesTable
-from models.account import AccountsTable
-from models.user import UsersConnectionsTable, UsersTable
-from models.loan import LoansTable
+from models.expenses import ExpenseCategoriesTable, ExpensesTable
+from models.accounts import AccountsTable
+from models.users import UsersConnectionsTable, UsersTable
+from models.loans import LoansTable
 
 # utils
 from utils import *

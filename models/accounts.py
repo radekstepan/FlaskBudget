@@ -1,11 +1,35 @@
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
+from sqlalchemy.sql.expression import asc
 
 # db
+from db.database import db_session
 from db.database import Base
+
+# models
+from models.users import UsersTable
 
 # utils
 from utils import *
+
+class Accounts():
+
+    user_id = None
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+
+    def get_all(self):
+        return AccountsTable.query.filter(AccountsTable.user == self.user_id)\
+        .filter(AccountsTable.balance != 0)\
+        .outerjoin((UsersTable, AccountsTable.name == UsersTable.id))\
+        .add_columns(UsersTable.name, UsersTable.slug)\
+        .order_by(asc(AccountsTable.type)).order_by(asc(AccountsTable.id))
+
+    def add_default_account(self):
+        a = AccountsTable(self.user_id, "Default", 'default', 0)
+        db_session.add(a)
+        db_session.commit()
 
 class AccountsTable(Base):
     """Represents a user's account to/from which to add/deduct monies"""

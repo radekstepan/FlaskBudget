@@ -6,9 +6,8 @@ from sqlalchemy.sql.expression import desc, asc
 from presenters.auth import login_required
 
 # models
-from models.expense import ExpensesTable, ExpenseCategoriesTable
-from models.account import AccountsTable
-from models.user import UsersTable
+from models.expenses import Expenses
+from models.accounts import Accounts
 
 dashboard = Module(__name__)
 
@@ -16,21 +15,20 @@ dashboard = Module(__name__)
 @dashboard.route('/')
 @login_required
 def index():
+    current_user_id = session.get('logged_in_user')
+
+    # setup objects in a context
+    exp = Expenses(current_user_id)
+    acc = Accounts(current_user_id)
+
     # get uncategorized expenses
-    uncategorized_expenses = ExpensesTable.query.filter(ExpensesTable.user == session.get('logged_in_user'))\
-    .join(ExpenseCategoriesTable).add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
-    .filter(ExpenseCategoriesTable.name == 'Uncategorized').order_by(desc(ExpensesTable.date))
+    uncategorized_expenses = exp.get_uncategorized()
 
     # get latest expenses
-    latest_expenses = ExpensesTable.query.filter(ExpensesTable.user == session.get('logged_in_user'))\
-    .join(ExpenseCategoriesTable).add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug).order_by(desc(ExpensesTable.date)).limit(5)
+    latest_expenses = exp.get_latest()
 
     # get accounts
-    accounts=AccountsTable.query.filter(AccountsTable.user == session.get('logged_in_user'))\
-    .filter(AccountsTable.balance != 0)\
-    .outerjoin((UsersTable, AccountsTable.name == UsersTable.id))\
-    .add_columns(UsersTable.name, UsersTable.slug)\
-    .order_by(asc(AccountsTable.type)).order_by(asc(AccountsTable.id))
+    accounts = acc.get_all()
 
     # split, get totals
     assets, liabilities, loans, assets_total, liabilities_total = [], [], [], 0, 0

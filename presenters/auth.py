@@ -3,7 +3,7 @@ from flask import Module, session, render_template, redirect, request, flash, ur
 from functools import wraps
 
 # models
-from models.user import UsersTable
+from models.users import UsersTable
 
 auth = Module(__name__)
 

@@ -5,9 +5,8 @@ from flask import Module, session, render_template, redirect, request, flash
 from presenters.auth import login_required
 
 # models
-from db.database import db_session
-from models.user import UsersConnectionsTable, UsersKeysTable, UsersTable
-from models.account import AccountsTable
+from models.users import Users
+from models.accounts import Accounts
 
 # utils
 from utils import *
@@ -22,29 +21,24 @@ def add_private():
     if request.method == 'POST':
         new_user_name, current_user_id = request.form['name'], session.get('logged_in_user')
 
+        # setup objects in a context
+        useri = Users(current_user_id)
+
         # blank name?
         if new_user_name:
             # already exists?
-            if not UsersTable.query\
-                .filter(UsersTable.associated_with == current_user_id)\
-                .filter(UsersTable.name == new_user_name).first():
+            if not useri.is_connection(name=new_user_name):
 
                 # create new private user
-                new_user = UsersTable(new_user_name, True)
-                db_session.add(new_user)
-                db_session.commit()
+                new_user_id = useri.add_private_user(new_user_name)
 
                 # give the user a default account so we can do loans
-                a = AccountsTable(new_user.id, "Default", 'default', 0)
-                db_session.add(a)
+                acc = Accounts(new_user_id)
+                acc.add_default_account()
 
                 # create connections from us to them and back
-                c = UsersConnectionsTable(current_user_id, new_user.id)
-                db_session.add(c)
-                c = UsersConnectionsTable(new_user.id, current_user_id)
-                db_session.add(c)
+                useri.add_connection(new_user_id)
 
-                db_session.commit()
                 flash('Private user added')
 
             else:
@@ -64,19 +58,19 @@ def connect_with_user():
         # fetch values and check they are actually provided
         if 'key' in request.form:
             key_value = request.form['key']
-            key = UsersKeysTable.query.filter(UsersKeysTable.key == key_value).filter(UsersKeysTable.expires > today_timestamp()).first()
+
+            useri = Users(current_user_id)
+
+            key_user_id = useri.validate_key(key_value)
+
             # valid key
-            if key:
-                # cannot connect to ourselves
-                if not key.user == current_user_id:
+            if key_user_id:
+                # cannot connect to ourselves and make a connection that has already been made ;)
+                if not key_user_id == current_user_id and not useri.is_connection(user_id=key_user_id):
 
                     # create connections from us to them and back
-                    c = UsersConnectionsTable(current_user_id, key.user)
-                    db_session.add(c)
-                    c = UsersConnectionsTable(key.user, current_user_id)
-                    db_session.add(c)
+                    useri.add_connection(key_user_id)
 
-                    db_session.commit()
                     flash('Connection made')
 
                 else: error = 'I can haz myself impossible'
@@ -90,12 +84,9 @@ def connect_with_user():
 def generate_key():
     current_user_id = session.get('logged_in_user')
 
-    # fetch key
-    key = UsersKeysTable.query.filter(UsersKeysTable.user == current_user_id).first()
-    # generate key
-    if not key:
-        key = UsersKeysTable(current_user_id)
-        db_session.add(key)
-        db_session.commit()
+    useri = Users(current_user_id)
+
+    # fetch/generate key
+    key = useri.get_key()
 
     return render_template('admin_generate_user_key.html', **locals())

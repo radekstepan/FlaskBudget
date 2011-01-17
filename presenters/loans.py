@@ -10,9 +10,9 @@ from presenters.accounts import __account_transfer
 
 # models
 from db.database import db_session
-from models.user import UsersTable, UsersConnectionsTable
-from models.loan import LoansTable
-from models.account import AccountsTable
+from models.users import UsersTable, UsersConnectionsTable
+from models.loans import LoansTable
+from models.accounts import AccountsTable
 
 # utils
 from utils import *

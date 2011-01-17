@@ -9,7 +9,7 @@ from presenters.auth import login_required
 # models
 from db.database import db_session
 from models.income import IncomeTable, IncomeCategoriesTable
-from models.account import AccountsTable
+from models.accounts import AccountsTable
 
 # utils
 from utils import *
