@@ -8,7 +8,7 @@ from presenters.auth import login_required
 
 # models
 from db.database import db_session
-from models.income import IncomeTable, IncomeCategoriesTable
+from models.income import IncomeTable, IncomeCategoriesTable, Income
 from models.accounts import AccountsTable
 
 # utils
@@ -29,27 +29,24 @@ income = Module(__name__)
 def index(date=None, category=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
+    inc = Income(current_user_id)
+
     # fetch entries
-    entries=IncomeTable.query\
-    .filter(IncomeTable.user == current_user_id)\
-    .join(IncomeCategoriesTable)\
-    .add_columns(IncomeCategoriesTable.name, IncomeCategoriesTable.slug)\
-    .order_by(desc(IncomeTable.date)).order_by(desc(IncomeTable.id))
+    entries = inc.get_entries()
 
     # categories
-    categories = IncomeCategoriesTable.query.filter(IncomeCategoriesTable.user == current_user_id).order_by(IncomeCategoriesTable.name)
+    categories = inc.get_categories()
     # provided category?
     if category:
         # search for the slug
-        for cat in categories:
-            if cat.slug == category:
-                entries = entries.filter(IncomeTable.category == cat.id)
-                break
+        category_id = inc.is_category(slug=category)
+        if category_id:
+            entries = inc.get_entries(category_id=category_id)
 
     # provided a date range?
     date_range = translate_date_range(date)
     if date_range:
-        entries = entries.filter(IncomeTable.date >= date_range['low']).filter(IncomeTable.date <= date_range['high'])
+        entries = inc.get_entries(date_from=date_range['low'], date_to=date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
 
@@ -125,22 +122,18 @@ def add_category():
     if request.method == 'POST':
         new_category_name, current_user_id = request.form['name'], session.get('logged_in_user')
 
+        inc = Income(current_user_id)
+
         # blank name?
         if new_category_name:
             # already exists?
-            if not IncomeCategoriesTable.query\
-                .filter(IncomeCategoriesTable.user == current_user_id)\
-                .filter(IncomeCategoriesTable.name == new_category_name).first():
+            if not inc.is_category(name=new_category_name):
 
                 # create category
-                c = IncomeCategoriesTable(current_user_id, new_category_name)
-                db_session.add(c)
-                db_session.commit()
+                inc.add_category(new_category_name)
                 flash('Income category added')
 
-            else:
-                error = 'You already have a category under that name'
-        else:
-            error = 'You need to provide a name'
+            else: error = 'You already have a category under that name'
+        else: error = 'You need to provide a name'
 
     return render_template('admin_add_income_category.html', error=error)

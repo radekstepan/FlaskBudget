@@ -9,7 +9,7 @@ from presenters.loans import __make_loan
 
 # models
 from db.database import db_session
-from models.expenses import ExpenseCategoriesTable, ExpensesTable
+from models.expenses import ExpenseCategoriesTable, ExpensesTable, Expenses
 from models.accounts import AccountsTable
 from models.users import UsersConnectionsTable, UsersTable
 from models.loans import LoansTable
@@ -32,27 +32,24 @@ expenses = Module(__name__)
 def index(date=None, category=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
+    exp = Expenses(current_user_id)
+
     # fetch entries
-    entries=ExpensesTable.query\
-    .filter(ExpensesTable.user == current_user_id)\
-    .join(ExpenseCategoriesTable)\
-    .add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
-    .order_by(desc(ExpensesTable.date)).order_by(desc(ExpensesTable.id))
+    entries = exp.get_entries()
 
     # categories
-    categories = ExpenseCategoriesTable.query.filter(ExpenseCategoriesTable.user == current_user_id).order_by(ExpenseCategoriesTable.name)
+    categories = exp.get_categories()
     # provided category?
     if category:
         # search for the slug
-        for cat in categories:
-            if cat.slug == category:
-                entries = entries.filter(ExpensesTable.category == cat.id)
-                break
+        category_id = exp.is_category(slug=category)
+        if category_id:
+            entries = exp.get_entries(category_id=category_id)
 
     # provided a date range?
     date_range = translate_date_range(date)
     if date_range:
-        entries = entries.filter(ExpensesTable.date >= date_range['low']).filter(ExpensesTable.date <= date_range['high'])
+        entries = exp.get_entries(date_from=date_range['low'], date_to=date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
 
@@ -193,22 +190,18 @@ def add_category():
     if request.method == 'POST':
         new_category_name, current_user_id = request.form['name'], session.get('logged_in_user')
 
+        exp = Expenses(current_user_id)
+
         # blank name?
         if new_category_name:
             # already exists?
-            if not ExpenseCategoriesTable.query\
-                .filter(ExpenseCategoriesTable.user == current_user_id)\
-                .filter(ExpenseCategoriesTable.name == new_category_name).first():
+            if not exp.is_category(name=new_category_name):
 
                 # create category
-                c = ExpenseCategoriesTable(current_user_id, new_category_name)
-                db_session.add(c)
-                db_session.commit()
+                exp.add_category(new_category_name)
                 flash('Expense category added')
 
-            else:
-                error = 'You already have a category under that name'
-        else:
-            error = 'You need to provide a name'
+            else: error = 'You already have a category under that name'
+        else: error = 'You need to provide a name'
 
     return render_template('admin_add_expense_category.html', error=error)

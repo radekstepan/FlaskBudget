@@ -1,29 +1,74 @@
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
+from sqlalchemy.sql.expression import desc
 
 # db
+from db.database import db_session
 from db.database import Base
 
 # utils
 from utils import *
-from sqlalchemy.sql.expression import desc
 
 class Expenses():
 
     user_id = None
 
+    entries = None
+    categories = None
+
     def __init__(self, user_id):
         self.user_id = user_id
 
-    def get_uncategorized(self):
-        return ExpensesTable.query.filter(ExpensesTable.user == self.user_id)\
-        .join(ExpenseCategoriesTable).add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
-        .filter(ExpenseCategoriesTable.name == 'Uncategorized').order_by(desc(ExpensesTable.date))
+    def get_entries(self, category_id=None, category_name=None, date_from=None, date_to=None, limit=None):
+        if not self.entries:
+            self.entries = ExpensesTable.query\
+            .filter(ExpensesTable.user == self.user_id)\
+            .join(ExpenseCategoriesTable)\
+            .add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
+            .order_by(desc(ExpensesTable.date)).order_by(desc(ExpensesTable.id))
 
-    def get_latest(self):
-        return ExpensesTable.query.filter(ExpensesTable.user == self.user_id)\
-        .join(ExpenseCategoriesTable).add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
-        .order_by(desc(ExpensesTable.date)).limit(5)
+        # provided category id
+        if category_id:
+            self.entries = self.entries.filter(ExpensesTable.category == category_id)
+
+        # provided category name
+        if category_name:
+            self.entries = self.entries.filter(ExpenseCategoriesTable.name == category_name)
+
+        # provided date range
+        if date_from and date_to:
+            self.entries = self.entries.filter(ExpensesTable.date >= date_from).filter(ExpensesTable.date <= date_to)
+
+        # provided count
+        if limit:
+            self.entries = self.entries.limit(5)
+
+        return self.entries
+
+    def get_categories(self):
+        if not self.categories:
+            self.categories = ExpenseCategoriesTable.query\
+            .filter(ExpenseCategoriesTable.user == self.user_id).order_by(ExpenseCategoriesTable.name)
+        return self.categories
+
+    def is_category(self, slug=None, name=None):
+        categories = self.get_categories()
+        for cat in categories:
+            if not slug:
+                # assume name
+                if cat.name == name:
+                    return cat.id
+                    break
+            else:
+                # assume slug
+                if cat.slug == slug:
+                    return cat.id
+                    break
+
+    def add_category(self, name):
+        c = ExpenseCategoriesTable(self.user_id, name)
+        db_session.add(c)
+        db_session.commit()
 
 class ExpenseCategoriesTable(Base):
     """Expense category of a user"""

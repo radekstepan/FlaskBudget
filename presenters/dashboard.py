@@ -17,17 +17,16 @@ dashboard = Module(__name__)
 def index():
     current_user_id = session.get('logged_in_user')
 
-    # setup objects in a context
-    exp = Expenses(current_user_id)
-    acc = Accounts(current_user_id)
-
     # get uncategorized expenses
-    uncategorized_expenses = exp.get_uncategorized()
+    exp = Expenses(current_user_id)
+    uncategorized_expenses = exp.get_entries(category_name="Uncategorized")
 
     # get latest expenses
-    latest_expenses = exp.get_latest()
+    exp = Expenses(current_user_id)
+    latest_expenses = exp.get_entries(limit=5)
 
     # get accounts
+    acc = Accounts(current_user_id)
     accounts = acc.get_all()
 
     # split, get totals
