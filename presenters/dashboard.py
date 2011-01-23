@@ -27,7 +27,7 @@ def index():
 
     # get accounts
     acc = Accounts(current_user_id)
-    accounts = acc.get_all()
+    accounts = acc.get_accounts_and_loans()
 
     # split, get totals
     assets, liabilities, loans, assets_total, liabilities_total = [], [], [], 0, 0

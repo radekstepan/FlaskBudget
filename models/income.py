@@ -51,17 +51,19 @@ class Income():
             .filter(IncomeCategoriesTable.user == self.user_id).order_by(IncomeCategoriesTable.name)
         return self.categories
 
-    def is_category(self, slug=None, name=None):
+    def is_category(self, slug=None, name=None, id=None):
         categories = self.get_categories()
         for cat in categories:
-            if not slug:
-                # assume name
+            if slug:
+                if cat.slug == slug:
+                    return cat.id
+                    break
+            elif name:
                 if cat.name == name:
                     return cat.id
                     break
-            else:
-                # assume slug
-                if cat.slug == slug:
+            elif id:
+                if cat.id == int(id):
                     return cat.id
                     break
 
@@ -69,6 +71,12 @@ class Income():
         c = IncomeCategoriesTable(self.user_id, name)
         db_session.add(c)
         db_session.commit()
+
+    def add_income(self, account_id, category_id, date, description, amount):
+        i = IncomeTable(self.user_id, date, category_id, description, account_id, amount)
+        db_session.add(i)
+        db_session.commit()
+        
 
 class IncomeCategoriesTable(Base):
     """Income category of a user"""

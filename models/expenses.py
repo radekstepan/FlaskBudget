@@ -51,17 +51,19 @@ class Expenses():
             .filter(ExpenseCategoriesTable.user == self.user_id).order_by(ExpenseCategoriesTable.name)
         return self.categories
 
-    def is_category(self, slug=None, name=None):
+    def is_category(self, slug=None, name=None, id=None):
         categories = self.get_categories()
         for cat in categories:
-            if not slug:
-                # assume name
+            if slug:
+                if cat.slug == slug:
+                    return cat.id
+                    break
+            elif name:
                 if cat.name == name:
                     return cat.id
                     break
-            else:
-                # assume slug
-                if cat.slug == slug:
+            elif id:
+                if cat.id == int(id):
                     return cat.id
                     break
 

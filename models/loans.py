@@ -2,10 +2,20 @@
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
 
 # db
+from db.database import db_session
 from db.database import Base
 
-# utils
-from utils import *
+class Loans():
+
+    user_id = None
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+
+    def add_loan(self, other_user_id, date, account_id, description, amount):
+        l = LoansTable(self.user_id, other_user_id, date, account_id, description, amount)
+        db_session.add(l)
+        db_session.commit()
 
 class LoansTable(Base):
     """A loan from one user to another"""

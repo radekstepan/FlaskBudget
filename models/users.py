@@ -15,23 +15,25 @@ class Users():
 
     def __init__(self, user_id):
         self.user_id = user_id
-        self.connections = self.__set_connections()
 
-    def __set_connections(self):
-        # fetch users from connections from us
-        return UsersTable.query\
-        .join((UsersConnectionsTable, (UsersTable.id == UsersConnectionsTable.to_user)))\
-        .filter(UsersConnectionsTable.from_user == self.user_id)
+    def get_connections(self):
+        if not self.connections:
+            # fetch users from connections from us
+            self.connections = UsersTable.query\
+            .join((UsersConnectionsTable, (UsersTable.id == UsersConnectionsTable.to_user)))\
+            .filter(UsersConnectionsTable.from_user == self.user_id)
+        return self.connections
 
     def is_connection(self, name=None, user_id=None):
+        connections = self.get_connections()
         if not name:
             # assume user id
-            for usr in self.connections:
+            for usr in connections:
                 if usr.id == user_id:
                     return True
         else:
             # assume user_id
-            for usr in self.connections:
+            for usr in connections:
                 if usr.name == name:
                     return True
 

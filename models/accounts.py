@@ -16,20 +16,74 @@ class Accounts():
 
     user_id = None
 
+    accounts = None
+    accounts_and_loans = None
+
     def __init__(self, user_id):
         self.user_id = user_id
 
-    def get_all(self):
-        return AccountsTable.query.filter(AccountsTable.user == self.user_id)\
-        .filter(AccountsTable.balance != 0)\
-        .outerjoin((UsersTable, AccountsTable.name == UsersTable.id))\
-        .add_columns(UsersTable.name, UsersTable.slug)\
-        .order_by(asc(AccountsTable.type)).order_by(asc(AccountsTable.id))
+    def get_accounts(self):
+        if not self.accounts:
+            self.accounts = AccountsTable.query.filter(AccountsTable.user == self.user_id)\
+            .filter(AccountsTable.type != "loan")\
+            .order_by(asc(AccountsTable.type)).order_by(asc(AccountsTable.id))
+        return self.accounts
+
+    def get_accounts_and_loans(self):
+        if not self.accounts_and_loans:
+            self.accounts_and_loans = AccountsTable.query.filter(AccountsTable.user == self.user_id)\
+            .filter(AccountsTable.balance != 0)\
+            .outerjoin((UsersTable, AccountsTable.name == UsersTable.id))\
+            .add_columns(UsersTable.name, UsersTable.slug)\
+            .order_by(asc(AccountsTable.type)).order_by(asc(AccountsTable.id))
+        return self.accounts_and_loans
+
+    def modify_account_balance(self, account_id, amount):
+        account = AccountsTable.query.filter(AccountsTable.id == account_id).first()
+        if account:
+            account.balance += float(amount)
+
+            db_session.add(account)
+            db_session.commit()
+
+    def modify_user_balance(self, amount, account_id=None):
+        if not account_id:
+            a = AccountsTable.query.filter(AccountsTable.user == self.user_id).filter(AccountsTable.type != "loan")\
+            .order_by(asc(AccountsTable.id)).first()
+        else:
+            a = AccountsTable.query.filter(AccountsTable.user == self.user_id)\
+            .filter(AccountsTable.id == account_id).first()
+
+        if a:
+            a.balance += float(amount)
+
+            db_session.add(a)
+            db_session.commit()
+
+    def modify_loan_balance(self, amount, with_user_id):
+        a = AccountsTable.query.filter(AccountsTable.user == self.user_id)\
+        .filter(AccountsTable.type == "loan")\
+        .filter(AccountsTable.name == with_user_id).first()
+        if not a:
+            a = AccountsTable(self.user_id, with_user_id, 'loan', float(amount)) # create new
+        else:
+            a.balance += float(amount) # update
+
+        db_session.add(a)
+        db_session.commit()
 
     def add_default_account(self):
         a = AccountsTable(self.user_id, "Default", 'default', 0)
         db_session.add(a)
         db_session.commit()
+
+    def is_account(self, id):
+        accounts = self.get_accounts()
+
+        for acc in accounts:
+            if acc.id == int(id):
+                return acc.id
+                break
 
 class AccountsTable(Base):
     """Represents a user's account to/from which to add/deduct monies"""

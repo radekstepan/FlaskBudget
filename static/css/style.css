@@ -31,7 +31,7 @@ nav.nav ul li, nav.subnav ul li { display:inline; }
             border-bottom:1px solid #316081; }
         nav.nav ul li a.white { background:#FFF url('../img/whitetab.png') repeat-x; border-bottom:1px solid #FFF;
             color:#316182; }
-    nav.subnav ul li a { font-size:13px; padding:2px 8px; line-height:26px; height:26px;
+    nav.subnav ul li a { font-size:13px; padding:2px 8px; line-height:25px; height:25px;
         -moz-border-radius:2px 2px 0 0; -webkit-border-radius:2px 2px 0 0; border-radius:2px 2px 0 0; }
         nav.subnav ul li a:hover { background:#2A516D; }
         nav.subnav ul li a.active { background:#FFF url('../img/whitetab.png') repeat-x; color:#316182; }

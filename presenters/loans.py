@@ -10,9 +10,9 @@ from presenters.accounts import __account_transfer
 
 # models
 from db.database import db_session
-from models.users import UsersTable, UsersConnectionsTable
-from models.loans import LoansTable
-from models.accounts import AccountsTable
+from models.users import UsersTable, UsersConnectionsTable, Users
+from models.loans import LoansTable, Loans
+from models.accounts import AccountsTable, Accounts
 
 # utils
 from utils import *
@@ -93,6 +93,9 @@ def get():
     error = None
     current_user_id = session.get('logged_in_user')
 
+    acc_us = Accounts(current_user_id)
+    usr = Users(current_user_id)
+
     if request.method == 'POST':
         # fetch values and check they are actually provided
         if 'user' in request.form: from_user = request.form['user']
@@ -113,21 +116,22 @@ def get():
                 # valid date?
                 if is_date(date):
                     # valid account?
-                    a = AccountsTable.query\
-                    .filter(AccountsTable.user == current_user_id)\
-                    .filter(AccountsTable.type != 'loan')\
-                    .filter(AccountsTable.id == credit_to_account).first()
-                    if a:
+                    if acc_us.is_account(id=credit_to_account):
 
-                        l = LoansTable(from_user, current_user_id, date, credit_to_account, description, amount)
-                        db_session.add(l)
+                        acc_them = Accounts(from_user)
+                        loa = Loans(from_user)
 
-                        # transfer money
-                        __account_transfer(from_user=from_user, to_user=current_user_id, amount=amount,
-                                           to_account=credit_to_account)
+                        # add loans entry
+                        loa.add_loan(other_user_id=current_user_id, date=date, account_id=credit_to_account,
+                                     description=description, amount=amount)
 
-                        # update/create loan type account (us & them)
-                        __make_loan(from_user, current_user_id, amount)
+                        # transfer money from/to respective accounts
+                        acc_us.modify_user_balance(account_id=credit_to_account, amount=amount)
+                        acc_them.modify_user_balance(amount=-float(amount))
+
+                        # fudge loan 'account' monies
+                        acc_us.modify_loan_balance(amount=-float(amount), with_user_id=from_user)
+                        acc_them.modify_loan_balance(amount=amount, with_user_id=current_user_id)
 
                         flash('Loan received')
 
@@ -136,10 +140,8 @@ def get():
             else: error = 'Not a valid amount'
 
     # fetch users from connections from us
-    users = UsersTable.query.join((UsersConnectionsTable, (UsersTable.id == UsersConnectionsTable.to_user)))\
-    .filter(UsersConnectionsTable.from_user == current_user_id)
-
-    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
+    users = usr.get_connections()
+    accounts = acc_us.get_accounts()
 
     return render_template('admin_get_loan.html', **locals())
 
@@ -148,6 +150,9 @@ def get():
 def give():
     error = None
     current_user_id = session.get('logged_in_user')
+
+    acc_us = Accounts(current_user_id)
+    usr = Users(current_user_id)
 
     if request.method == 'POST':
         # fetch values and check they are actually provided
@@ -169,22 +174,22 @@ def give():
                 # valid date?
                 if is_date(date):
                     # valid account?
-                    a = AccountsTable.query\
-                    .filter(AccountsTable.user == current_user_id)\
-                    .filter(AccountsTable.type != 'loan')\
-                    .filter(AccountsTable.id == deduct_from_account).first()
-                    if a:
+                    if acc_us.is_account(id=deduct_from_account):
 
-                        l = LoansTable(current_user_id, to_user, date,
-                                 deduct_from_account, description, amount)
-                        db_session.add(l)
+                        acc_them = Accounts(to_user)
+                        loa = Loans(current_user_id)
 
-                        # transfer money
-                        __account_transfer(from_user=current_user_id, to_user=to_user,
-                                           amount=amount, from_account=deduct_from_account)
+                        # add loans entry
+                        loa.add_loan(other_user_id=to_user, date=date, account_id=deduct_from_account,
+                                     description=description, amount=amount)
 
-                        # update/create loan type account (us & them)
-                        __make_loan(current_user_id, to_user, amount)
+                        # transfer money from/to respective accounts
+                        acc_us.modify_user_balance(account_id=deduct_from_account, amount=-float(amount))
+                        acc_them.modify_user_balance(amount=amount)
+
+                        # fudge loan 'account' monies
+                        acc_us.modify_loan_balance(amount=amount, with_user_id=to_user)
+                        acc_them.modify_loan_balance(amount=-float(amount), with_user_id=current_user_id)
 
                         flash('Loan given')
 

@@ -64,7 +64,7 @@ def currency_format(value):
     return locale.format("%.2f", value, grouping=True).rstrip('0').rstrip('.')
 
 @app.template_filter('isloggeduserid')
-def id_logged_user_id(value):
+def is_logged_user_id(value):
     return value == session.get('logged_in_user')
 
 @app.template_filter('slugify')

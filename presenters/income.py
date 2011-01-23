@@ -9,7 +9,7 @@ from presenters.auth import login_required
 # models
 from db.database import db_session
 from models.income import IncomeTable, IncomeCategoriesTable, Income
-from models.accounts import AccountsTable
+from models.accounts import AccountsTable, Accounts
 
 # utils
 from utils import *
@@ -58,9 +58,12 @@ def index(date=None, category=None, page=1, items_per_page=10):
 
 @income.route('/income/add', methods=['GET', 'POST'])
 @login_required
-def add():
+def add_income():
     error = None
     current_user_id = session.get('logged_in_user')
+
+    inc = Income(current_user_id)
+    acc = Accounts(current_user_id)
 
     if request.method == 'POST':
         # fetch values and check they are actually provided
@@ -79,28 +82,20 @@ def add():
         if not error:
             # valid date?
             if is_date(date):
+                # valid amount?
                 if is_float(amount):
-                # valid category?
-                    if IncomeCategoriesTable.query\
-                    .filter(IncomeCategoriesTable.user == current_user_id)\
-                    .filter(IncomeCategoriesTable.id == category_id)\
-                    .first():
-                    # valid account?
-                        a = AccountsTable.query\
-                        .filter(AccountsTable.user == current_user_id)\
-                        .filter(AccountsTable.type != 'loan')\
-                        .filter(AccountsTable.id == account_id).first()
-                        if a:
+                    # valid category?
+                    if inc.is_category(id=category_id):
+                        # valid account?
+                        if acc.is_account(account_id):
 
                             # add new income
-                            i = IncomeTable(current_user_id, date, category_id, description, account_id, amount)
-                            db_session.add(i)
+                            inc.add_income(account_id=account_id, amount=amount, category_id=category_id, date=date,
+                                           description=description)
 
                             # credit to account
-                            a.balance += float(amount)
-                            db_session.add(a)
+                            acc.modify_account_balance(account_id, amount)
 
-                            db_session.commit()
                             flash('Income added')
 
                         else: error = 'Not a valid account'
@@ -109,7 +104,7 @@ def add():
             else: error = 'Not a valid date'
 
     # fetch user's categories and accounts
-    categories = IncomeCategoriesTable.query.filter(IncomeCategoriesTable.user == current_user_id).order_by(IncomeCategoriesTable.name)
+    categories = inc.get_categories()
 
     accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
 
