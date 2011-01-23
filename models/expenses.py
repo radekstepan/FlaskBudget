@@ -7,7 +7,7 @@ from db.database import db_session
 from db.database import Base
 
 # models
-from models.accounts import AccountsTable, Accounts
+from models.accounts import Accounts
 
 # utils
 from utils import *

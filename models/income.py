@@ -1,6 +1,6 @@
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
-from sqlalchemy.sql.expression import desc
+from sqlalchemy.sql.expression import desc, and_
 
 # db
 from db.database import db_session
@@ -15,6 +15,8 @@ class Income():
 
     entries = None
     categories = None
+
+    entry = None # cache
 
     def __init__(self, user_id):
         self.user_id = user_id
@@ -76,7 +78,22 @@ class Income():
         i = IncomeTable(self.user_id, date, category_id, description, account_id, amount)
         db_session.add(i)
         db_session.commit()
-        
+
+    def edit_income(self, income_id, account_id, category_id, date, description, amount):
+        i = self.get_income(income_id)
+        if i:
+            i.credit_to, i.category, i.date, i.description, i.amount = account_id, category_id, date, description, amount
+            db_session.add(i)
+            db_session.commit()
+
+            return i # return so we see the updated values
+
+    def get_income(self, income_id):
+        # if there is no cache or cache id does not match
+        if not self.entry or self.entry.id != income_id:
+            self.entry = IncomeTable.query.filter(and_(IncomeTable.user == self.user_id, IncomeTable.id == income_id)).first()
+
+        return self.entry
 
 class IncomeCategoriesTable(Base):
     """Income category of a user"""

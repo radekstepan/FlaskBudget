@@ -5,7 +5,6 @@ from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
-from presenters.loans import __make_loan
 
 # models
 from db.database import db_session

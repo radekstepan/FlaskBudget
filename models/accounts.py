@@ -45,11 +45,11 @@ class Accounts():
         return self.accounts_and_loans
 
     def modify_account_balance(self, account_id, amount):
-        account = AccountsTable.query.filter(AccountsTable.id == account_id).first()
-        if account:
-            account.balance += float(amount)
+        a = AccountsTable.query.filter(AccountsTable.id == account_id).first()
+        if a:
+            a.balance += float(amount)
 
-            db_session.add(account)
+            db_session.add(a)
             db_session.commit()
 
     def modify_user_balance(self, amount, account_id=None):

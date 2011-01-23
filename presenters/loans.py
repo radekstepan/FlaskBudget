@@ -187,31 +187,3 @@ def give():
     accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
 
     return render_template('admin_give_loan.html', **locals())
-
-def __make_loan(from_user, to_user, amount):
-    # update/create loan type account (us & them)
-    a1 = AccountsTable.query.filter(AccountsTable.user == to_user)\
-    .filter(AccountsTable.type == 'loan')\
-    .filter(AccountsTable.name == from_user).first()
-    if not a1:
-    # initial
-        a1 = AccountsTable(to_user, from_user, 'loan', -float(amount))
-        db_session.add(a1)
-    else:
-    # update
-        a1.balance -= float(amount)
-        db_session.add(a1)
-
-    a2 = AccountsTable.query.filter(AccountsTable.user == from_user)\
-    .filter(AccountsTable.type == 'loan')\
-    .filter(AccountsTable.name == to_user).first()
-    if not a2:
-    # initial
-        a2 = AccountsTable(from_user, to_user, 'loan', float(amount))
-        db_session.add(a2)
-    else:
-    # update
-        a2.balance += float(amount)
-        db_session.add(a2)
-
-    db_session.commit()

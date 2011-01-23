@@ -1,15 +1,14 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash
-from sqlalchemy.sql.expression import desc
+from flask.helpers import url_for
 from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
 
 # models
-from db.database import db_session
-from models.income import IncomeTable, IncomeCategoriesTable, Income
-from models.accounts import AccountsTable, Accounts
+from models.income import Income
+from models.accounts import Accounts
 
 # utils
 from utils import *
@@ -105,10 +104,74 @@ def add_income():
 
     # fetch user's categories and accounts
     categories = inc.get_categories()
-
-    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
+    accounts = acc.get_accounts()
 
     return render_template('admin_add_income.html', **locals())
+
+@income.route('/income/edit/<income_id>', methods=['GET', 'POST'])
+@login_required
+def edit_income(income_id):
+    current_user_id = session.get('logged_in_user')
+
+    inc = Income(current_user_id)
+
+    # is it valid?
+    income = inc.get_income(income_id)
+    if income:
+        # fetch user's categories and accounts
+        categories = inc.get_categories()
+
+        acc = Accounts(current_user_id)
+        accounts = acc.get_accounts()
+
+        if request.method == 'POST': # POST
+            error = None
+
+            # fetch values and check they are actually provided
+            if 'date' in request.form: date = request.form['date']
+            else: error = 'Not a valid date'
+            if 'category' in request.form: category_id = request.form['category']
+            else: error = 'You need to provide a category'
+            if 'credit_to' in request.form: account_id = request.form['credit_to']
+            else: error = 'You need to provide an account'
+            if 'description' in request.form and request.form['description']: description = request.form['description']
+            else: error = 'You need to provide a description'
+            if 'amount' in request.form: amount = request.form['amount']
+            else: error = 'You need to provide an amount'
+
+            # 'heavier' checks
+            if not error:
+                # valid date?
+                if is_date(date):
+                    # valid amount?
+                    if is_float(amount):
+                        # valid category?
+                        if inc.is_category(id=category_id):
+                            # valid account?
+                            if acc.is_account(account_id=account_id):
+
+                                # debit the original account
+                                print "debit account", income.credit_to
+                                acc.modify_account_balance(income.credit_to, -float(income.amount))
+                                
+                                # credit the 'new' account
+                                print "credit account", account_id
+                                acc.modify_account_balance(account_id, amount)
+
+                                # edit income entry
+                                income = inc.edit_income(account_id=account_id, amount=amount, category_id=category_id,
+                                                             date=date, description=description, income_id=income.id)
+
+                                flash('Income edited')
+
+                            else: error = 'Not a valid account'
+                        else: error = 'Not a valid category'
+                    else: error = 'Not a valid amount'
+                else: error = 'Not a valid date'
+
+        return render_template('admin_edit_income.html', **locals())
+
+    else: return redirect(url_for('income.index'))
 
 @income.route('/income/category/add', methods=['GET', 'POST'])
 @login_required
