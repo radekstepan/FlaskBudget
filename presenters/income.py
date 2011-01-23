@@ -87,7 +87,7 @@ def add_income():
                     # valid category?
                     if inc.is_category(id=category_id):
                         # valid account?
-                        if acc.is_account(account_id):
+                        if acc.is_account(account_id=account_id):
 
                             # add new income
                             inc.add_income(account_id=account_id, amount=amount, category_id=category_id, date=date,

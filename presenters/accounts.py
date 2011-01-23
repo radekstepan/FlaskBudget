@@ -1,15 +1,12 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash, url_for
-from sqlalchemy.sql.expression import asc, desc, or_, and_
-from sqlalchemy.orm import aliased
 from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
 
 # models
-from db.database import db_session
-from models.accounts import AccountsTable, AccountTransfersTable
+from models.accounts import Accounts
 
 # utils
 from utils import *
@@ -29,35 +26,26 @@ accounts = Module(__name__)
 def show_transfers(account=None, date=None, page=1, items_per_page=10):
     current_user_id = session.get('logged_in_user')
 
-    # table referred to twice, create alias
-    from_account_alias = aliased(AccountsTable)
-    to_account_alias = aliased(AccountsTable)
+    acc = Accounts(current_user_id)
+
     # fetch account transfers
-    transfers = AccountTransfersTable.query.filter(AccountTransfersTable.user == current_user_id)\
-    .order_by(desc(AccountTransfersTable.date)).order_by(desc(AccountTransfersTable.id))\
-    .join(
-            (from_account_alias, (AccountTransfersTable.from_account == from_account_alias.id)),\
-            (to_account_alias, (AccountTransfersTable.to_account == to_account_alias.id)))\
-    .add_columns(from_account_alias.name, from_account_alias.slug, to_account_alias.name, to_account_alias.slug)
+    transfers = acc.get_account_transfers()
 
     # provided a date range?
     date_range = translate_date_range(date)
     if date_range:
-        transfers = transfers\
-        .filter(AccountTransfersTable.date >= date_range['low']).filter(AccountTransfersTable.date <= date_range['high'])
+        transfers = acc.get_account_transfers(date_from=date_range['low'], date_to=date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
 
     # fetch accounts
-    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
+    accounts = acc.get_accounts()
 
     # provided an account?
     if account:
-        # search for the slug
-        for acc in accounts:
-            if acc.slug == account:
-                transfers = transfers.filter(or_(from_account_alias.slug == account, to_account_alias.slug == account))
-                break
+        # valid slug?
+        if acc.is_account(account_slug=account):
+            transfers = acc.get_account_transfers(account_slug=account)
 
     # build a paginator
     paginator = Pagination(transfers, page, items_per_page, transfers.count(),
@@ -81,15 +69,14 @@ def add_account():
                 if not account_balance: account_balance = 0
                 # is balance a valid float?
                 if is_float(account_balance):
+
+                    acc = Accounts(current_user_id)
                     # already exists?
-                    if not AccountsTable.query\
-                        .filter(AccountsTable.user == current_user_id)\
-                        .filter(AccountsTable.name == new_account_name).first():
+                    if not acc.is_account(account_slug=new_account_name):
 
                         # create new account
-                        a = AccountsTable(current_user_id, new_account_name, account_type, account_balance)
-                        db_session.add(a)
-                        db_session.commit()
+                        acc.add_account(name=new_account_name, type=account_type, balance=account_balance)
+
                         flash('Account added')
 
                     else: error = 'You already have an account under that name'
@@ -104,6 +91,8 @@ def add_account():
 def add_transfer():
     error = None
     current_user_id = session.get('logged_in_user')
+
+    acc = Accounts(current_user_id)
 
     if request.method == 'POST':
         # fetch values and check they are actually provided
@@ -125,28 +114,18 @@ def add_transfer():
                     # valid date?
                     if is_date(date):
                         # valid debit account?
-                        debit_a = AccountsTable.query\
-                        .filter(AccountsTable.user == current_user_id)\
-                        .filter(AccountsTable.type != 'loan')\
-                        .filter(AccountsTable.id == deduct_from_account).first()
-                        if debit_a:
+                        if acc.is_account(account_id=deduct_from_account):
                             # valid credit account?
-                            credit_a = AccountsTable.query\
-                            .filter(AccountsTable.user == current_user_id)\
-                            .filter(AccountsTable.type != 'loan')\
-                            .filter(AccountsTable.id == credit_to_account).first()
-                            if credit_a:
+                            if acc.is_account(account_id=credit_to_account):
 
                                 # add a new transfer row
-                                t = AccountTransfersTable(current_user_id, date, deduct_from_account, credit_to_account,
-                                                    amount)
-                                db_session.add(t)
+                                acc.add_account_transfer(date=date, deduct_from_account=deduct_from_account,
+                                                         credit_to_account=credit_to_account, amount=amount)
 
                                 # modify accounts
-                                __account_transfer(current_user_id, current_user_id, amount, deduct_from_account,
-                                                   credit_to_account)
+                                acc.modify_account_balance(deduct_from_account, -float(amount))
+                                acc.modify_account_balance(credit_to_account, amount)
 
-                                db_session.commit()
                                 flash('Monies transferred')
 
                             else: error = 'Not a valid target account'
@@ -155,7 +134,7 @@ def add_transfer():
                 else: error = 'Not a valid amount'
             else: error = 'Source and target accounts cannot be the same'
 
-    accounts = AccountsTable.query.filter(AccountsTable.user == current_user_id).filter(AccountsTable.type != 'loan')
+    accounts = acc.get_accounts()
 
     return render_template('admin_add_transfer.html', **locals())
 
@@ -163,22 +142,3 @@ def add_transfer():
 @login_required
 def edit_transfer(transfer_id):
     pass
-
-def __account_transfer(from_user, to_user, amount, from_account=None, to_account=None):
-    # fetch first user's account if not provided (default)
-    if not from_account:
-        a = AccountsTable.query.filter(AccountsTable.user == from_user).order_by(asc(AccountsTable.id)).first()
-        from_account = a.id
-    if not to_account:
-        a = AccountsTable.query.filter(AccountsTable.user == to_user).order_by(asc(AccountsTable.id)).first()
-        to_account = a.id
-
-    # deduct
-    a1 = AccountsTable.query.filter(AccountsTable.user == from_user).filter(AccountsTable.id == from_account).first()
-    a1.balance -= float(amount)
-    db_session.add(a1)
-
-    # credit
-    a2 = AccountsTable.query.filter(AccountsTable.user == to_user).filter(AccountsTable.id == to_account).first()
-    a2.balance += float(amount)
-    db_session.add(a2)

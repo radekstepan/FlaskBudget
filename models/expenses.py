@@ -1,10 +1,13 @@
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
-from sqlalchemy.sql.expression import desc
+from sqlalchemy.sql.expression import desc, asc
 
 # db
 from db.database import db_session
 from db.database import Base
+
+# models
+from models.accounts import AccountsTable, Accounts
 
 # utils
 from utils import *
@@ -70,6 +73,29 @@ class Expenses():
     def add_category(self, name):
         c = ExpenseCategoriesTable(self.user_id, name)
         db_session.add(c)
+        db_session.commit()
+
+    def add_expense(self, date, description, amount, category_id=None, account_id=None):
+        # add into uncategorized expenses if category not provided
+        if not category_id:
+            category_id = self.is_category(name="Uncategorized")
+            if not category_id:
+                # crete a new one
+                c = ExpenseCategoriesTable(self.user_id, u'Uncategorized')
+                db_session.add(c)
+                db_session.commit()
+                category_id = c.id
+
+        # find default account if not provided
+        if not account_id:
+            acc = Accounts(self.user_id)
+            account_id = acc.get_default_account()
+            if not account_id:
+                account_id = acc.add_default_account()
+
+        # add the actual expense
+        e = ExpensesTable(self.user_id, date, category_id, description, account_id, amount)
+        db_session.add(e)
         db_session.commit()
 
 class ExpenseCategoriesTable(Base):

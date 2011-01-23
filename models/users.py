@@ -24,18 +24,22 @@ class Users():
             .filter(UsersConnectionsTable.from_user == self.user_id)
         return self.connections
 
-    def is_connection(self, name=None, user_id=None):
+    def is_connection(self, name=None, user_id=None, slug=None):
         connections = self.get_connections()
-        if not name:
-            # assume user id
-            for usr in connections:
-                if usr.id == user_id:
-                    return True
-        else:
-            # assume user_id
+        if name:
             for usr in connections:
                 if usr.name == name:
-                    return True
+                    return usr.id
+
+        elif user_id:
+            for usr in connections:
+                if usr.id == int(user_id):
+                    return usr.id
+
+        elif slug:
+            for usr in connections:
+                if usr.slug == slug:
+                    return usr.id
 
         return False
 

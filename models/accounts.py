@@ -1,6 +1,7 @@
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
-from sqlalchemy.sql.expression import asc
+from sqlalchemy.sql.expression import asc, desc, or_
+from sqlalchemy.orm import aliased
 
 # db
 from db.database import db_session
@@ -18,6 +19,11 @@ class Accounts():
 
     accounts = None
     accounts_and_loans = None
+    transfers = None
+
+    # preserve aliases when aliasing AccountsTable
+    alias1 = None
+    alias2 = None
 
     def __init__(self, user_id):
         self.user_id = user_id
@@ -72,18 +78,59 @@ class Accounts():
         db_session.add(a)
         db_session.commit()
 
+    def get_default_account(self):
+        a = AccountsTable.query.filter(AccountsTable.user == self.user_id).order_by(asc(AccountsTable.id)).first()
+        if a: return a.id
+
     def add_default_account(self):
         a = AccountsTable(self.user_id, "Default", 'default', 0)
         db_session.add(a)
         db_session.commit()
 
-    def is_account(self, id):
+    def add_account(self, name, type, balance):
+        a = AccountsTable(self.user_id, name, type, balance)
+        db_session.add(a)
+        db_session.commit()
+
+    def is_account(self, account_id=None, account_slug=None):
         accounts = self.get_accounts()
 
-        for acc in accounts:
-            if acc.id == int(id):
-                return acc.id
-                break
+        if account_id:
+            for acc in accounts:
+                if acc.id == int(account_id):
+                    return acc.id
+
+        elif account_slug:
+            for acc in accounts:
+                if acc.slug == account_slug:
+                    return acc.id
+
+    def add_account_transfer(self, date, deduct_from_account, credit_to_account, amount):
+        t = AccountTransfersTable(self.user_id, date, deduct_from_account, credit_to_account, amount)
+        db_session.add(t)
+        db_session.commit()
+
+    def get_account_transfers(self, date_from=None, date_to=None, account_slug=None):
+        if not self.transfers:
+            # table referred to twice, create alias
+            self.alias1, self.alias2 = aliased(AccountsTable), aliased(AccountsTable)
+            # fetch account transfers
+            self.transfers = AccountTransfersTable.query.filter(AccountTransfersTable.user == self.user_id)\
+            .order_by(desc(AccountTransfersTable.date)).order_by(desc(AccountTransfersTable.id))\
+            .join(
+                    (self.alias1, (AccountTransfersTable.from_account == self.alias1.id)),\
+                    (self.alias2, (AccountTransfersTable.to_account == self.alias2.id)))\
+            .add_columns(self.alias1.name, self.alias1.slug, self.alias2.name, self.alias2.slug)
+
+        if date_from and date_to:
+            self.transfers = self.transfers\
+            .filter(AccountTransfersTable.date >= date_from).filter(AccountTransfersTable.date <= date_to)
+
+        if account_slug:
+            self.transfers = self.transfers\
+            .filter(or_(self.alias1.slug == account_slug, self.alias2.slug == account_slug))
+
+        return self.transfers
 
 class AccountsTable(Base):
     """Represents a user's account to/from which to add/deduct monies"""
