@@ -1,0 +1,60 @@
+{% extends "admin_layout.html" %}
+{% block nav %}
+<nav class="nav">
+    <ul>
+        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
+        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
+        <li><a href="{{ url_for('accounts.show_transfers') }}" class="active">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
+    </ul>
+</nav>
+<nav class="subnav">
+    <ul>
+        <li><a href="{{ url_for('accounts.show_transfers') }}">Transfers</a></li>
+        <li><a href="{{ url_for('accounts.add_account') }}">Add Account</a></li>
+        <li><a href="{{ url_for('accounts.add_transfer') }}" class="active">Account Transfer</a></li>
+    </ul>
+</nav>
+{% endblock %}
+
+{% block header %}<h1>Edit Account Transfer #{{ transfer.id }}</h1>{% endblock %}
+
+{% block body %}
+<div class="left grid_6">
+    <form action="{{ url_for('accounts.edit_transfer', transfer_id=transfer.id) }}" method=post class="form_1">
+        <dl>
+            <dt>Date:
+            <dd><input type=text name=date value="{{ transfer.date }}">
+
+            <dt>From Account:
+            <dd><select name=deduct_from>
+                {% for account in accounts %}
+                    {% if account.id == transfer.from_account %}
+                        <option value="{{ account.id }}" selected="selected">{{ account.name }}</option>
+                    {% else %}
+                        <option value="{{ account.id }}">{{ account.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+
+            <dt>To Account:
+            <dd><select name=credit_to>
+                {% for account in accounts %}
+                    {% if account.id == transfer.to_account %}
+                        <option value="{{ account.id }}" selected="selected">{{ account.name }}</option>
+                    {% else %}
+                        <option value="{{ account.id }}">{{ account.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+
+            <dt>Amount:
+            <dd><input type=text name=amount value="{{ transfer.amount }}">
+
+            <dd><input type=submit value="Edit">
+        </dl>
+    </form>
+</div>
+{% endblock %}

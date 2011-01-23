@@ -141,4 +141,62 @@ def add_transfer():
 @accounts.route('/account/transfer/edit/<transfer_id>', methods=['GET', 'POST'])
 @login_required
 def edit_transfer(transfer_id):
-    pass
+    current_user_id = session.get('logged_in_user')
+
+    acc = Accounts(current_user_id)
+    accounts = acc.get_accounts()
+
+    # is it valid?
+    transfer = acc.get_transfer(transfer_id)
+    if transfer:
+
+        if request.method == 'POST': # POST
+            error = None
+            
+            # fetch values and check they are actually provided
+            if 'date' in request.form: date = request.form['date']
+            else: error = 'You need to provide a date'
+            if 'amount' in request.form: amount = request.form['amount']
+            else: error = 'You need to provide an amount'
+            if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
+            else: error = 'You need to provide an account to deduct from'
+            if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
+            else: error = 'You need to provide an account to credit to'
+
+            # 'heavier' checks
+            if not error:
+                # source and target the same?
+                if not deduct_from_account == credit_to_account:
+                    # valid amount?
+                    if is_float(amount):
+                        # valid date?
+                        if is_date(date):
+                            # valid debit account?
+                            if acc.is_account(account_id=deduct_from_account):
+                                # valid credit account?
+                                if acc.is_account(account_id=credit_to_account):
+
+                                    # modify accounts to original state
+                                    acc.modify_account_balance(transfer.from_account, transfer.amount)
+                                    acc.modify_account_balance(transfer.to_account, -float(transfer.amount))
+
+                                    # new state
+                                    acc.modify_account_balance(deduct_from_account, -float(amount))
+                                    acc.modify_account_balance(credit_to_account, amount)
+
+                                    # edit transfer row
+                                    transfer = acc.edit_account_transfer(date=date, deduct_from_account=deduct_from_account,
+                                                             credit_to_account=credit_to_account, amount=amount,
+                                                             transfer_id=transfer_id)
+
+                                    flash('Transfer edited')
+
+                                else: error = 'Not a valid target account'
+                            else: error = 'Not a valid source account'
+                        else: error = 'Not a valid date'
+                    else: error = 'Not a valid amount'
+                else: error = 'Source and target accounts cannot be the same'
+
+        return render_template('admin_edit_transfer.html', **locals())
+
+    else: return redirect(url_for('accounts.show_transfers'))

@@ -1,6 +1,6 @@
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
-from sqlalchemy.sql.expression import asc, desc, or_
+from sqlalchemy.sql.expression import asc, desc, or_, and_
 from sqlalchemy.orm import aliased
 
 # db
@@ -24,6 +24,8 @@ class Accounts():
     # preserve aliases when aliasing AccountsTable
     alias1 = None
     alias2 = None
+
+    transfer = None # cache
 
     def __init__(self, user_id):
         self.user_id = user_id
@@ -110,6 +112,15 @@ class Accounts():
         db_session.add(t)
         db_session.commit()
 
+    def edit_account_transfer(self, date, deduct_from_account, credit_to_account, amount, transfer_id):
+        t = self.get_transfer(transfer_id)
+        if t:
+            t.date, t.from_account, t.to_account, t.amount = date, deduct_from_account, credit_to_account, amount
+            db_session.add(t)
+            db_session.commit()
+
+            return t # return so we see the updated values
+
     def get_account_transfers(self, date_from=None, date_to=None, account_slug=None):
         if not self.transfers:
             # table referred to twice, create alias
@@ -131,6 +142,14 @@ class Accounts():
             .filter(or_(self.alias1.slug == account_slug, self.alias2.slug == account_slug))
 
         return self.transfers
+
+    def get_transfer(self, transfer_id):
+        # if there is no cache or cache id does not match
+        if not self.transfer or self.transfer.id != transfer_id:
+            self.transfer = AccountTransfersTable.query\
+            .filter(and_(AccountTransfersTable.user == self.user_id, AccountTransfersTable.id == transfer_id)).first()
+
+        return self.transfer
 
 class AccountsTable(Base):
     """Represents a user's account to/from which to add/deduct monies"""
