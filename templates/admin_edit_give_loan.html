@@ -1,0 +1,63 @@
+{% extends "admin_layout.html" %}
+{% block nav %}
+<nav class="nav">
+    <ul>
+        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
+        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('loans.index') }}" class="active">Loans</a></li>
+        <li><a href="{{ url_for('accounts.show_transfers') }}">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
+    </ul>
+</nav>
+<nav class="subnav">
+    <ul>
+        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
+        <li><a href="{{ url_for('loans.give') }}" class="active">Give Loan</a></li>
+        <li><a href="{{ url_for('loans.get') }}">Get Loan</a></li>
+    </ul>
+</nav>
+{% endblock %}
+
+{% block header %}<h1>Editing Giving Loan "{{ loan.description }}"</h1>{% endblock %}
+
+{% block body %}
+<div class="left grid_6">
+    <form action="{{ url_for('loans.edit_loan', loan_id=loan.id) }}" method=post class="form_1">
+        <dl>
+            <dt>To User:
+            <dd><select name=user>
+                {% for user in users %}
+                    {% if user.id == loan.to_user %}
+                        <option value="{{ user.id }}" selected>{{ user.name }}</option>
+                    {% else %}
+                        <option value="{{ user.id }}">{{ user.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+
+            <dt>Date:
+            <dd><input type=text name=date value="{{ loan.date }}">
+
+            <dt>From Account:
+            <dd><select name=deduct_from>
+                {% for account in accounts %}
+                    {% if account.id == loan.account %}
+                        <option value="{{ account.id }}" selected>{{ account.name }}</option>
+                    {% else %}
+                        <option value="{{ account.id }}">{{ account.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+
+            <dt>Description:
+            <dd><input type=text name=description value="{{ loan.description }}">
+
+            <dt>Amount:
+            <dd><input type=text name=amount value="{{ loan.amount }}">
+
+            <dd><input type=submit value="Edit">
+        </dl>
+    </form>
+</div>
+{% endblock %}

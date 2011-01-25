@@ -20,6 +20,8 @@ class Loans():
     alias1 = None
     alias2 = None
 
+    loan = None # cache
+
     def __init__(self, user_id):
         self.user_id = user_id
 
@@ -56,6 +58,33 @@ class Loans():
         l = LoansTable(self.user_id, other_user_id, date, account_id, description, amount)
         db_session.add(l)
         db_session.commit()
+
+    # works for users in 'both' directions!
+    def get_loan(self, loan_id):
+        # if there is no cache or cache id does not match
+        if not self.loan or self.loan.id != loan_id:
+            self.loan = LoansTable.query\
+            .filter(or_(LoansTable.from_user == self.user_id, LoansTable.to_user == self.user_id))\
+            .filter(LoansTable.id == loan_id).first()
+
+        return self.loan
+
+    # works for users in 'both' directions!
+    def edit_loan(self, other_user_id, date, account_id, description, amount, loan_id):
+        l = self.get_loan(loan_id)
+        if l:
+            if other_user_id != self.user_id: # us getting loan
+                l.from_user, l.to_user = other_user_id, self.user_id
+            else: # us giving a loan
+                l.from_user, l.to_user = self.user_id, other_user_id
+
+            l.date, l.account, l.description, l.amount = date, account_id, description, amount
+
+            db_session.add(l)
+            db_session.commit()
+
+            return l # return so we see the updated values
+
 
 class LoansTable(Base):
     """A loan from one user to another"""
