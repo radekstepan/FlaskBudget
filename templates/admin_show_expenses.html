@@ -32,9 +32,17 @@
                 <span class="amount">&minus; &pound;{{ entry.0.amount|currencyformat }}</span>
                 {{ entry.0.description }} in <a href="{{ url_for('expenses.index', category=entry.2) }}">{{ entry.1 }}</a>
             </p>
-            <div class="date">{{ entry.0.date|datetimeformat }}</div>
+            <div class="date">
+                {% if entry.3 != None %}
+                    shared with <a href="{{ url_for('loans.index', user=entry.4) }}">{{ entry.3 }}</a>
+                {% endif %}
+                {{ entry.0.date|datetimeformat }}
+            </div>
             <div class="actions">
-                <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
+                <ul>
+                    <li class="first"><a href="{{ url_for('expenses.edit_expense', expense_id=entry.0.id) }}">Edit</a></li>
+                    <li><a href="#">Delete</a></li>
+                </ul>
             </div>
         </li>
         {% if loop.last %}

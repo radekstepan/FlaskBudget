@@ -59,6 +59,8 @@ class Loans():
         db_session.add(l)
         db_session.commit()
 
+        return l.id
+
     # works for users in 'both' directions!
     def get_loan(self, loan_id):
         # if there is no cache or cache id does not match

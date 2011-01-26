@@ -63,6 +63,14 @@ create table expenses (
   amount string not null
 );
 
+drop table if exists expenses_to_loans;
+create table expenses_to_loans (
+  id integer primary key autoincrement,
+  expense_id integer not null,
+  loan_id integer not null,
+  shared_with_user_id integer not null
+);
+
 drop table if exists accounts;
 create table accounts (
   id integer primary key autoincrement,

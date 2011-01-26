@@ -1,6 +1,6 @@
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
-from sqlalchemy.sql.expression import desc, asc
+from sqlalchemy.sql.expression import desc, and_
 
 # db
 from db.database import db_session
@@ -8,6 +8,8 @@ from db.database import Base
 
 # models
 from models.accounts import Accounts
+from models.loans import LoansTable
+from models.users import UsersTable
 
 # utils
 from utils import *
@@ -19,6 +21,8 @@ class Expenses():
     entries = None
     categories = None
 
+    entry = None # cache
+
     def __init__(self, user_id):
         self.user_id = user_id
 
@@ -28,7 +32,10 @@ class Expenses():
             .filter(ExpensesTable.user == self.user_id)\
             .join(ExpenseCategoriesTable)\
             .add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
-            .order_by(desc(ExpensesTable.date)).order_by(desc(ExpensesTable.id))
+            .order_by(desc(ExpensesTable.date)).order_by(desc(ExpensesTable.id))\
+            .outerjoin(ExpensesToLoansTable)\
+            .outerjoin((UsersTable, (UsersTable.id == ExpensesToLoansTable.shared_with)))\
+            .add_columns(UsersTable.name, UsersTable.slug)
 
         # provided category id
         if category_id:
@@ -98,6 +105,22 @@ class Expenses():
         db_session.add(e)
         db_session.commit()
 
+        return e.id
+
+    def get_expense(self, expense_id):
+        # if there is no cache or cache id does not match
+        if not self.entry or self.entry.id != expense_id:
+            self.entry = ExpensesTable.query\
+            .filter(and_(ExpensesTable.user == self.user_id, ExpensesTable.id == expense_id)).first()
+
+        return self.entry
+
+    # blindly obey
+    def link_to_loan(self, expense_id, loan_id, shared_with):
+        l = ExpensesToLoansTable(expense=expense_id, loan=loan_id, shared_with=shared_with)
+        db_session.add(l)
+        db_session.commit()
+
 class ExpenseCategoriesTable(Base):
     """Expense category of a user"""
 
@@ -131,3 +154,17 @@ class ExpensesTable(Base):
         self.description = description
         self.deduct_from = deduct_from
         self.amount = amount
+
+class ExpensesToLoansTable(Base):
+    """Linking shared expenses together"""
+
+    __tablename__ = 'expenses_to_loans'
+    id = Column(Integer, primary_key=True)
+    expense = Column('expense_id', Integer, ForeignKey('expenses.id'))
+    loan = Column('loan_id', Integer, ForeignKey('loans.id'))
+    shared_with = Column('shared_with_user_id', Integer, ForeignKey('users.id')) # shortcut
+
+    def __init__(self, expense=None, loan=None, shared_with=None):
+        self.expense = expense
+        self.loan = loan
+        self.shared_with = shared_with

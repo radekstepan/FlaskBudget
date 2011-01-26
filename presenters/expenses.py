@@ -1,6 +1,6 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash
-from sqlalchemy.sql.expression import desc, asc, and_
+from flask.helpers import url_for
 from flaskext.sqlalchemy import Pagination
 
 # presenters
@@ -8,10 +8,10 @@ from presenters.auth import login_required
 
 # models
 from db.database import db_session
-from models.expenses import ExpenseCategoriesTable, ExpensesTable, Expenses
-from models.accounts import AccountsTable, Accounts
-from models.users import UsersConnectionsTable, UsersTable, Users
-from models.loans import LoansTable, Loans
+from models.expenses import Expenses
+from models.accounts import Accounts
+from models.users import Users
+from models.loans import Loans
 
 # utils
 from utils import *
@@ -112,24 +112,33 @@ def add_expense():
 
                                             # create a loan
                                             loa = Loans(current_user_id)
-                                            loa.add_loan(other_user_id=shared_with_user, date=date,
+                                            loan_id = loa.add_loan(other_user_id=shared_with_user, date=date,
                                                          account_id=account_id, description=description,
                                                          amount=loaned_amount)
                                             flash('Loan given')
 
                                             # add new expense (loaner)
-                                            exp_us.add_expense(date=date, category_id=category_id, account_id=account_id,
-                                                            amount=float(amount) - loaned_amount, description=description)
+                                            expense_id_us = exp_us.add_expense(date=date, category_id=category_id,
+                                                                               account_id=account_id,
+                                                                               amount=float(amount) - loaned_amount,
+                                                                               description=description)
 
                                             # add new expenses (borrower)
                                             exp_them = Expenses(shared_with_user)
-                                            exp_them.add_expense(date=date, amount=loaned_amount, description=description)
+                                            expense_id_them = exp_them.add_expense(date=date, amount=loaned_amount,
+                                                                                   description=description)
 
                                             # fudge loan 'account' monies
                                             acc_us.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
                                             acc_them = Accounts(shared_with_user)
                                             acc_them.modify_loan_balance(amount=-float(loaned_amount),
                                                                          with_user_id=current_user_id)
+
+                                            # link loan and the expenses (through us)
+                                            exp_us.link_to_loan(expense_id=expense_id_us, loan_id=loan_id,
+                                                                shared_with=shared_with_user)
+                                            exp_us.link_to_loan(expense_id=expense_id_them, loan_id=loan_id,
+                                                                shared_with=current_user_id)
 
                                         else: error = 'Not a valid user sharing with'
                                     else: error = 'Not a valid % split'
@@ -161,6 +170,11 @@ def add_expense():
     users = usr.get_connections()
 
     return render_template('admin_add_expense.html', **locals())
+
+@expenses.route('/expenses/edit/<expense_id>', methods=['GET', 'POST'])
+@login_required
+def edit_expense(expense_id):
+    pass
 
 @expenses.route('/expense/category/add', methods=['GET', 'POST'])
 @login_required
