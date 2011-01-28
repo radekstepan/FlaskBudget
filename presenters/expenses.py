@@ -174,7 +174,140 @@ def add_expense():
 @expenses.route('/expenses/edit/<expense_id>', methods=['GET', 'POST'])
 @login_required
 def edit_expense(expense_id):
-    pass
+    current_user_id = session.get('logged_in_user')
+
+    exp_us = Expenses(current_user_id)
+
+    # is it valid?
+    expense = exp_us.get_expense(expense_id)
+    if expense:
+        error = None
+
+        acc_us = Accounts(current_user_id)
+        usr = Users(current_user_id)
+
+        # fetch user's categories, accounts and users
+        categories = exp_us.get_categories()
+        if not categories: error = 'You need to define at least one category'
+
+        accounts = acc_us.get_accounts()
+        if not accounts: error = 'You need to define at least one account'
+
+        # fetch users from connections from us
+        users = usr.get_connections()
+
+        if request.method == 'POST':
+            # fetch values and check they are actually provided
+            if 'amount' in request.form: amount = request.form['amount']
+            else: error = 'You need to provide an amount'
+            if 'date' in request.form: date = request.form['date']
+            else: error = 'Not a valid date'
+            if 'deduct_from' in request.form: account_id = request.form['deduct_from']
+            else: error = 'You need to provide an account'
+            if 'description' in request.form and request.form['description']: description = request.form['description']
+            else: error = 'You need to provide a description'
+            if 'category' in request.form: category_id = request.form['category']
+            else: error = 'You need to provide a category'
+
+            # 'heavier' checks
+            if not error:
+                # valid amount?
+                if is_float(amount):
+                    # valid date?
+                    if is_date(date):
+                        # valid account?
+                        if acc_us.is_account(account_id=account_id):
+                            # valid category?
+                            if exp_us.is_category(id=category_id):
+
+                                # is it shared NOW?
+                                if 'is_shared' in request.form: is_shared = True
+                                # WAS it a shared expense?
+                                if expense[1]:
+                                    return __edit_shared_expense(**locals())
+                                else:
+                                    return __edit_simple_expense(**locals())
+
+                            else: error = 'Not a valid category'
+                        else: error = 'Not a valid account'
+                    else: error = 'Not a valid date'
+                else: error = 'Not a valid amount'
+
+        # show the form
+        return render_template('admin_edit_expense.html', **locals())
+
+    else: return redirect(url_for('expenses.index'))
+
+def __edit_simple_expense(current_user_id, exp_us, expense, acc_us, usr, date, description, account_id, amount, error,
+                          category_id, categories, accounts, users, expense_id, is_shared=None):
+    # is it a shared expense?
+    if is_shared:
+        # fetch values and check they are actually provided
+        if 'split' in request.form: split = request.form['split']
+        else: error = 'You need to provide a % split'
+        if 'user' in request.form: shared_with_user = request.form['user']
+        else: error = 'You need to provide a user'
+
+        # 'heavier' checks
+        if not error:
+            # valid percentage split?
+            if is_percentage(split):
+                # valid user sharing with?
+                if usr.is_connection(user_id=shared_with_user):
+
+                    # figure out percentage split
+                    loaned_amount = (float(amount)*(100-float(split)))/100
+
+                    # create a loan
+                    loa = Loans(current_user_id)
+                    loan_id = loa.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
+                                           description=description, amount=loaned_amount)
+                    flash('Loan given')
+
+                    # credit our account back
+                    acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
+
+                    # debit from account
+                    acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
+
+                    # edit expense (loaner - us)
+                    exp_us.edit_expense(date=date, category_id=category_id, account_id=account_id,
+                                                       amount=float(amount) - loaned_amount, description=description,
+                                                       expense_id=expense_id)
+
+                    # add new expenses (borrower)
+                    exp_them = Expenses(shared_with_user)
+                    expense_id_them = exp_them.add_expense(date=date, amount=loaned_amount, description=description)
+
+                    # fudge loan 'account' monies
+                    acc_us.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
+                    acc_them = Accounts(shared_with_user)
+                    acc_them.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
+
+                    # link loan and the expenses (through us)
+                    exp_us.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user)
+                    exp_us.link_to_loan(expense_id=expense_id_them, loan_id=loan_id, shared_with=current_user_id)
+
+                    flash('Expense edited')
+
+                else: error = 'Not a valid user sharing with'
+            else: error = 'Not a valid % split'
+
+    else:
+        # credit our account back
+        acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
+
+        # debit from account
+        acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
+
+        # edit expense
+        exp_us.edit_expense(date=date, category_id=category_id, account_id=account_id, amount=amount,
+                            description=description, expense_id=expense_id)
+
+        flash('Expense edited')
+
+    # show the form
+    return render_template('admin_edit_expense.html', **locals())
 
 @expenses.route('/expense/category/add', methods=['GET', 'POST'])
 @login_required

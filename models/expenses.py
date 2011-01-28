@@ -107,11 +107,27 @@ class Expenses():
 
         return e.id
 
+    def edit_expense(self, date, description, amount, category_id, account_id, expense_id):
+        e = self.get_simple_expense(expense_id)
+        if e:
+            e.date, e.category_id, e.description, e.deduct_from, e.amount = date, category_id, description, account_id,\
+                                                                           amount
+            db_session.add(e)
+            db_session.commit()
+
+            return e # return so we see the updated values
+
+    def get_simple_expense(self, expense_id):
+        return ExpensesTable.query\
+        .filter(and_(ExpensesTable.user == self.user_id, ExpensesTable.id == expense_id)).first()
+
     def get_expense(self, expense_id):
         # if there is no cache or cache id does not match
-        if not self.entry or self.entry.id != expense_id:
+        if not self.entry or self.entry[0].id != expense_id:
             self.entry = ExpensesTable.query\
-            .filter(and_(ExpensesTable.user == self.user_id, ExpensesTable.id == expense_id)).first()
+            .filter(and_(ExpensesTable.user == self.user_id, ExpensesTable.id == expense_id))\
+            .outerjoin(ExpensesToLoansTable).add_columns(ExpensesToLoansTable.loan, ExpensesToLoansTable.shared_with,
+                                                         ExpensesToLoansTable.percentage).first()
 
         return self.entry
 
@@ -163,8 +179,10 @@ class ExpensesToLoansTable(Base):
     expense = Column('expense_id', Integer, ForeignKey('expenses.id'))
     loan = Column('loan_id', Integer, ForeignKey('loans.id'))
     shared_with = Column('shared_with_user_id', Integer, ForeignKey('users.id')) # shortcut
+    percentage = Column(Float(precision=2))
 
-    def __init__(self, expense=None, loan=None, shared_with=None):
+    def __init__(self, expense=None, loan=None, shared_with=None, percentage=None):
         self.expense = expense
         self.loan = loan
         self.shared_with = shared_with
+        self.percentage = percentage
