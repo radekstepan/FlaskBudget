@@ -8,9 +8,6 @@ from presenters.auth import login_required
 from models.users import Users
 from models.accounts import Accounts
 
-# utils
-from utils import *
-
 users = Module(__name__)
 
 ''' Users '''

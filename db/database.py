@@ -1,17 +1,21 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.engine import create_engine
+from sqlalchemy.orm import scoped_session, create_session
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('sqlite:////var/www/html/python/flask/budget/db/database.sqlite3', convert_unicode=True)
-db_session = scoped_session(sessionmaker(autocommit=False,
-                                         autoflush=False,
-                                         bind=engine))
+engine = None
+db_session = scoped_session(lambda: create_session(bind=engine,
+                                                   autoflush=True, autocommit=False, expire_on_commit=True))
+
 Base = declarative_base()
 Base.query = db_session.query_property()
 
-# init
-def init_db():
+def init_engine(uri, **kwargs):
+    global engine
+    engine = create_engine(uri, **kwargs)
+
     Base.metadata.create_all(bind=engine)
+
+    return engine
 
 # logging
 #import logging
