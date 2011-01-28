@@ -87,6 +87,9 @@ class Loans():
 
             return l # return so we see the updated values
 
+    def delete_loan(self, loan_id):
+        LoansTable.query.filter(LoansTable.id == loan_id).delete()
+        db_session.commit()
 
 class LoansTable(Base):
     """A loan from one user to another"""

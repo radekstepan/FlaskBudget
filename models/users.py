@@ -43,6 +43,25 @@ class Users():
 
         return False
 
+    def is_private(self, name=None, user_id=None, slug=None):
+        connections = self.get_connections()
+        if name:
+            for usr in connections:
+                if usr.name == name:
+                    return True if usr.is_private else False
+
+        elif user_id:
+            for usr in connections:
+                if usr.id == int(user_id):
+                    return True if usr.is_private else False
+
+        elif slug:
+            for usr in connections:
+                if usr.slug == slug:
+                    return True if usr.is_private else False
+
+        return False
+
     def add_private_user(self, name):
         u = UsersTable(name, True)
         db_session.add(u)

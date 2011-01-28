@@ -121,21 +121,47 @@ class Expenses():
         return ExpensesTable.query\
         .filter(and_(ExpensesTable.user == self.user_id, ExpensesTable.id == expense_id)).first()
 
-    def get_expense(self, expense_id):
-        # if there is no cache or cache id does not match
-        if not self.entry or self.entry[0].id != expense_id:
+    def get_expense(self, expense_id=None, loan_id=None):
+        if loan_id:
+            # fetch the expense through a loan
             self.entry = ExpensesTable.query\
-            .filter(and_(ExpensesTable.user == self.user_id, ExpensesTable.id == expense_id))\
-            .outerjoin(ExpensesToLoansTable).add_columns(ExpensesToLoansTable.loan, ExpensesToLoansTable.shared_with,
-                                                         ExpensesToLoansTable.percentage).first()
+            .outerjoin(ExpensesToLoansTable)\
+            .filter(and_(ExpensesTable.user == self.user_id, ExpensesToLoansTable.loan == loan_id))\
+            .add_columns(ExpensesToLoansTable.loan, ExpensesToLoansTable.shared_with, ExpensesToLoansTable.percentage)\
+            .first()
+        else:
+            # if there is no cache or cache id does not match
+            if not self.entry or self.entry[0].id != expense_id:
+                self.entry = ExpensesTable.query\
+                .filter(and_(ExpensesTable.user == self.user_id, ExpensesTable.id == expense_id))\
+                .outerjoin(ExpensesToLoansTable).add_columns(ExpensesToLoansTable.loan, ExpensesToLoansTable.shared_with,
+                                                             ExpensesToLoansTable.percentage).first()
 
         return self.entry
 
+    def delete_expense(self, expense_id):
+        ExpensesTable.query.filter(ExpensesTable.id == expense_id).delete()
+        db_session.commit()
+
     # blindly obey
-    def link_to_loan(self, expense_id, loan_id, shared_with):
-        l = ExpensesToLoansTable(expense=expense_id, loan=loan_id, shared_with=shared_with)
+    def link_to_loan(self, expense_id, loan_id, shared_with, percentage):
+        l = ExpensesToLoansTable(expense=expense_id, loan=loan_id, shared_with=shared_with, percentage=percentage)
         db_session.add(l)
         db_session.commit()
+
+    # blindly obey and delete records for all entries associated with this loan
+    def unlink_loan(self, loan_id):
+        ExpensesToLoansTable.query.filter(ExpensesToLoansTable.loan == loan_id).delete()
+        db_session.commit()
+
+    # blindly obey and delete records for all entries associated with this loan
+    def modify_loan_link_percentage(self, loan_id, percentage):
+        le = ExpensesToLoansTable.query.filter(ExpensesToLoansTable.loan == loan_id)
+        if le:
+            for i in le:
+                i.percentage = percentage
+                db_session.add(i)
+            db_session.commit()
 
 class ExpenseCategoriesTable(Base):
     """Expense category of a user"""
