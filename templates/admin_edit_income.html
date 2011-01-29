@@ -19,7 +19,7 @@
 </nav>
 {% endblock %}
 
-{% block header %}<h1>Edit "{{ income.description }}"</h1>{% endblock %}
+{% block header %}<h1>Edit Income "{{ income.description }}"</h1>{% endblock %}
 
 {% block body %}
 <div class="left grid_6">
@@ -33,7 +33,7 @@
                 <select name=category>
                     {% for category in categories %}
                         {% if category.id == income.category %}
-                            <option value="{{ category.id }}" selected>{{ category.name }}</option>
+                            <option value="{{ category.id }}" selected="selected">{{ category.name }}</option>
                         {% else %}
                             <option value="{{ category.id }}">{{ category.name }}</option>
                         {% endif %}

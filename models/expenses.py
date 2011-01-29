@@ -8,7 +8,6 @@ from db.database import Base
 
 # models
 from models.accounts import Accounts
-from models.loans import LoansTable
 from models.users import UsersTable
 
 # utils
@@ -110,7 +109,7 @@ class Expenses():
     def edit_expense(self, date, description, amount, category_id, account_id, expense_id):
         e = self.get_simple_expense(expense_id)
         if e:
-            e.date, e.category_id, e.description, e.deduct_from, e.amount = date, category_id, description, account_id,\
+            e.date, e.category, e.description, e.deduct_from, e.amount = date, category_id, description, account_id,\
                                                                            amount
             db_session.add(e)
             db_session.commit()

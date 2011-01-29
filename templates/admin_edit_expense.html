@@ -32,7 +32,7 @@
             <dd><select name=category>
                 {% for category in categories %}
                     {% if category.id == expense.0.category %}
-                        <option value="{{ category.id }}" selected>{{ category.name }}</option>
+                        <option value="{{ category.id }}" selected="selected">{{ category.name }}</option>
                     {% else %}
                         <option value="{{ category.id }}">{{ category.name }}</option>
                     {% endif %}
@@ -46,7 +46,7 @@
             <dd><select name=deduct_from>
                 {% for account in accounts %}
                     {% if account.id == expense.0.deduct_from %}
-                        <option value="{{ account.id }}" selected>{{ account.name }}</option>
+                        <option value="{{ account.id }}" selected="selected">{{ account.name }}</option>
                     {% else %}
                         <option value="{{ account.id }}">{{ account.name }}</option>
                     {% endif %}
@@ -64,7 +64,7 @@
                 <dd><select name=user>
                     {% for user in users %}
                         {% if user.id == expense.2 %}
-                            <option value="{{ user.id }}" selected>{{ user.name }}</option>
+                            <option value="{{ user.id }}" selected="selected">{{ user.name }}</option>
                         {% else %}
                             <option value="{{ user.id }}">{{ user.name }}</option>
                         {% endif %}

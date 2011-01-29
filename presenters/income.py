@@ -151,11 +151,9 @@ def edit_income(income_id):
                             if acc.is_account(account_id=account_id):
 
                                 # debit the original account
-                                print "debit account", income.credit_to
                                 acc.modify_account_balance(income.credit_to, -float(income.amount))
                                 
                                 # credit the 'new' account
-                                print "credit account", account_id
                                 acc.modify_account_balance(account_id, amount)
 
                                 # edit income entry

@@ -171,7 +171,7 @@ def add_expense():
 
     return render_template('admin_add_expense.html', **locals())
 
-@expenses.route('/expenses/edit/<expense_id>', methods=['GET', 'POST'])
+@expenses.route('/expense/edit/<expense_id>', methods=['GET', 'POST'])
 @login_required
 def edit_expense(expense_id):
     current_user_id = session.get('logged_in_user')
@@ -299,6 +299,12 @@ def __edit_simple_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                                         percentage=split)
 
                     flash('Expense edited')
+
+                    # for the view...
+                    expense = exp_us.get_expense(expense_id=expense_id)
+                    # fudge the total for the expense if we have a shared expense
+                    if expense[1]:
+                        expense[0].amount = float(expense[0].amount) * (100/float(expense[3]))
 
                 else: error = 'Not a valid user sharing with'
             else: error = 'Not a valid % split'
