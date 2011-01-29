@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf -*-
+
 # framework
 from flask import Module, session, render_template, redirect, request, flash
 

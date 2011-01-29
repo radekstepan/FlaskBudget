@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf -*-
+
 # framework
 from flask import Module, session, render_template
 from sqlalchemy.sql.expression import desc, asc

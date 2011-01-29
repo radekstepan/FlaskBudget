@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf -*-
+
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
 from sqlalchemy.sql.expression import desc, and_

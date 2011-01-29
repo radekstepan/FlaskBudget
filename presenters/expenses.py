@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf -*-
+
 # framework
 from flask import Module, session, render_template, redirect, request, flash
 from flask.helpers import url_for
@@ -341,7 +344,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
             if is_percentage(split):
                 # valid user sharing with?
                 if usr.is_connection(user_id=shared_with_user):
-                    
+
                     # figure out percentage split
                     loaned_amount = (float(amount) * (100-float(split)))/100
                     loaned_then_amount = (float(expense[0].amount) * (100-float(expense[3])))/100
@@ -351,6 +354,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                     if expense[2] == int(shared_with_user):
 
                         if not usr.is_private(user_id=shared_with_user): # only modify non private accounts
+                            # TODO untested
                             exp_them = Expenses(shared_with_user)
                             acc_them = Accounts(shared_with_user)
 
@@ -388,7 +392,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                                           amount=loaned_amount, date=date, loan_id=expense[1])
 
                             # fudge loan 'account' monies
-                            acc_us.modify_loan_balance(amount=-loaned_amount - loaned_then_amount,
+                            acc_us.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
                                                        with_user_id=shared_with_user)
 
                             # credit our account back
@@ -400,39 +404,65 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                             exp_us.modify_loan_link_percentage(loan_id=expense[1], percentage=split)
                             
                     else:
-                        # TODO fix this
+                        if not usr.is_private(user_id=shared_with_user): # only modify non private accounts
+                            # TODO untested
+                            exp_them = Expenses(shared_with_user)
+                            acc_them = Accounts(shared_with_user)
 
-                        # create a loan
-                        loan_id = loa.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
-                                               description=description, amount=loaned_amount)
+                            # the user now and then is the same
+                            expense_them = exp_them.get_expense(loan_id=expense[1])
 
-                        flash('Loan given')
+                            # edit the loan
+                            loa.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
+                                          amount=loaned_amount, date=date, loan_id=expense[1])
 
-                        # add new expenses (borrower)
-                        exp_them = Expenses(shared_with_user) # change the owner
-                        expense_id_them = exp_them.add_expense(date=date, amount=loaned_amount, description=description)
+                            # fudge loan 'account' monies
+                            acc_us.modify_loan_balance(amount=-loaned_amount - loaned_then_amount,
+                                                       with_user_id=shared_with_user)
 
-                        # delete the original expense
-                        exp_them = Expenses(expense[2]) # change the owner
-                        expense_them = exp_them.get_expense(loan_id=expense[1])
-                        exp_them.delete_expense(expense_id=expense_them[0].id)
+                            # credit our account back
+                            acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
 
-                        # delete the original loan
-                        loa.delete_loan(loan_id=expense[1])
+                            # debit from account
+                            acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
 
-                        # link new loan and the new expenses (through us)
-                        exp_us.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
-                                            percentage=split)
-                        exp_us.link_to_loan(expense_id=expense_id_them, loan_id=loan_id, shared_with=current_user_id,
-                                            percentage=split)
+                            # modify their loan and account status
+                            acc_them.modify_loan_balance(amount=loaned_then_amount - loaned_amount,
+                                                         with_user_id=current_user_id)
 
-                        # unlink the old expense and loan
-                        exp_us.unlink_loan(loan_id=expense[1])
+                            # edit their expense amount
+                            exp_them.edit_expense(date=date, category_id=category_id, account_id=account_id,
+                                                  amount=float(amount) - loaned_amount, description=description,
+                                                  expense_id=expense_them[0].id)
 
-                        # fudge loan 'account' monies
-                        acc_us.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
-                        acc_them = Accounts(shared_with_user)
-                        acc_them.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
+                            exp_us.modify_loan_link_percentage(loan_id=expense[1], percentage=split)
+
+                        else:
+                            # create a new loan
+                            loan_id = loa.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
+                                           description=description, amount=loaned_amount)
+
+                            # credit loan back
+                            acc_us.modify_loan_balance(amount=-loaned_then_amount, with_user_id=expense[2])
+
+                            # debit new loan
+                            acc_us.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
+
+                            # credit our account back
+                            acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
+
+                            # debit from account
+                            acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
+
+                            # remove the original loan - expense link
+                            exp_us.unlink_loan(loan_id=expense[1])
+
+                            # create new loan - expense link
+                            exp_us.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
+                                        percentage=split)
+
+                            # remove original loan
+                            loa.delete_loan(expense[1])
 
                     # edit expense (loaner - us)
                     exp_us.edit_expense(date=date, category_id=category_id, account_id=account_id,
@@ -440,7 +470,8 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                                                        expense_id=expense_id)
 
                     # fudge the total for the expense if we have a shared expense after POST
-                    if expense[1]: expense[0].amount = float(expense[0].amount) * (100/float(expense[3]))                    
+                    expense = exp_us.get_expense(expense_id)
+                    if expense[1]: expense[0].amount = float(expense[0].amount) * (100/float(expense[3]))
 
                     flash('Expense edited')
 
@@ -474,10 +505,8 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
         loa.delete_loan(loan_id=expense[1])
 
         flash('Loan reverted')
-
         # credit our account back with the full amount (expense amount + loaned amount)
-        acc_us.modify_user_balance(amount=float(expense[0].amount) * ((100 + float(expense[3]))/100),
-                                   account_id=expense[0].deduct_from)
+        acc_us.modify_user_balance(amount=float(expense[0].amount), account_id=expense[0].deduct_from)
 
         # debit from account
         acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)

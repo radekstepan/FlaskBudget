@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf -*-
+
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
 from sqlalchemy.orm import aliased
@@ -75,7 +78,7 @@ class Loans():
     def edit_loan(self, other_user_id, date, account_id, description, amount, loan_id):
         l = self.get_loan(loan_id)
         if l:
-            if other_user_id != self.user_id: # us getting loan
+            if other_user_id == self.user_id: # us getting loan
                 l.from_user, l.to_user = other_user_id, self.user_id
             else: # us giving a loan
                 l.from_user, l.to_user = self.user_id, other_user_id

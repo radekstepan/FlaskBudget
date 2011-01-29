@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf -*-
+
 # framework
 from flask import Module
 from flask.helpers import make_response
