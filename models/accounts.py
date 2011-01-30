@@ -92,6 +92,8 @@ class Accounts():
         db_session.add(a)
         db_session.commit()
 
+        return a.id
+
     def add_account(self, name, type, balance):
         a = AccountsTable(self.user_id, name, type, balance)
         db_session.add(a)

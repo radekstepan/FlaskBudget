@@ -193,6 +193,7 @@ class EnhancedGUIRunner():
         self.running = 0
         self.rollbackImporter = None
         apply(self.initGUI, args, kwargs)
+        self.runClicked()
         
     def initGUI(self, root, initialTestName):
         """Set up the GUI inside the given root window. The test name entry
@@ -322,6 +323,7 @@ class EnhancedGUIRunner():
         stopOnErrorButton = tk.Checkbutton(stopOnErrorFrame, text="Stop on first error", 
                                            variable=self.stopOnErrorVar)
         stopOnErrorButton.pack(side=tk.LEFT, expand=0, anchor=tk.W)
+        stopOnErrorButton.toggle()
 
         # Progress bar
         progressFrame = tk.Frame(rightFrame, relief=tk.GROOVE, borderwidth=2)

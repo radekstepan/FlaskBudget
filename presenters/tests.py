@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # framework
-from flask import Module
+from flask import Module, session
 from flask.helpers import make_response
 
 # db
@@ -15,19 +15,31 @@ from models.accounts import AccountsTable, AccountTransfersTable
 from models.expenses import ExpenseCategoriesTable, ExpensesTable, ExpensesToLoansTable
 from models.income import IncomeTable, IncomeCategoriesTable
 from models.loans import LoansTable
-from models.users import UsersTable, UsersConnectionsTable, UsersKeysTable
+from models.users import UsersTable, UsersConnectionsTable, UsersKeysTable, Users
+
+# utils
+from string import capitalize
 
 tests = Module(__name__)
 
-@tests.route('/test/create_admin')
-def create_admin():
-    admin = UsersTable(u"Admin", False, "admin", "admin")
-    db_session.add(admin)
+@tests.route('/test/create-user/<name>')
+def create_user(name):
+    name = name.lower()
+    u = UsersTable(name.capitalize(), False, name, name)
+    db_session.add(u)
     db_session.commit()
 
-    return make_response("Admin user created", 200)
+    return make_response("User created", 200)
 
-@tests.route('/test/wipe_tables')
+@tests.route('/test/get-key')
+def get_key():
+    u = Users(session.get('logged_in_user'))
+    # fetch/generate key
+    key = u.get_key()
+
+    return make_response(key.key, 200)
+
+@tests.route('/test/wipe-tables')
 def wipe_tables():
     UsersTable.query.delete()
     UsersConnectionsTable.query.delete()

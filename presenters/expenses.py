@@ -354,7 +354,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                     if expense[2] == int(shared_with_user):
 
                         if not usr.is_private(user_id=shared_with_user): # only modify non private accounts
-                            # TODO untested
+                            
                             exp_them = Expenses(shared_with_user)
                             acc_them = Accounts(shared_with_user)
 
@@ -366,7 +366,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                                           amount=loaned_amount, date=date, loan_id=expense[1])
 
                             # fudge loan 'account' monies
-                            acc_us.modify_loan_balance(amount=-loaned_amount - loaned_then_amount,
+                            acc_us.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
                                                        with_user_id=shared_with_user)
 
                             # credit our account back
@@ -376,12 +376,12 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                             acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
 
                             # modify their loan and account status
-                            acc_them.modify_loan_balance(amount=loaned_then_amount - loaned_amount,
+                            acc_them.modify_loan_balance(amount=-loaned_amount + loaned_then_amount,
                                                          with_user_id=current_user_id)
 
                             # edit their expense amount
                             exp_them.edit_expense(date=date, category_id=category_id, account_id=account_id,
-                                                  amount=float(amount) - loaned_amount, description=description,
+                                                  amount=loaned_amount, description=description,
                                                   expense_id=expense_them[0].id)
 
                             exp_us.modify_loan_link_percentage(loan_id=expense[1], percentage=split)
@@ -405,37 +405,68 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                             
                     else:
                         if not usr.is_private(user_id=shared_with_user): # only modify non private accounts
-                            # TODO untested
-                            exp_them = Expenses(shared_with_user)
-                            acc_them = Accounts(shared_with_user)
 
-                            # the user now and then is the same
-                            expense_them = exp_them.get_expense(loan_id=expense[1])
-
-                            # edit the loan
-                            loa.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
-                                          amount=loaned_amount, date=date, loan_id=expense[1])
-
-                            # fudge loan 'account' monies
-                            acc_us.modify_loan_balance(amount=-loaned_amount - loaned_then_amount,
-                                                       with_user_id=shared_with_user)
+                            # the other user we WERE sharing with
+                            exp_them = Expenses(expense[2])
+                            acc_them = Accounts(expense[2])
 
                             # credit our account back
                             acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
 
-                            # debit from account
-                            acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
+                            # credit our loan account
+                            acc_us.modify_loan_balance(amount=-float(expense[0].amount) * ((100 - expense[3])/100),
+                                                       with_user_id=expense[2])
 
-                            # modify their loan and account status
-                            acc_them.modify_loan_balance(amount=loaned_then_amount - loaned_amount,
+                            # fetch their expense
+                            expense_them = exp_them.get_expense(loan_id=expense[1])
+
+                            # delete the shared user's expense
+                            exp_them.delete_expense(expense_id=expense_them[0].id)
+
+                            # delete their loan status towards us
+                            acc_them.modify_loan_balance(amount=float(expense[0].amount) * ((100 - float(expense[3]))/100),
                                                          with_user_id=current_user_id)
 
-                            # edit their expense amount
-                            exp_them.edit_expense(date=date, category_id=category_id, account_id=account_id,
-                                                  amount=float(amount) - loaned_amount, description=description,
-                                                  expense_id=expense_them[0].id)
+                            # unlink expenses to loan entries
+                            exp_us.unlink_loan(loan_id=expense[1])
 
-                            exp_us.modify_loan_link_percentage(loan_id=expense[1], percentage=split)
+                            # delete the original loan
+                            loa.delete_loan(loan_id=expense[1])
+
+                            flash('Loan reverted')
+
+                            # the current user we are sharing with
+                            exp_them = Expenses(shared_with_user)
+                            acc_them = Accounts(shared_with_user)
+        
+                            # figure out percentage split
+                            loaned_amount = (float(amount)*(100-float(split)))/100
+
+                            # create a loan from us to the new user
+                            loa = Loans(current_user_id)
+                            loan_id = loa.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
+                                                   description=description, amount=loaned_amount)
+
+                            # fudge loan 'account' monies for them
+                            acc_them.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
+
+                            # modify loan monies for us
+                            acc_us.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
+
+                            flash('Loan given')
+
+                            # add new expenses (borrower)
+                            expense_id_them = exp_them.add_expense(date=date, amount=loaned_amount,
+                                                                   description=description)
+
+                            # debit from our account the whole amount
+                            acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
+
+                            # create new loan - expense links
+                            exp_us.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
+                                                percentage=split)
+                            exp_us.link_to_loan(expense_id=expense_id_them, loan_id=loan_id, shared_with=current_user_id,
+                                                percentage=split)
 
                         else:
                             # create a new loan

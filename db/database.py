@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 engine = None
 db_session = scoped_session(lambda: create_session(bind=engine,
-                                                   autoflush=True, autocommit=False, expire_on_commit=True))
+                                                   autoflush=False, autocommit=False, expire_on_commit=True))
 
 Base = declarative_base()
 Base.query = db_session.query_property()

@@ -13,21 +13,21 @@ class IncomeTestCases(unittest.TestCase):
         self.app = budget.app.test_client()
 
         # cleanup
-        self.app.get('/test/wipe_tables')
+        self.app.get('/test/wipe-tables')
 
-        # setup
-        self.app.get('/test/create_admin')
+        # setup our test user
+        self.app.get('/test/create-user/admin')
 
     def test_add_income(self):
         # login
-        rv = self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
+        self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
 
         # create account
         rv = self.app.post('/account/add', data=dict(name="HSBC", type="asset", balance=1000), follow_redirects=True)
         assert 'Account added' in rv.data
 
         # create account
-        rv = self.app.post('/account/add', data=dict(name="Credit Card", type="liability", balance=0),
+        self.app.post('/account/add', data=dict(name="Credit Card", type="liability", balance=0),
                            follow_redirects=True)
 
         # create income category
@@ -49,20 +49,20 @@ class IncomeTestCases(unittest.TestCase):
 
     def test_edit_income(self):
         # login
-        rv = self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
+        self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
 
         # create account
-        rv = self.app.post('/account/add', data=dict(name="HSBC", type="asset", balance=1000), follow_redirects=True)
+        self.app.post('/account/add', data=dict(name="HSBC", type="asset", balance=1000), follow_redirects=True)
 
         # create account
-        rv = self.app.post('/account/add', data=dict(name="Credit Card", type="liability", balance=0),
+        self.app.post('/account/add', data=dict(name="Credit Card", type="liability", balance=0),
                            follow_redirects=True)
 
         # create income category
-        rv = self.app.post('/income/category/add', data=dict(name="Salary"), follow_redirects=True)
+        self.app.post('/income/category/add', data=dict(name="Salary"), follow_redirects=True)
 
         # add income
-        rv = self.app.post('/income/add', data=dict(
+        self.app.post('/income/add', data=dict(
                 date="2011-01-28", category=1, description="January", credit_to=1, amount=500
                 ), follow_redirects=True)
 
