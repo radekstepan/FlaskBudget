@@ -54,7 +54,7 @@
             <dd><input type=text name=description value="{{ loan.description }}">
 
             <dt>Amount:
-            <dd><input type=text name=amount value="{{ loan.amount }}">
+            <dd><input type=text name=amount value="{{ loan.amount|numberformat }}">
 
             <dd><input type=submit value="Edit">
         </dl>

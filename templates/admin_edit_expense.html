@@ -54,7 +54,7 @@
             </select>
 
             <dt>Amount:
-            <dd><input type=text name=amount value="{{ expense.0.amount }}">
+            <dd><input type=text name=amount value="{{ expense.0.amount|numberformat }}">
 
             {% if expense.1 != None %}
                 <dt>Shared Expense?:
@@ -72,7 +72,7 @@
                 </select>
 
                 <dt>% Split:
-                <dd><input type=text name=split value="{{ expense.3 }}">
+                <dd><input type=text name=split value="{{ expense.3|numberformat }}">
             {% else %}
                 <dt>Shared Expense?:
                 <dd><input type=checkbox name=is_shared>

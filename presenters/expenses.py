@@ -111,7 +111,7 @@ def add_expense():
                                         if usr.is_connection(user_id=shared_with_user):
 
                                             # figure out percentage split
-                                            loaned_amount = (float(amount)*(100-float(split)))/100
+                                            loaned_amount = round((float(amount)*(100-float(split)))/100, 2)
 
                                             # create a loan
                                             loa = Loans(current_user_id)
@@ -139,9 +139,11 @@ def add_expense():
 
                                             # link loan and the expenses (through us)
                                             exp_us.link_to_loan(expense_id=expense_id_us, loan_id=loan_id,
-                                                                shared_with=shared_with_user, percentage=split)
+                                                                shared_with=shared_with_user, percentage=split,
+                                                                original_amount=amount)
                                             exp_us.link_to_loan(expense_id=expense_id_them, loan_id=loan_id,
-                                                                shared_with=current_user_id, percentage=split)
+                                                                shared_with=current_user_id, percentage=split,
+                                                                original_amount=amount)
 
                                         else: error = 'Not a valid user sharing with'
                                     else: error = 'Not a valid % split'
@@ -200,8 +202,7 @@ def edit_expense(expense_id):
         users = usr.get_connections()
 
         # fudge the total for the expense if we have a shared expense
-        if expense[1]:
-            expense[0].amount = float(expense[0].amount) * (100/float(expense[3]))
+        if expense[1]: expense[0].amount = expense[4]
 
         if request.method == 'POST':
             # fetch values and check they are actually provided
@@ -263,7 +264,7 @@ def __edit_simple_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                 if usr.is_connection(user_id=shared_with_user):
 
                     # figure out percentage split
-                    loaned_amount = (float(amount)*(100-float(split)))/100
+                    loaned_amount = round((float(amount)*(100-float(split)))/100, 2)
 
                     # create a loan
                     loa = Loans(current_user_id)
@@ -299,15 +300,14 @@ def __edit_simple_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
 
                     # link loan and the expenses (through us)
                     exp_us.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
-                                        percentage=split)
+                                        percentage=split, original_amount=amount)
 
                     flash('Expense edited')
 
                     # for the view...
                     expense = exp_us.get_expense(expense_id=expense_id)
                     # fudge the total for the expense if we have a shared expense
-                    if expense[1]:
-                        expense[0].amount = float(expense[0].amount) * (100/float(expense[3]))
+                    if expense[1]: expense[0].amount = expense[4]
 
                 else: error = 'Not a valid user sharing with'
             else: error = 'Not a valid % split'
@@ -346,8 +346,8 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                 if usr.is_connection(user_id=shared_with_user):
 
                     # figure out percentage split
-                    loaned_amount = (float(amount) * (100-float(split)))/100
-                    loaned_then_amount = (float(expense[0].amount) * (100-float(expense[3])))/100
+                    loaned_amount = round((float(amount) * (100-float(split)))/100, 2)
+                    loaned_then_amount = round((float(expense[0].amount) * (100-float(expense[3])))/100, 2)
 
                     loa = Loans(current_user_id)
                     # are we sharing the expense with the same user as before?
@@ -384,7 +384,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                                                   amount=loaned_amount, description=description,
                                                   expense_id=expense_them[0].id)
 
-                            exp_us.modify_loan_link_percentage(loan_id=expense[1], percentage=split)
+                            exp_us.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
 
                         else:
                             # edit the loan
@@ -401,7 +401,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                             # debit from account
                             acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
 
-                            exp_us.modify_loan_link_percentage(loan_id=expense[1], percentage=split)
+                            exp_us.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
                             
                     else:
                         if not usr.is_private(user_id=shared_with_user): # only modify non private accounts
@@ -414,8 +414,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                             acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
 
                             # credit our loan account
-                            acc_us.modify_loan_balance(amount=-float(expense[0].amount) * ((100 - expense[3])/100),
-                                                       with_user_id=expense[2])
+                            acc_us.modify_loan_balance(amount=expense[4], with_user_id=expense[2])
 
                             # fetch their expense
                             expense_them = exp_them.get_expense(loan_id=expense[1])
@@ -423,9 +422,8 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                             # delete the shared user's expense
                             exp_them.delete_expense(expense_id=expense_them[0].id)
 
-                            # delete their loan status towards us
-                            acc_them.modify_loan_balance(amount=float(expense[0].amount) * ((100 - float(expense[3]))/100),
-                                                         with_user_id=current_user_id)
+                            # modify their loan status towards us
+                            acc_them.modify_loan_balance(amount=loaned_then_amount, with_user_id=current_user_id)
 
                             # unlink expenses to loan entries
                             exp_us.unlink_loan(loan_id=expense[1])
@@ -440,7 +438,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                             acc_them = Accounts(shared_with_user)
         
                             # figure out percentage split
-                            loaned_amount = (float(amount)*(100-float(split)))/100
+                            loaned_amount = round((float(amount)*(100-float(split)))/100, 2)
 
                             # create a loan from us to the new user
                             loa = Loans(current_user_id)
@@ -464,9 +462,9 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
 
                             # create new loan - expense links
                             exp_us.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
-                                                percentage=split)
+                                                percentage=split, original_amount=amount)
                             exp_us.link_to_loan(expense_id=expense_id_them, loan_id=loan_id, shared_with=current_user_id,
-                                                percentage=split)
+                                                percentage=split, original_amount=amount)
 
                         else:
                             # create a new loan
@@ -490,7 +488,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
 
                             # create new loan - expense link
                             exp_us.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
-                                        percentage=split)
+                                        percentage=split, original_amount=amount)
 
                             # remove original loan
                             loa.delete_loan(expense[1])
@@ -502,7 +500,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
 
                     # fudge the total for the expense if we have a shared expense after POST
                     expense = exp_us.get_expense(expense_id)
-                    if expense[1]: expense[0].amount = float(expense[0].amount) * (100/float(expense[3]))
+                    if expense[1]: expense[0].amount = expense[4]
 
                     flash('Expense edited')
 
@@ -513,7 +511,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
         loa = Loans(current_user_id)
 
         # credit our loan account
-        acc_us.modify_loan_balance(amount=-float(expense[0].amount) * ((100 - expense[3])/100), with_user_id=expense[2])
+        acc_us.modify_loan_balance(amount=-expense[4], with_user_id=expense[2])
 
         if not usr.is_private(user_id=expense[2]): # only modify non private accounts
             exp_them = Expenses(expense[2])
@@ -526,8 +524,7 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
             exp_them.delete_expense(expense_id=expense_them[0].id)
 
             # delete their loan status towards us
-            acc_them.modify_loan_balance(amount=float(expense[0].amount) * ((100 - float(expense[3]))/100),
-                                         with_user_id=current_user_id)
+            acc_them.modify_loan_balance(amount=expense[4], with_user_id=current_user_id)
 
         # unlink expenses to loan entries
         exp_us.unlink_loan(loan_id=expense[1])

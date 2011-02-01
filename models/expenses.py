@@ -129,7 +129,8 @@ class Expenses():
             self.entry = ExpensesTable.query\
             .outerjoin(ExpensesToLoansTable)\
             .filter(and_(ExpensesTable.user == self.user_id, ExpensesToLoansTable.loan == loan_id))\
-            .add_columns(ExpensesToLoansTable.loan, ExpensesToLoansTable.shared_with, ExpensesToLoansTable.percentage)\
+            .add_columns(ExpensesToLoansTable.loan, ExpensesToLoansTable.shared_with, ExpensesToLoansTable.percentage,
+                         ExpensesToLoansTable.original_amount)\
             .first()
         else:
             # if there is no cache or cache id does not match
@@ -137,7 +138,9 @@ class Expenses():
                 self.entry = ExpensesTable.query\
                 .filter(and_(ExpensesTable.user == self.user_id, ExpensesTable.id == expense_id))\
                 .outerjoin(ExpensesToLoansTable).add_columns(ExpensesToLoansTable.loan, ExpensesToLoansTable.shared_with,
-                                                             ExpensesToLoansTable.percentage).first()
+                                                             ExpensesToLoansTable.percentage,
+                                                             ExpensesToLoansTable.original_amount)\
+                .first()
 
         return self.entry
 
@@ -146,8 +149,9 @@ class Expenses():
         db_session.commit()
 
     # blindly obey
-    def link_to_loan(self, expense_id, loan_id, shared_with, percentage):
-        l = ExpensesToLoansTable(expense=expense_id, loan=loan_id, shared_with=shared_with, percentage=percentage)
+    def link_to_loan(self, expense_id, loan_id, shared_with, percentage, original_amount):
+        l = ExpensesToLoansTable(expense=expense_id, loan=loan_id, shared_with=shared_with, percentage=percentage,
+                                 original_amount=original_amount)
         db_session.add(l)
         db_session.commit()
 
@@ -157,11 +161,11 @@ class Expenses():
         db_session.commit()
 
     # blindly obey and delete records for all entries associated with this loan
-    def modify_loan_link_percentage(self, loan_id, percentage):
+    def modify_loan_link(self, loan_id, percentage, original_amount):
         le = ExpensesToLoansTable.query.filter(ExpensesToLoansTable.loan == loan_id)
         if le:
             for i in le:
-                i.percentage = percentage
+                i.percentage, i.original_amount = percentage, original_amount
                 db_session.add(i)
             db_session.commit()
 
@@ -208,9 +212,11 @@ class ExpensesToLoansTable(Base):
     loan = Column('loan_id', Integer, ForeignKey('loans.id'))
     shared_with = Column('shared_with_user_id', Integer, ForeignKey('users.id')) # shortcut
     percentage = Column(Float(precision=2))
+    original_amount = Column(Float(precision=2))
 
-    def __init__(self, expense=None, loan=None, shared_with=None, percentage=None):
+    def __init__(self, expense=None, loan=None, shared_with=None, percentage=None, original_amount=None):
         self.expense = expense
         self.loan = loan
         self.shared_with = shared_with
         self.percentage = percentage
+        self.original_amount = original_amount

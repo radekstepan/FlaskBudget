@@ -16,8 +16,6 @@ def create_app(db):
     app.config.from_object(__name__)
     app.secret_key = '98320C8A14B7D50623A8AC1D78D7E9D8F8DF1D390ABEFE3D3263B135493DF250'
 
-    init_engine(db)
-
     # presenters
     from presenters.dashboard import dashboard
     from presenters.auth import auth
@@ -35,6 +33,9 @@ def create_app(db):
     app.register_module(expenses)
     app.register_module(loans)
     app.register_module(users)
+
+    # initialize the database
+    init_engine(db)
 
     # testing module
     if DEBUG:
@@ -73,6 +74,10 @@ def create_app(db):
         locale.setlocale(locale.LC_ALL, '')
 
         return locale.format("%.2f", value, grouping=True).rstrip('0').rstrip('.')
+
+    @app.template_filter('numberformat')
+    def number_format(value):
+        return str(value).rstrip('0').rstrip('.')
 
     @app.template_filter('isloggeduserid')
     def is_logged_user_id(value):

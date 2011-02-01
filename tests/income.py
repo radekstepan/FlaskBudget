@@ -9,14 +9,19 @@ class IncomeTestCases(unittest.TestCase):
 
     def setUp(self):
         # create app with a testing database
-        budget.app = budget.create_app(db='sqlite:////var/www/html/python/flask/budget/db/database.sqlite3.testing')
+        budget.app = budget.create_app(db='sqlite:///:memory:')
         self.app = budget.app.test_client()
 
         # cleanup
-        self.app.get('/test/wipe-tables')
+        #self.app.get('/test/wipe-tables')
 
         # setup our test user
         self.app.get('/test/create-user/admin')
+
+    def tearDown(self):
+        # cleanup
+        from db.database import Base, engine
+        Base.metadata.drop_all(bind=engine)
 
     def test_add_income(self):
         # login

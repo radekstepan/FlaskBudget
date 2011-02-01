@@ -69,7 +69,8 @@ create table expenses_to_loans (
   expense_id integer not null,
   loan_id integer not null,
   shared_with_user_id integer not null,
-  percentage string not null
+  percentage string not null,
+  original_amount string not null
 );
 
 drop table if exists accounts;
