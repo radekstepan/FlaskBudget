@@ -10,6 +10,10 @@ from presenters.auth import login_required
 # models
 from models.users import Users
 from models.accounts import Accounts
+from models.loans import Loans
+
+# utils
+from utils import *
 
 users = Module(__name__)
 
@@ -19,7 +23,7 @@ users = Module(__name__)
 def add_private():
     error = None
     if request.method == 'POST':
-        new_user_name, current_user_id = request.form['name'], session.get('logged_in_user')
+        new_user_name,  current_user_id = request.form['name'], session.get('logged_in_user')
 
         # setup objects in a context
         useri = Users(current_user_id)
@@ -36,15 +40,42 @@ def add_private():
                 acc = Accounts(new_user_id)
                 acc.add_default_account()
 
+                # have we provided initial balance?
+                if 'balance' in request.form:
+                    # get balance
+                    balance = request.form['balance']
+                    # valid amount?
+                    if is_float(balance):
+                        balance = float(balance)
+                        # do we have a pre-existing balance with the user?
+                        if balance != 0:
+                            if balance > 0: # they owe us
+                                # models
+                                loa, acc = Loans(current_user_id), Accounts(current_user_id)
+                                # add loan entry
+                                loa.add_loan(other_user_id=new_user_id, date=today_date(),
+                                             account_id=acc.get_default_account(),
+                                             description="Initial balance with the user", amount=balance)
+                                # fudge loan monies balance
+                                acc.modify_loan_balance(amount=balance, with_user_id=new_user_id)
+                            else: # we owe them
+                                # models
+                                loa, acc = Loans(new_user_id), Accounts(current_user_id)
+                                # add loan entry
+                                loa.add_loan(other_user_id=current_user_id, date=today_date(),
+                                             account_id=acc.get_default_account(),
+                                             description="Initial balance with the user", amount=-balance)
+                                # fudge loan monies balance
+                                acc.modify_loan_balance(amount=balance, with_user_id=new_user_id)
+                    else: error = 'Not a valid amount'
+
                 # create connections from us to them and back
                 useri.add_connection(new_user_id)
 
                 flash('Private user added')
 
-            else:
-                error = 'You already have a user under that name'
-        else:
-            error = 'You need to provide a name'
+            else: error = 'You already have a user under that name'
+        else: error = 'You need to provide a name'
 
     return render_template('admin_add_private_user.html', **locals())
 

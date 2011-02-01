@@ -65,6 +65,11 @@ def generate_random_key():
     return base64.b64encode(hashlib.sha256(str(random.getrandbits(256))).digest(),
                      random.choice(['rA','aZ','gQ','hH','hG','aR','DD'])).rstrip('==')
 
+def today_date():
+    from datetime import date
+
+    return date.today()
+
 def today_timestamp():
     import time
 

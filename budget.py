@@ -73,7 +73,7 @@ def create_app(db):
         import locale
         locale.setlocale(locale.LC_ALL, '')
 
-        return locale.format("%.2f", value, grouping=True).rstrip('0').rstrip('.')
+        return locale.format("%.2f", value, grouping=True)
 
     @app.template_filter('numberformat')
     def number_format(value):

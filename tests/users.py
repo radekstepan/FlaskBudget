@@ -45,6 +45,58 @@ class UsersTestCases(unittest.TestCase):
         rv = self.app.post('/user/add-private', data=dict(name="Barunka"), follow_redirects=True)
         assert 'Private user added' in rv.data
 
+    def test_add_private_user_with_positive_balance(self):
+        # login
+        self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
+
+        # add private user
+        rv = self.app.post('/user/add-private', data=dict(name="Barunka", balance="865.19"), follow_redirects=True)
+        assert 'Private user added' in rv.data
+
+        # check dashboard
+        rv = self.app.get('/')
+        assert '''
+        <li class="gray last">
+            <span class="amount">&pound;865.19</span>
+            Loaned to <a href="/loans/with/barunka">Barunka</a>
+        </li>
+        ''' in rv.data
+
+        # check loans
+        rv = self.app.get('/')
+        assert '''
+        <li class="gray last">
+            <span class="amount">&pound;865.19</span>
+            Loaned to <a href="/loans/with/barunka">Barunka</a>
+        </li>
+        ''' in rv.data
+
+    def test_add_private_user_with_negative_balance(self):
+        # login
+        self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
+
+        # add private user
+        rv = self.app.post('/user/add-private', data=dict(name="Barunka", balance="-865.19"), follow_redirects=True)
+        assert 'Private user added' in rv.data
+
+        # check dashboard
+        rv = self.app.get('/')
+        assert '''
+        <li class="red last">
+            <span class="amount">&minus; &pound;865.19</span>
+            Loaned from <a href="/loans/with/barunka">Barunka</a>
+        </li>
+        ''' in rv.data
+
+        # check loans
+        rv = self.app.get('/')
+        assert '''
+        <li class="red last">
+            <span class="amount">&minus; &pound;865.19</span>
+            Loaned from <a href="/loans/with/barunka">Barunka</a>
+        </li>
+        ''' in rv.data
+
     def test_private_user_login(self):
         # login
         self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
