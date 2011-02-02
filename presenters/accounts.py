@@ -114,26 +114,29 @@ def add_transfer():
             if not deduct_from_account == credit_to_account:
                 # valid amount?
                 if is_float(amount):
-                    # valid date?
-                    if is_date(date):
-                        # valid debit account?
-                        if acc.is_account(account_id=deduct_from_account):
-                            # valid credit account?
-                            if acc.is_account(account_id=credit_to_account):
+                    # is it a positive amount?
+                    if float(amount) > 0:
+                        # valid date?
+                        if is_date(date):
+                            # valid debit account?
+                            if acc.is_account(account_id=deduct_from_account):
+                                # valid credit account?
+                                if acc.is_account(account_id=credit_to_account):
 
-                                # add a new transfer row
-                                acc.add_account_transfer(date=date, deduct_from_account=deduct_from_account,
-                                                         credit_to_account=credit_to_account, amount=amount)
+                                    # add a new transfer row
+                                    acc.add_account_transfer(date=date, deduct_from_account=deduct_from_account,
+                                                             credit_to_account=credit_to_account, amount=amount)
 
-                                # modify accounts
-                                acc.modify_account_balance(deduct_from_account, -float(amount))
-                                acc.modify_account_balance(credit_to_account, amount)
+                                    # modify accounts
+                                    acc.modify_account_balance(deduct_from_account, -float(amount))
+                                    acc.modify_account_balance(credit_to_account, amount)
 
-                                flash('Monies transferred')
+                                    flash('Monies transferred')
 
-                            else: error = 'Not a valid target account'
-                        else: error = 'Not a valid source account'
-                    else: error = 'Not a valid date'
+                                else: error = 'Not a valid target account'
+                            else: error = 'Not a valid source account'
+                        else: error = 'Not a valid date'
+                    else: error = 'Provide a positive amount'
                 else: error = 'Not a valid amount'
             else: error = 'Source and target accounts cannot be the same'
 

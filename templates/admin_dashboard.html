@@ -69,8 +69,13 @@
         {% endif %}
         {% if account.0.type == "asset" %}
         <li class="green {% if loop.last %}last{% endif %}">
-            <span class="amount">&pound;{{ account.0.balance|currencyformat }}</span>
+            {% if account.0.balance < 0 %}
+            <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
             <a>{{ account.0.name }}</a>
+            {% else %}
+            <span class="amount">&pound;{{ account.0.balance|abs|currencyformat }}</span>
+            <a>{{ account.0.name }}</a>
+            {% endif %}
         </li>
         {% else %}
         <li class="gray {% if loop.last %}last{% endif %}">
@@ -93,8 +98,13 @@
         {% endif %}
         {% if account.0.type == "liability" %}
         <li class="red {% if loop.last %}last{% endif %}">
+            {% if account.0.balance < 0 %}
             <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
             <a>{{ account.0.name }}</a>
+            {% else %}
+            <span class="amount">&pound;{{ account.0.balance|abs|currencyformat }}</span>
+            <a>{{ account.0.name }}</a>
+            {% endif %}
         </li>
         {% else %}
         <li class="red {% if loop.last %}last{% endif %}">

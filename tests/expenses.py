@@ -46,11 +46,11 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;20</span>
+                <span class="amount">&minus; &pound;20.00</span>
                 Tesco in <a href="/expenses/in/shopping">Shopping</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;980</span>
+            <span class="amount">&pound;980.00</span>
             <a>HSBC</a>
         ''' in rv.data
 
@@ -122,15 +122,15 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;10</span>
+                <span class="amount">&minus; &pound;10.00</span>
                 Tesco in <a href="/expenses/in/shopping">Shopping</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;980</span>
+            <span class="amount">&pound;980.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;10</span>
+            <span class="amount">&pound;10.00</span>
             Loaned to <a href="/loans/with/barunka">Barunka</a>
         ''' in rv.data
 
@@ -169,15 +169,15 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;10</span>
+                <span class="amount">&minus; &pound;10.00</span>
                 Tesco in <a href="/expenses/in/shopping">Shopping</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;980</span>
+            <span class="amount">&pound;980.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;10</span>
+            <span class="amount">&pound;10.00</span>
             Loaned to <a href="/loans/with/barunka">Barunka</a>
         ''' in rv.data
 
@@ -190,18 +190,18 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;10</span>
+                <span class="amount">&minus; &pound;10.00</span>
                 Tesco in <a href="/expenses/in/uncategorized">Uncategorized</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;10</span>
+            <span class="amount">&minus; &pound;10.00</span>
             Loaned from <a href="/loans/with/admin">Admin</a>
         ''' in rv.data
 
         # check the expenses listing
         rv = self.app.get('/expenses', follow_redirects=True)
         assert '''
-                <span class="amount">&minus; &pound;10</span>
+                <span class="amount">&minus; &pound;10.00</span>
                 Tesco in <a href="/expenses/in/uncategorized">Uncategorized</a>
         ''' in rv.data
 
@@ -210,7 +210,7 @@ class ExpensesTestCases(unittest.TestCase):
         assert '''
         <li class="red last">
             <p>
-                <span class="amount">&pound;10</span>
+                <span class="amount">&pound;10.00</span>
                 Tesco
             </p>
             <div class="date">from <a href="/loans/with/admin">Admin</a>
@@ -260,19 +260,19 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;250</span>
+                <span class="amount">&minus; &pound;250.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;500</span>
+            <span class="amount">&minus; &pound;500.00</span>
             <a>Credit Card</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;250</span>
+            <span class="amount">&pound;250.00</span>
             Loaned to <a href="/loans/with/barunka">Barunka</a>
         ''' in rv.data
 
@@ -332,19 +332,19 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;250</span>
+                <span class="amount">&minus; &pound;250.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;500</span>
+            <span class="amount">&minus; &pound;500.00</span>
             <a>Credit Card</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;250</span>
+            <span class="amount">&pound;250.00</span>
             Loaned to <a href="/loans/with/barunka">Barunka</a>
         ''' in rv.data
 
@@ -357,18 +357,18 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;250</span>
+                <span class="amount">&minus; &pound;250.00</span>
                 Bought a PC in <a href="/expenses/in/uncategorized">Uncategorized</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;250</span>
+            <span class="amount">&minus; &pound;250.00</span>
             Loaned from <a href="/loans/with/admin">Admin</a>
         ''' in rv.data
 
         # check the expenses listing
         rv = self.app.get('/expenses', follow_redirects=True)
         assert '''
-                <span class="amount">&minus; &pound;250</span>
+                <span class="amount">&minus; &pound;250.00</span>
                 Bought a PC in <a href="/expenses/in/uncategorized">Uncategorized</a>
         ''' in rv.data
 
@@ -377,7 +377,7 @@ class ExpensesTestCases(unittest.TestCase):
         assert '''
         <li class="red last">
             <p>
-                <span class="amount">&pound;250</span>
+                <span class="amount">&pound;250.00</span>
                 Bought a PC
             </p>
             <div class="date">from <a href="/loans/with/admin">Admin</a>
@@ -438,15 +438,15 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;500</span>
+                <span class="amount">&minus; &pound;500.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;500</span>
+            <span class="amount">&minus; &pound;500.00</span>
             <a>Credit Card</a>
         ''' in rv.data
         assert '''
@@ -499,15 +499,15 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;500</span>
+                <span class="amount">&minus; &pound;500.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;500</span>
+            <span class="amount">&minus; &pound;500.00</span>
             <a>Credit Card</a>
         ''' in rv.data
         assert '''
@@ -578,7 +578,7 @@ class ExpensesTestCases(unittest.TestCase):
         # check the loans entries table
         rv = self.app.get('/loans', follow_redirects=True)
         assert '''
-                <span class="amount">&minus; &pound;125</span>
+                <span class="amount">&minus; &pound;125.00</span>
                 Bought a PC
             </p>
             <div class="date">to <a href="/loans/with/barunka">Barunka</a>
@@ -587,20 +587,20 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;375</span>
+                <span class="amount">&minus; &pound;375.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert 'shared with <a href="/loans/with/barunka">Barunka</a>' in rv.data
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;500</span>
+            <span class="amount">&minus; &pound;500.00</span>
             <a>Credit Card</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;125</span>
+            <span class="amount">&pound;125.00</span>
             Loaned to <a href="/loans/with/barunka">Barunka</a>
         ''' in rv.data
         assert 'Loaned from' not in rv.data
@@ -661,7 +661,7 @@ class ExpensesTestCases(unittest.TestCase):
         # check the loans entries table
         rv = self.app.get('/loans', follow_redirects=True)
         assert '''
-                <span class="amount">&minus; &pound;125</span>
+                <span class="amount">&minus; &pound;125.00</span>
                 Bought a PC
             </p>
             <div class="date">to <a href="/loans/with/barunka">Barunka</a>
@@ -670,20 +670,20 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;375</span>
+                <span class="amount">&minus; &pound;375.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert 'shared with <a href="/loans/with/barunka">Barunka</a>' in rv.data
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;500</span>
+            <span class="amount">&minus; &pound;500.00</span>
             <a>Credit Card</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;125</span>
+            <span class="amount">&pound;125.00</span>
             Loaned to <a href="/loans/with/barunka">Barunka</a>
         ''' in rv.data
         assert 'Loaned from' not in rv.data
@@ -697,7 +697,7 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;125</span>
+                <span class="amount">&minus; &pound;125.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert 'shared with <a href="/loans/with/admin">Admin</a>' in rv.data
@@ -706,7 +706,7 @@ class ExpensesTestCases(unittest.TestCase):
 
         assert '''
         <li class="red last">
-            <span class="amount">&minus; &pound;125</span>
+            <span class="amount">&minus; &pound;125.00</span>
             Loaned from <a href="/loans/with/admin">Admin</a>
         </li>
         ''' in rv.data
@@ -760,7 +760,7 @@ class ExpensesTestCases(unittest.TestCase):
         # check the loans entries table
         rv = self.app.get('/loans', follow_redirects=True)
         assert '''
-                <span class="amount">&minus; &pound;125</span>
+                <span class="amount">&minus; &pound;125.00</span>
                 Bought a PC
             </p>
             <div class="date">to <a href="/loans/with/nikki">Nikki</a>
@@ -769,20 +769,20 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;375</span>
+                <span class="amount">&minus; &pound;375.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert 'shared with <a href="/loans/with/nikki">Nikki</a>' in rv.data
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;500</span>
+            <span class="amount">&minus; &pound;500.00</span>
             <a>Credit Card</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;125</span>
+            <span class="amount">&pound;125.00</span>
             Loaned to <a href="/loans/with/nikki">Nikki</a>
         ''' in rv.data
         assert 'Loaned from' not in rv.data
@@ -865,7 +865,7 @@ class ExpensesTestCases(unittest.TestCase):
         # check the loans entries table
         rv = self.app.get('/loans', follow_redirects=True)
         assert '''
-                <span class="amount">&minus; &pound;125</span>
+                <span class="amount">&minus; &pound;125.00</span>
                 Bought a PC
             </p>
             <div class="date">to <a href="/loans/with/nikki">Nikki</a>
@@ -874,20 +874,20 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;375</span>
+                <span class="amount">&minus; &pound;375.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
         ''' in rv.data
         assert 'shared with <a href="/loans/with/nikki">Nikki</a>' in rv.data
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;500</span>
+            <span class="amount">&minus; &pound;500.00</span>
             <a>Credit Card</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&pound;125</span>
+            <span class="amount">&pound;125.00</span>
             Loaned to <a href="/loans/with/nikki">Nikki</a>
         ''' in rv.data
         assert 'Loaned from' not in rv.data
@@ -921,7 +921,7 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;125</span>
+                <span class="amount">&minus; &pound;125.00</span>
                 Bought a PC in <a href="/expenses/in/uncategorized">Uncategorized</a>
         ''' in rv.data
         assert 'shared with <a href="/loans/with/admin">Admin</a>' in rv.data
@@ -929,7 +929,7 @@ class ExpensesTestCases(unittest.TestCase):
         assert 'Default' not in rv.data
 
         assert '''
-            <span class="amount">&minus; &pound;125</span>
+            <span class="amount">&minus; &pound;125.00</span>
             Loaned from <a href="/loans/with/admin">Admin</a>
         ''' in rv.data
 
@@ -1025,19 +1025,19 @@ class ExpensesTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-                <span class="amount">&minus; &pound;20</span>
+                <span class="amount">&minus; &pound;20.00</span>
                 Bought a Book in <a href="/expenses/in/shopping">Shopping</a>
         ''' in rv.data
 
         assert '''
         <li class="green last">
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         </li>
         ''' in rv.data
         assert '''
         <li class="red last">
-            <span class="amount">&minus; &pound;20</span>
+            <span class="amount">&minus; &pound;20.00</span>
             <a>Credit Card</a>
         </li>
         ''' in rv.data
