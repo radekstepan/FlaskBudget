@@ -74,24 +74,15 @@ def index(direction=None, user=None, date=None, page=1, items_per_page=10):
 @loans.route('/loan/get', methods=['GET', 'POST'])
 @login_required
 def get():
-    error = None
     current_user_id = session.get('logged_in_user')
 
     acc_us = Accounts(current_user_id)
     usr = Users(current_user_id)
 
     if request.method == 'POST':
-        # fetch values and check they are actually provided
-        if 'user' in request.form: from_user = request.form['user']
-        else: error = 'You need to specify from whom to borrow'
-        if 'date' in request.form: date = request.form['date']
-        else: error = 'You need to provide a date'
-        if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
-        else: error = 'You need to provide an account to credit to'
-        if 'amount' in request.form: amount = request.form['amount']
-        else: error = 'You need to provide an amount'
-        if 'description' in request.form and request.form['description']: description = request.form['description']
-        else: error = 'You need to provide a description'
+
+        dict = __validate_get_loan_form()
+        for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
         # 'heavier' checks
         if not error:
@@ -132,24 +123,15 @@ def get():
 @loans.route('/loan/give', methods=['GET', 'POST'])
 @login_required
 def give():
-    error = None
     current_user_id = session.get('logged_in_user')
 
     acc_us = Accounts(current_user_id)
     usr = Users(current_user_id)
 
     if request.method == 'POST':
-        # fetch values and check they are actually provided
-        if 'user' in request.form: to_user = request.form['user']
-        else: error = 'You need to specify to whom to loan'
-        if 'date' in request.form: date = request.form['date']
-        else: error = 'You need to provide a date'
-        if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
-        else: error = 'You need to provide an account to deduct from'
-        if 'amount' in request.form: amount = request.form['amount']
-        else: error = 'You need to provide an amount'
-        if 'description' in request.form and request.form['description']: description = request.form['description']
-        else: error = 'You need to provide a description'
+
+        dict = __validate_give_loan_form()
+        for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
         # 'heavier' checks
         if not error:
@@ -214,19 +196,9 @@ def edit_loan(loan_id):
 
 def __edit_get_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, users):
     if request.method == 'POST': # POST
-        error = None
 
-        # fetch values and check they are actually provided
-        if 'user' in request.form: from_user = request.form['user']
-        else: error = 'You need to specify from whom to borrow'
-        if 'date' in request.form: date = request.form['date']
-        else: error = 'You need to provide a date'
-        if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
-        else: error = 'You need to provide an account to credit to'
-        if 'amount' in request.form: amount = request.form['amount']
-        else: error = 'You need to provide an amount'
-        if 'description' in request.form and request.form['description']: description = request.form['description']
-        else: error = 'You need to provide a description'
+        dict = __validate_get_loan_form()
+        for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
         # 'heavier' checks
         if not error:
@@ -273,19 +245,9 @@ def __edit_get_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, use
 
 def __edit_give_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, users):
     if request.method == 'POST': # POST
-        error = None
 
-        # fetch values and check they are actually provided
-        if 'user' in request.form: to_user = request.form['user']
-        else: error = 'You need to specify to whom to loan'
-        if 'date' in request.form: date = request.form['date']
-        else: error = 'You need to provide a date'
-        if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
-        else: error = 'You need to provide an account to deduct from'
-        if 'amount' in request.form: amount = request.form['amount']
-        else: error = 'You need to provide an amount'
-        if 'description' in request.form and request.form['description']: description = request.form['description']
-        else: error = 'You need to provide a description'
+        dict = __validate_give_loan_form()
+        for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
         # 'heavier' checks
         if not error:
@@ -329,3 +291,37 @@ def __edit_give_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, us
             else: error = 'Not a valid amount'
 
     return render_template('admin_edit_give_loan.html', **locals())
+
+def __validate_give_loan_form():
+    error = None
+
+    # fetch values and check they are actually provided
+    if 'user' in request.form: to_user = request.form['user']
+    else: error = 'You need to specify to whom to loan'
+    if 'date' in request.form: date = request.form['date']
+    else: error = 'You need to provide a date'
+    if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
+    else: error = 'You need to provide an account to deduct from'
+    if 'amount' in request.form: amount = request.form['amount']
+    else: error = 'You need to provide an amount'
+    if 'description' in request.form and request.form['description']: description = request.form['description']
+    else: error = 'You need to provide a description'
+
+    return locals()
+
+def __validate_get_loan_form():
+    error = None
+
+    # fetch values and check they are actually provided
+    if 'user' in request.form: from_user = request.form['user']
+    else: error = 'You need to specify from whom to borrow'
+    if 'date' in request.form: date = request.form['date']
+    else: error = 'You need to provide a date'
+    if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
+    else: error = 'You need to provide an account to credit to'
+    if 'amount' in request.form: amount = request.form['amount']
+    else: error = 'You need to provide an amount'
+    if 'description' in request.form and request.form['description']: description = request.form['description']
+    else: error = 'You need to provide a description'
+
+    return locals()

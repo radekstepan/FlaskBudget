@@ -92,21 +92,13 @@ def add_account():
 @accounts.route('/account/transfer', methods=['GET', 'POST'])
 @login_required
 def add_transfer():
-    error = None
     current_user_id = session.get('logged_in_user')
 
     acc = Accounts(current_user_id)
 
     if request.method == 'POST':
-        # fetch values and check they are actually provided
-        if 'date' in request.form: date = request.form['date']
-        else: error = 'You need to provide a date'
-        if 'amount' in request.form: amount = request.form['amount']
-        else: error = 'You need to provide an amount'
-        if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
-        else: error = 'You need to provide an account to deduct from'
-        if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
-        else: error = 'You need to provide an account to credit to'
+        dict = __validate_transfer_form()
+        for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
         # 'heavier' checks
         if not error:
@@ -157,17 +149,8 @@ def edit_transfer(transfer_id):
     if transfer:
 
         if request.method == 'POST': # POST
-            error = None
-            
-            # fetch values and check they are actually provided
-            if 'date' in request.form: date = request.form['date']
-            else: error = 'You need to provide a date'
-            if 'amount' in request.form: amount = request.form['amount']
-            else: error = 'You need to provide an amount'
-            if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
-            else: error = 'You need to provide an account to deduct from'
-            if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
-            else: error = 'You need to provide an account to credit to'
+            dict = __validate_transfer_form()
+            for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
             # 'heavier' checks
             if not error:
@@ -206,3 +189,18 @@ def edit_transfer(transfer_id):
         return render_template('admin_edit_transfer.html', **locals())
 
     else: return redirect(url_for('accounts.show_transfers'))
+
+def __validate_transfer_form():
+    error = None
+
+    # fetch values and check they are actually provided
+    if 'date' in request.form: date = request.form['date']
+    else: error = 'You need to provide a date'
+    if 'amount' in request.form: amount = request.form['amount']
+    else: error = 'You need to provide an amount'
+    if 'deduct_from' in request.form: deduct_from_account = request.form['deduct_from']
+    else: error = 'You need to provide an account to deduct from'
+    if 'credit_to' in request.form: credit_to_account = request.form['credit_to']
+    else: error = 'You need to provide an account to credit to'
+
+    return locals()

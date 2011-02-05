@@ -48,7 +48,7 @@ class IncomeTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-            <span class="amount">&pound;1,500</span>
+            <span class="amount">&pound;1,500.00</span>
             <a>HSBC</a>
         ''' in rv.data
 
@@ -98,10 +98,10 @@ class IncomeTestCases(unittest.TestCase):
         # check the dashboard
         rv = self.app.get('/')
         assert '''
-            <span class="amount">&pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
         ''' in rv.data
         assert '''
-            <span class="amount">&minus; &pound;1,000</span>
+            <span class="amount">&pound;1,000.00</span>
             <a>Credit Card</a>
         ''' in rv.data

@@ -4,13 +4,12 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash
 from flask.helpers import url_for
-from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
+import entries
 
 # models
-from db.database import db_session
 from models.expenses import Expenses
 from models.accounts import Accounts
 from models.users import Users
@@ -32,32 +31,10 @@ expenses = Module(__name__)
 @expenses.route('/expenses/for/<date>/in/<category>/page/<int:page>')
 @login_required
 def index(date=None, category=None, page=1, items_per_page=10):
-    current_user_id = session.get('logged_in_user')
+    model = Expenses(session.get('logged_in_user'))
 
-    exp = Expenses(current_user_id)
-
-    # fetch entries
-    entries = exp.get_entries()
-
-    # categories
-    categories = exp.get_categories()
-    # provided category?
-    if category:
-        # search for the slug
-        category_id = exp.is_category(slug=category)
-        if category_id:
-            entries = exp.get_entries(category_id=category_id)
-
-    # provided a date range?
-    date_range = translate_date_range(date)
-    if date_range:
-        entries = exp.get_entries(date_from=date_range['low'], date_to=date_range['high'])
-    # date ranges for the template
-    date_ranges = get_date_ranges()
-
-    # build a paginator
-    paginator = Pagination(entries, page, items_per_page, entries.count(),
-                               entries.offset((page - 1) * items_per_page).limit(items_per_page))
+    dict = entries.index(**locals())
+    for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
     return render_template('admin_show_expenses.html', **locals())
 
@@ -72,17 +49,8 @@ def add_expense():
     usr = Users(current_user_id)
 
     if request.method == 'POST':
-        # fetch values and check they are actually provided
-        if 'amount' in request.form: amount = request.form['amount']
-        else: error = 'You need to provide an amount'
-        if 'date' in request.form: date = request.form['date']
-        else: error = 'Not a valid date'
-        if 'deduct_from' in request.form: account_id = request.form['deduct_from']
-        else: error = 'You need to provide an account'
-        if 'description' in request.form and request.form['description']: description = request.form['description']
-        else: error = 'You need to provide a description'
-        if 'category' in request.form: category_id = request.form['category']
-        else: error = 'You need to provide a category'
+        dict = __validate_expense_form()
+        for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
         # 'heavier' checks
         if not error:
@@ -205,17 +173,8 @@ def edit_expense(expense_id):
         if expense[1]: expense[0].amount = expense[4]
 
         if request.method == 'POST':
-            # fetch values and check they are actually provided
-            if 'amount' in request.form: amount = request.form['amount']
-            else: error = 'You need to provide an amount'
-            if 'date' in request.form: date = request.form['date']
-            else: error = 'Not a valid date'
-            if 'deduct_from' in request.form: account_id = request.form['deduct_from']
-            else: error = 'You need to provide an account'
-            if 'description' in request.form and request.form['description']: description = request.form['description']
-            else: error = 'You need to provide a description'
-            if 'category' in request.form: category_id = request.form['category']
-            else: error = 'You need to provide a category'
+            dict = __validate_expense_form()
+            for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
             # 'heavier' checks
             if not error:
@@ -247,7 +206,7 @@ def edit_expense(expense_id):
     else: return redirect(url_for('expenses.index'))
 
 def __edit_simple_expense(current_user_id, exp_us, expense, acc_us, usr, date, description, account_id, amount, error,
-                          category_id, categories, accounts, users, expense_id, is_shared=None):
+                          category_id, categories, accounts, users, expense_id, is_shared=None, key=None, dict=None):
     # is it a shared expense?
     if is_shared:
         # fetch values and check they are actually provided
@@ -329,7 +288,7 @@ def __edit_simple_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
     return render_template('admin_edit_expense.html', **locals())
 
 def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, description, account_id, amount, error,
-                          category_id, categories, accounts, users, expense_id, is_shared=None):
+                          category_id, categories, accounts, users, expense_id, is_shared=None, key=None, dict=None):
     # is it a shared expense?
     if is_shared:
         # fetch values and check they are actually provided
@@ -353,6 +312,20 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                     # are we sharing the expense with the same user as before?
                     if expense[2] == int(shared_with_user):
 
+                        # edit the loan
+                        loa.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
+                                      amount=loaned_amount, date=date, loan_id=expense[1])
+
+                        # fudge loan 'account' monies
+                        acc_us.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
+                                                   with_user_id=shared_with_user)
+
+                        # credit our account back
+                        acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
+
+                        # debit from account
+                        acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
+
                         if not usr.is_private(user_id=shared_with_user): # only modify non private accounts
                             
                             exp_them = Expenses(shared_with_user)
@@ -360,20 +333,6 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
 
                             # the user now and then is the same
                             expense_them = exp_them.get_expense(loan_id=expense[1])
-
-                            # edit the loan
-                            loa.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
-                                          amount=loaned_amount, date=date, loan_id=expense[1])
-
-                            # fudge loan 'account' monies
-                            acc_us.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
-                                                       with_user_id=shared_with_user)
-
-                            # credit our account back
-                            acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
-
-                            # debit from account
-                            acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
 
                             # modify their loan and account status
                             acc_them.modify_loan_balance(amount=-loaned_amount + loaned_then_amount,
@@ -387,20 +346,6 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
                             exp_us.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
 
                         else:
-                            # edit the loan
-                            loa.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
-                                          amount=loaned_amount, date=date, loan_id=expense[1])
-
-                            # fudge loan 'account' monies
-                            acc_us.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
-                                                       with_user_id=shared_with_user)
-
-                            # credit our account back
-                            acc_us.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
-
-                            # debit from account
-                            acc_us.modify_user_balance(amount=-float(amount), account_id=account_id)
-
                             exp_us.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
                             
                     else:
@@ -553,22 +498,29 @@ def __edit_shared_expense(current_user_id, exp_us, expense, acc_us, usr, date, d
 @expenses.route('/expense/category/add', methods=['GET', 'POST'])
 @login_required
 def add_category():
-    error = None
     if request.method == 'POST':
         new_category_name, current_user_id = request.form['name'], session.get('logged_in_user')
 
         exp = Expenses(current_user_id)
 
-        # blank name?
-        if new_category_name:
-            # already exists?
-            if not exp.is_category(name=new_category_name):
-
-                # create category
-                exp.add_category(new_category_name)
-                flash('Expense category added')
-
-            else: error = 'You already have a category under that name'
-        else: error = 'You need to provide a name'
+        error = entries.add_category(exp, new_category_name)
+        if not error: flash('Expense category added')
 
     return render_template('admin_add_expense_category.html', error=error)
+
+def __validate_expense_form():
+    error = None
+
+    # fetch values and check they are actually provided
+    if 'amount' in request.form: amount = request.form['amount']
+    else: error = 'You need to provide an amount'
+    if 'date' in request.form: date = request.form['date']
+    else: error = 'Not a valid date'
+    if 'deduct_from' in request.form: account_id = request.form['deduct_from']
+    else: error = 'You need to provide an account'
+    if 'description' in request.form and request.form['description']: description = request.form['description']
+    else: error = 'You need to provide a description'
+    if 'category' in request.form: category_id = request.form['category']
+    else: error = 'You need to provide a category'
+
+    return locals()

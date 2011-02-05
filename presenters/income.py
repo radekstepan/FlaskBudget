@@ -4,10 +4,10 @@
 # framework
 from flask import Module, session, render_template, redirect, request, flash
 from flask.helpers import url_for
-from flaskext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
+import entries
 
 # models
 from models.income import Income
@@ -29,56 +29,25 @@ income = Module(__name__)
 @income.route('/income/for/<date>/in/<category>/page/<int:page>')
 @login_required
 def index(date=None, category=None, page=1, items_per_page=10):
-    current_user_id = session.get('logged_in_user')
+    model = Income(session.get('logged_in_user'))
 
-    inc = Income(current_user_id)
-
-    # fetch entries
-    entries = inc.get_entries()
-
-    # categories
-    categories = inc.get_categories()
-    # provided category?
-    if category:
-        # search for the slug
-        category_id = inc.is_category(slug=category)
-        if category_id:
-            entries = inc.get_entries(category_id=category_id)
-
-    # provided a date range?
-    date_range = translate_date_range(date)
-    if date_range:
-        entries = inc.get_entries(date_from=date_range['low'], date_to=date_range['high'])
-    # date ranges for the template
-    date_ranges = get_date_ranges()
-
-    # build a paginator
-    paginator = Pagination(entries, page, items_per_page, entries.count(),
-                           entries.offset((page - 1) * items_per_page).limit(items_per_page))
+    dict = entries.index(**locals())
+    for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
     return render_template('admin_show_income.html', **locals())
 
 @income.route('/income/add', methods=['GET', 'POST'])
 @login_required
 def add_income():
-    error = None
     current_user_id = session.get('logged_in_user')
 
     inc = Income(current_user_id)
     acc = Accounts(current_user_id)
 
     if request.method == 'POST':
-        # fetch values and check they are actually provided
-        if 'date' in request.form: date = request.form['date']
-        else: error = 'Not a valid date'
-        if 'category' in request.form: category_id = request.form['category']
-        else: error = 'You need to provide a category'
-        if 'credit_to' in request.form: account_id = request.form['credit_to']
-        else: error = 'You need to provide an account'
-        if 'description' in request.form and request.form['description']: description = request.form['description']
-        else: error = 'You need to provide a description'
-        if 'amount' in request.form: amount = request.form['amount']
-        else: error = 'You need to provide an amount'
+        
+        dict = __validate_income_form()
+        for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
         # 'heavier' checks
         if not error:
@@ -128,19 +97,9 @@ def edit_income(income_id):
         accounts = acc.get_accounts()
 
         if request.method == 'POST': # POST
-            error = None
 
-            # fetch values and check they are actually provided
-            if 'date' in request.form: date = request.form['date']
-            else: error = 'Not a valid date'
-            if 'category' in request.form: category_id = request.form['category']
-            else: error = 'You need to provide a category'
-            if 'credit_to' in request.form: account_id = request.form['credit_to']
-            else: error = 'You need to provide an account'
-            if 'description' in request.form and request.form['description']: description = request.form['description']
-            else: error = 'You need to provide a description'
-            if 'amount' in request.form: amount = request.form['amount']
-            else: error = 'You need to provide an amount'
+            dict = __validate_income_form()
+            for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
             # 'heavier' checks
             if not error:
@@ -177,22 +136,29 @@ def edit_income(income_id):
 @income.route('/income/category/add', methods=['GET', 'POST'])
 @login_required
 def add_category():
-    error = None
     if request.method == 'POST':
         new_category_name, current_user_id = request.form['name'], session.get('logged_in_user')
 
         inc = Income(current_user_id)
 
-        # blank name?
-        if new_category_name:
-            # already exists?
-            if not inc.is_category(name=new_category_name):
-
-                # create category
-                inc.add_category(new_category_name)
-                flash('Income category added')
-
-            else: error = 'You already have a category under that name'
-        else: error = 'You need to provide a name'
+        error = entries.add_category(inc, new_category_name)
+        if not error: flash('Income category added')
 
     return render_template('admin_add_income_category.html', error=error)
+
+def __validate_income_form():
+    error = None
+
+    # fetch values and check they are actually provided
+    if 'date' in request.form: date = request.form['date']
+    else: error = 'Not a valid date'
+    if 'category' in request.form: category_id = request.form['category']
+    else: error = 'You need to provide a category'
+    if 'credit_to' in request.form: account_id = request.form['credit_to']
+    else: error = 'You need to provide an account'
+    if 'description' in request.form and request.form['description']: description = request.form['description']
+    else: error = 'You need to provide a description'
+    if 'amount' in request.form: amount = request.form['amount']
+    else: error = 'You need to provide an amount'
+
+    return locals()
