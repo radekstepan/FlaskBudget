@@ -187,7 +187,6 @@ class ExpensesBase():
                 db_session.add(i)
             db_session.commit()
 
-
 class NormalUserExpenses(ExpensesBase):
     pass
 
@@ -197,6 +196,17 @@ class PrivateUserExpenses(ExpensesBase):
         return None
 
     def link_to_loan(self, expense_id, loan_id, shared_with, percentage, original_amount):
+        return None
+
+    def get_expense(self, expense_id=None, loan_id=None):
+        # so we match the returned list in normal call...
+        class Temp(): id=None
+        return [Temp()]
+
+    def edit_expense(self, date, description, amount, category_id, account_id, expense_id):
+        return None
+
+    def delete_expense(self, expense_id):
         return None
 
 class ExpenseCategoriesTable(Base):

@@ -16,7 +16,25 @@ from models.users import UsersTable
 # utils
 from utils import *
 
-class Accounts():
+class Accounts(object):
+
+    object = None
+
+    def __init__(self, user_id, user_type=None):
+        # determine user type
+        if not user_type:
+            user_type = 'private' if UsersTable.query\
+            .filter(and_(UsersTable.id == user_id, UsersTable.is_private == True)).first() else 'normal'
+        if user_type == 'normal':
+            self.object = NormalUserAccounts(user_id)
+        else:
+            self.object = PrivateUserAccounts(user_id)
+
+    def __getattr__(self, name):
+        print "calling: ", name, ' on ', self.object
+        return getattr(self.object, name)
+
+class AccountsBase():
 
     user_id = None
 
@@ -155,6 +173,14 @@ class Accounts():
             .filter(and_(AccountTransfersTable.user == self.user_id, AccountTransfersTable.id == transfer_id)).first()
 
         return self.transfer
+
+class NormalUserAccounts(AccountsBase):
+    pass
+
+class PrivateUserAccounts(AccountsBase):
+
+    def modify_loan_balance(self, amount, with_user_id):
+        return None
 
 class AccountsTable(Base):
     """Represents a user's account to/from which to add/deduct monies"""
