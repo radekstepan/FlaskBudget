@@ -109,7 +109,7 @@ def add_expense():
                                             exp_us.link_to_loan(expense_id=expense_id_us, loan_id=loan_id,
                                                                 shared_with=shared_with_user, percentage=split,
                                                                 original_amount=amount)
-                                            exp_us.link_to_loan(expense_id=expense_id_them, loan_id=loan_id,
+                                            exp_them.link_to_loan(expense_id=expense_id_them, loan_id=loan_id,
                                                                 shared_with=current_user_id, percentage=split,
                                                                 original_amount=amount)
 

@@ -16,7 +16,25 @@ from models.users import UsersTable
 # utils
 from utils import *
 
-class Expenses():
+class Expenses(object):
+
+    object = None
+
+    def __init__(self, user_id, user_type=None):
+        # determine user type
+        if not user_type:
+            user_type = 'private' if UsersTable.query\
+            .filter(and_(UsersTable.id == user_id, UsersTable.is_private == True)).first() else 'normal'
+        if user_type == 'normal':
+            self.object = NormalUserExpenses(user_id)
+        else:
+            self.object = PrivateUserExpenses(user_id)
+
+    def __getattr__(self, name):
+        print "calling: ", name, ' on ', self.object
+        return getattr(self.object, name)
+
+class ExpensesBase():
 
     user_id = None
 
@@ -168,6 +186,18 @@ class Expenses():
                 i.percentage, i.original_amount = percentage, original_amount
                 db_session.add(i)
             db_session.commit()
+
+
+class NormalUserExpenses(ExpensesBase):
+    pass
+
+class PrivateUserExpenses(ExpensesBase):
+    
+    def add_expense(self, date, description, amount, category_id=None, account_id=None):
+        return None
+
+    def link_to_loan(self, expense_id, loan_id, shared_with, percentage, original_amount):
+        return None
 
 class ExpenseCategoriesTable(Base):
     """Expense category of a user"""
