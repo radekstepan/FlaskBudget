@@ -38,6 +38,8 @@ loans = Module(__name__)
 @loans.route('/loans/made/<direction>/with/<user>/for/<date>/page/<int:page>')
 @login_required
 def index(direction=None, user=None, date=None, page=1, items_per_page=10):
+    '''List loans user has with other users'''
+
     current_user_id = session.get('logged_in_user')
 
     loa = Loans(current_user_id)
@@ -74,6 +76,8 @@ def index(direction=None, user=None, date=None, page=1, items_per_page=10):
 @loans.route('/loan/get', methods=['GET', 'POST'])
 @login_required
 def get():
+    '''Get a loan, ie I get money from someone'''
+
     current_user_id = session.get('logged_in_user')
 
     acc_us = Accounts(current_user_id)
@@ -123,6 +127,8 @@ def get():
 @loans.route('/loan/give', methods=['GET', 'POST'])
 @login_required
 def give():
+    '''Give a loan or pay someone back'''
+
     current_user_id = session.get('logged_in_user')
 
     acc_us = Accounts(current_user_id)
@@ -172,6 +178,8 @@ def give():
 @loans.route('/loans/edit/<loan_id>', methods=['GET', 'POST'])
 @login_required
 def edit_loan(loan_id):
+    '''Edit loan entry'''
+
     current_user_id = session.get('logged_in_user')
 
     loa = Loans(current_user_id)
@@ -195,6 +203,8 @@ def edit_loan(loan_id):
     else: return redirect(url_for('loans.index'))
 
 def __edit_get_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, users):
+    '''Editing of loan entries where we were getting money'''
+
     if request.method == 'POST': # POST
 
         dict = __validate_get_loan_form()
@@ -244,6 +254,8 @@ def __edit_get_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, use
     return render_template('admin_edit_get_loan.html', **locals())
 
 def __edit_give_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, users):
+    '''Editing of loan entries where we were giving money'''
+
     if request.method == 'POST': # POST
 
         dict = __validate_give_loan_form()
@@ -293,6 +305,8 @@ def __edit_give_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, us
     return render_template('admin_edit_give_loan.html', **locals())
 
 def __validate_give_loan_form():
+    '''Simple validate add/edit give loan entry form'''
+
     error = None
 
     # fetch values and check they are actually provided
@@ -310,6 +324,8 @@ def __validate_give_loan_form():
     return locals()
 
 def __validate_get_loan_form():
+    '''Simple validate add/edit get loan entry form'''
+
     error = None
 
     # fetch values and check they are actually provided

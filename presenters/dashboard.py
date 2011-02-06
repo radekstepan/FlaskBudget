@@ -18,6 +18,8 @@ dashboard = Module(__name__)
 @dashboard.route('/')
 @login_required
 def index():
+    '''Budget dashboard'''
+
     current_user_id = session.get('logged_in_user')
 
     # get uncategorized expenses

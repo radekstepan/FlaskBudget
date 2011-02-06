@@ -5,6 +5,8 @@ from flaskext.sqlalchemy import Pagination
 from utils import *
 
 def index(model, date=None, category=None, page=1, items_per_page=10):
+    '''A helper function listing expense/income entries as needed'''
+
     # fetch entries
     entries = model.get_entries()
 
@@ -31,6 +33,8 @@ def index(model, date=None, category=None, page=1, items_per_page=10):
     return locals()
 
 def add_category(model, new_category_name):
+    '''A helper function for adding expense/income categories'''
+
     error = None
     # blank name?
     if new_category_name:

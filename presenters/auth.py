@@ -13,6 +13,8 @@ auth = Module(__name__)
 ''' Auth '''
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    '''User login'''
+
     error = None
     if request.method == 'POST':
         u = UsersTable.query\
@@ -31,10 +33,14 @@ def login():
 
 @auth.route('/logout')
 def logout():
+    '''User logout'''
+
     session.pop('logged_in_user', None)
     return redirect(url_for('login'))
 
 def login_required(f):
+    '''Decorator for functions needing user authentication'''
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('logged_in_user'):

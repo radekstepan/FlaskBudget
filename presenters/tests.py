@@ -24,6 +24,8 @@ tests = Module(__name__)
 
 @tests.route('/test/create-user/<name>')
 def create_user(name):
+    '''A test module for creating users in the system'''
+
     name = name.lower()
     u = UsersTable(name.capitalize(), False, name, name)
     db_session.add(u)
@@ -33,6 +35,8 @@ def create_user(name):
 
 @tests.route('/test/get-key')
 def get_key():
+    '''Get a user key for a logged in user'''
+
     u = Users(session.get('logged_in_user'))
     # fetch/generate key
     key = u.get_key()
@@ -41,6 +45,8 @@ def get_key():
 
 @tests.route('/test/wipe-tables')
 def wipe_tables():
+    '''Make a table cleanup in a database'''
+
     UsersTable.query.delete()
     UsersConnectionsTable.query.delete()
     UsersKeysTable.query.delete()

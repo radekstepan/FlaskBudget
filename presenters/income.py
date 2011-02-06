@@ -29,6 +29,8 @@ income = Module(__name__)
 @income.route('/income/for/<date>/in/<category>/page/<int:page>')
 @login_required
 def index(date=None, category=None, page=1, items_per_page=10):
+    '''List income entries for the user'''
+
     model = Income(session.get('logged_in_user'))
 
     dict = entries.index(**locals())
@@ -39,6 +41,8 @@ def index(date=None, category=None, page=1, items_per_page=10):
 @income.route('/income/add', methods=['GET', 'POST'])
 @login_required
 def add_income():
+    '''Add an income entry'''
+
     current_user_id = session.get('logged_in_user')
 
     inc = Income(current_user_id)
@@ -83,6 +87,8 @@ def add_income():
 @income.route('/income/edit/<income_id>', methods=['GET', 'POST'])
 @login_required
 def edit_income(income_id):
+    '''Edit income entry'''
+
     current_user_id = session.get('logged_in_user')
 
     inc = Income(current_user_id)
@@ -136,6 +142,9 @@ def edit_income(income_id):
 @income.route('/income/category/add', methods=['GET', 'POST'])
 @login_required
 def add_category():
+    '''Add an income category'''
+
+    error = None
     if request.method == 'POST':
         new_category_name, current_user_id = request.form['name'], session.get('logged_in_user')
 
@@ -147,6 +156,8 @@ def add_category():
     return render_template('admin_add_income_category.html', error=error)
 
 def __validate_income_form():
+    '''Perform basic validation/fetch of add/edit income entry form'''
+
     error = None
 
     # fetch values and check they are actually provided

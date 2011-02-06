@@ -32,6 +32,8 @@ expenses = Module(__name__)
 @expenses.route('/expenses/for/<date>/in/<category>/page/<int:page>')
 @login_required
 def index(date=None, category=None, page=1, items_per_page=10):
+    '''List expenses for the user'''
+
     model = Expenses(session.get('logged_in_user'))
 
     dict = entries.index(**locals())
@@ -42,6 +44,8 @@ def index(date=None, category=None, page=1, items_per_page=10):
 @expenses.route('/expense/add', methods=['GET', 'POST'])
 @login_required
 def add_expense():
+    '''Add an expense entry'''
+
     error = None
     current_user_id = session.get('logged_in_user')
 
@@ -149,6 +153,8 @@ def add_expense():
 @expenses.route('/expense/edit/<expense_id>', methods=['GET', 'POST'])
 @login_required
 def edit_expense(expense_id):
+    '''Edit expense entry'''
+
     current_user_id = session.get('logged_in_user')
 
     our_expenses = Expenses(current_user_id)
@@ -189,13 +195,16 @@ def edit_expense(expense_id):
                             # valid category?
                             if our_expenses.is_category(id=category_id):
 
-                                # is it shared NOW?
-                                if 'is_shared' in request.form: is_shared = True
-                                # WAS it a shared expense?
                                 if expense[1]:
-                                    return __edit_shared_expense(**locals())
+                                    if 'is_shared' in request.form: # shared expense that will be shared
+                                        return __edit_shared_expense_into_shared(**locals())
+                                    else: # shared expense that will be simple
+                                        return __edit_shared_expense_into_simple(**locals())
                                 else:
-                                    return __edit_simple_expense(**locals())
+                                    if 'is_shared' in request.form: # simple expense that will be shared
+                                        return __edit_simple_expense_into_shared(**locals())
+                                    else:  # simple expense that will be shared
+                                        return __edit_simple_expense_into_simple(**locals())
 
                             else: error = 'Not a valid category'
                         else: error = 'Not a valid account'
@@ -207,261 +216,278 @@ def edit_expense(expense_id):
 
     else: return redirect(url_for('expenses.index'))
 
-def __edit_simple_expense(current_user_id, our_expenses, expense, our_accounts, our_users, date, description, account_id,
-                          amount, error, category_id, categories, accounts, users, expense_id, is_shared=None, key=None,
-                          dict=None):
-    # is it a shared expense?
-    if is_shared:
-        # fetch values and check they are actually provided
-        if 'split' in request.form: split = request.form['split']
-        else: error = 'You need to provide a % split'
-        if 'user' in request.form: shared_with_user = request.form['user']
-        else: error = 'You need to provide a user'
+def __edit_simple_expense_into_shared(current_user_id, our_expenses, expense, our_accounts, our_users, date, description,
+                                      account_id, amount, error, category_id, categories, accounts, users, expense_id,
+                                      key=None, dict=None):
+    '''Edit a simple expense entry into a shared one'''
 
-        # 'heavier' checks
-        if not error:
-            # valid percentage split?
-            if is_percentage(split):
-                # valid user sharing with?
-                if our_users.is_connection(user_id=shared_with_user):
+    # fetch values and check they are actually provided
+    if 'split' in request.form: split = request.form['split']
+    else: error = 'You need to provide a % split'
+    if 'user' in request.form: shared_with_user = request.form['user']
+    else: error = 'You need to provide a user'
 
-                    # figure out percentage split
-                    loaned_amount = round((float(amount)*(100-float(split)))/100, 2)
+    # 'heavier' checks
+    if not error:
+        # valid percentage split?
+        if is_percentage(split):
+            # valid user sharing with?
+            if our_users.is_connection(user_id=shared_with_user):
 
-                    # create a loan
-                    our_loans = Loans(current_user_id)
-                    our_loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
-                                                     description=description, amount=loaned_amount)
-                    flash('Loan given')
+                # figure out percentage split
+                loaned_amount = round((float(amount)*(100-float(split)))/100, 2)
 
-                    # credit our account back
+                # create a loan
+                our_loans = Loans(current_user_id)
+                our_loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
+                                                 description=description, amount=loaned_amount)
+                flash('Loan given')
+
+                # is our original and current account the same?
+                if expense[0].deduct_from == account_id:
+                    # modify the difference between then and now
+                    our_accounts.modify_user_balance(amount=expense[0].amount-float(amount), account_id=account_id)
+                else:
+                    # credit our original account back
                     our_accounts.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
 
-                    # debit from account
+                    # debit from our current account
                     our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
 
-                    # edit expense (loaner - us)
-                    our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id,
-                                                       amount=float(amount) - loaned_amount, description=description,
-                                                       expense_id=expense_id)
+                # edit expense (loaner - us)
+                our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id,
+                                          amount=float(amount) - loaned_amount, description=description,
+                                          expense_id=expense_id)
 
+                their_expenses = Expenses(shared_with_user)
+                their_accounts = Accounts(shared_with_user)
+
+                # add new expenses (borrower)
+                their_expense_id = their_expenses.add_expense(date=date, amount=loaned_amount,
+                                                              description=description)
+
+                # modify their loan account balance
+                their_accounts.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
+
+                # modify our loan account balance
+                our_accounts.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
+
+                # link loan and the expenses
+                our_expenses.link_to_loan(expense_id=expense_id, loan_id=our_loan_id, shared_with=shared_with_user,
+                                          percentage=split, original_amount=amount)
+                their_expenses.link_to_loan(expense_id=their_expense_id, loan_id=our_loan_id,
+                                            shared_with=current_user_id, percentage=split, original_amount=amount)
+
+                flash('Expense edited')
+
+                # for the view...
+                expense = our_expenses.get_expense(expense_id=expense_id)
+                # fudge the total for the expense if we have a shared expense
+                if expense[1]: expense[0].amount = expense[4]
+
+            else: error = 'Not a valid user sharing with'
+        else: error = 'Not a valid % split'
+
+    # show the form
+    return render_template('admin_edit_expense.html', **locals())
+
+def __edit_simple_expense_into_simple(current_user_id, our_expenses, expense, our_accounts, our_users, date, description,
+                                      account_id, amount, error, category_id, categories, accounts, users, expense_id,
+                                      key=None, dict=None):
+    '''Edit a simple expense entry into a simple one, ie without sharing with a user'''
+
+    # credit our account back
+    our_accounts.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
+
+    # debit from account
+    our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
+
+    # edit expense
+    our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id, amount=amount,
+                              description=description, expense_id=expense_id)
+
+    flash('Expense edited')
+
+    # show the form
+    return render_template('admin_edit_expense.html', **locals())
+
+def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, our_accounts, our_users, date, description,
+                                      account_id, amount, error, category_id, categories, accounts, users, expense_id,
+                                      key=None, dict=None):
+    '''Edit a shared expense entry into a shared entry still'''
+
+    # fetch values and check they are actually provided
+    if 'split' in request.form: split = request.form['split']
+    else: error = 'You need to provide a % split'
+    if 'user' in request.form: shared_with_user = request.form['user']
+    else: error = 'You need to provide a user'
+
+    # 'heavier' checks
+    if not error:
+        # valid percentage split?
+        if is_percentage(split):
+            # valid user sharing with?
+            if our_users.is_connection(user_id=shared_with_user):
+
+                # figure out percentage split
+                loaned_amount = round((float(amount) * (100-float(split)))/100, 2)
+                loaned_then_amount = round((float(expense[0].amount) * (100-float(expense[3])))/100, 2)
+
+                # is our original and current account the same?
+                if expense[0].deduct_from == account_id:
+                    # modify the difference between then and now
+                    our_accounts.modify_user_balance(amount=expense[0].amount-float(amount), account_id=account_id)
+                else:
+                    # credit our original account back
+                    our_accounts.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
+
+                    # debit from our current account
+                    our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
+
+                our_loans = Loans(current_user_id)
+                # are we sharing the expense with the same user as before?
+                if expense[2] == int(shared_with_user):
+
+                    # edit the loan entry
+                    our_loans.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
+                                        amount=loaned_amount, date=date, loan_id=expense[1])
+
+                    # modify our loan account balance difference with the user
+                    our_accounts.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
+                                                     with_user_id=shared_with_user)
+
+                    # now for the user we share with
                     their_expenses = Expenses(shared_with_user)
                     their_accounts = Accounts(shared_with_user)
+
+                    # the user now and then is the same, get their expense
+                    their_expense = their_expenses.get_expense(loan_id=expense[1])
+
+                    # modify their loan account balance
+                    their_accounts.modify_loan_balance(amount=-loaned_amount + loaned_then_amount,
+                                                       with_user_id=current_user_id)
+
+                    # edit their expense amount
+                    their_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id,
+                                                amount=loaned_amount, description=description,
+                                                expense_id=their_expense[0].id)
+
+                    # update loan links
+                    our_expenses.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
+                    their_expenses.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
+
+                else:
+                    # the other user we WERE sharing with
+                    their_expenses = Expenses(expense[2])
+                    their_accounts = Accounts(expense[2])
+
+                    # credit our loan account
+                    our_accounts.modify_loan_balance(amount=expense[4], with_user_id=expense[2])
+
+                    # fetch their expense
+                    their_expense = their_expenses.get_expense(loan_id=expense[1])
+
+                    # delete the shared user's expense
+                    their_expenses.delete_expense(expense_id=their_expense[0].id)
+
+                    # modify their loan status towards us
+                    their_accounts.modify_loan_balance(amount=loaned_then_amount, with_user_id=current_user_id)
+
+                    # unlink expenses to loan entries
+                    our_expenses.unlink_loan(loan_id=expense[1])
+
+                    # delete the original loan
+                    our_loans.delete_loan(loan_id=expense[1])
+
+                    flash('Loan reverted')
+
+                    # create a loan from us to the new user
+                    loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
+                                                 description=description, amount=loaned_amount)
+
+                    # modify loan monies for us
+                    our_accounts.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
+
+                    # the CURRENT user we are sharing with
+                    their_accounts = Accounts(shared_with_user)
+
+                    # fudge loan 'account' monies for them
+                    their_accounts.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
+
+                    flash('Loan given')
+
+                    their_expenses = Expenses(shared_with_user)
 
                     # add new expenses (borrower)
                     their_expense_id = their_expenses.add_expense(date=date, amount=loaned_amount,
                                                                   description=description)
 
-                    # fudge loan 'account' monies
-                    their_accounts.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
+                    # create new loan - expense links
+                    our_expenses.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
+                                              percentage=split, original_amount=amount)
+                    their_expenses.link_to_loan(expense_id=their_expense_id, loan_id=loan_id, shared_with=current_user_id,
+                                                percentage=split, original_amount=amount)
 
-                    # fudge loan 'account' monies
-                    our_accounts.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
+                # edit expense (loaner - us)
+                our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id,
+                                          amount=float(amount) - loaned_amount, description=description,
+                                          expense_id=expense_id)
 
-                    # link loan and the expenses (through us)
-                    our_expenses.link_to_loan(expense_id=expense_id, loan_id=our_loan_id, shared_with=shared_with_user,
-                                        percentage=split, original_amount=amount)
-                    their_expenses.link_to_loan(expense_id=their_expense_id, loan_id=our_loan_id,
-                                                shared_with=current_user_id, percentage=split, original_amount=amount)
+                # fudge the total for the expense if we have a shared expense after POST
+                expense = our_expenses.get_expense(expense_id)
+                if expense[1]: expense[0].amount = expense[4]
 
-                    flash('Expense edited')
+                flash('Expense edited')
 
-                    # for the view...
-                    expense = our_expenses.get_expense(expense_id=expense_id)
-                    # fudge the total for the expense if we have a shared expense
-                    if expense[1]: expense[0].amount = expense[4]
-
-                else: error = 'Not a valid user sharing with'
-            else: error = 'Not a valid % split'
-
-    else:
-        # credit our account back
-        our_accounts.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
-
-        # debit from account
-        our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
-
-        # edit expense
-        our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id, amount=amount,
-                            description=description, expense_id=expense_id)
-
-        flash('Expense edited')
+            else: error = 'Not a valid user sharing with'
+        else: error = 'Not a valid % split'
 
     # show the form
     return render_template('admin_edit_expense.html', **locals())
 
-def __edit_shared_expense(current_user_id, our_expenses, expense, our_accounts, our_users, date, description, account_id,
-                          amount, error, category_id, categories, accounts, users, expense_id, is_shared=None, key=None,
-                          dict=None):
-    # is it a shared expense?
-    if is_shared:
-        # fetch values and check they are actually provided
-        if 'split' in request.form: split = request.form['split']
-        else: error = 'You need to provide a % split'
-        if 'user' in request.form: shared_with_user = request.form['user']
-        else: error = 'You need to provide a user'
+def __edit_shared_expense_into_simple(current_user_id, our_expenses, expense, our_accounts, our_users, date, description,
+                                      account_id, amount, error, category_id, categories, accounts, users, expense_id,
+                                      key=None, dict=None):
+    '''Edit a shared expense entry into a simple expense entry'''
 
-        # 'heavier' checks
-        if not error:
-            # valid percentage split?
-            if is_percentage(split):
-                # valid user sharing with?
-                if our_users.is_connection(user_id=shared_with_user):
+    our_loans = Loans(current_user_id)
 
-                    # figure out percentage split
-                    loaned_amount = round((float(amount) * (100-float(split)))/100, 2)
-                    loaned_then_amount = round((float(expense[0].amount) * (100-float(expense[3])))/100, 2)
+    # credit our loan account
+    our_accounts.modify_loan_balance(amount=-expense[4], with_user_id=expense[2])
 
-                    our_loans = Loans(current_user_id)
-                    # are we sharing the expense with the same user as before?
-                    if expense[2] == int(shared_with_user):
+    their_expenses = Expenses(expense[2])
+    their_accounts = Accounts(expense[2])
 
-                        # edit the loan
-                        our_loans.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
-                                      amount=loaned_amount, date=date, loan_id=expense[1])
+    # fetch their expense
+    their_expense = their_expenses.get_expense(loan_id=expense[1])
 
-                        # fudge loan 'account' monies
-                        our_accounts.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
-                                                   with_user_id=shared_with_user)
+    # delete the shared user's expense
+    their_expenses.delete_expense(expense_id=their_expense[0].id)
 
-                        # credit our account back
-                        our_accounts.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
+    # delete their loan status towards us
+    their_accounts.modify_loan_balance(amount=expense[4], with_user_id=current_user_id)
 
-                        # debit from account
-                        our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
+    # unlink expenses to loan entries
+    our_expenses.unlink_loan(loan_id=expense[1])
 
-                        their_expenses = Expenses(shared_with_user)
-                        their_accounts = Accounts(shared_with_user)
+    # delete the original loan
+    our_loans.delete_loan(loan_id=expense[1])
 
-                        # the user now and then is the same
-                        their_expense = their_expenses.get_expense(loan_id=expense[1])
+    flash('Loan reverted')
 
-                        # modify their loan and account status
-                        their_accounts.modify_loan_balance(amount=-loaned_amount + loaned_then_amount,
-                                                           with_user_id=current_user_id)
+    # credit our account back with the full amount (expense amount + loaned amount)
+    our_accounts.modify_user_balance(amount=float(expense[0].amount), account_id=expense[0].deduct_from)
 
-                        # edit their expense amount
-                        their_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id,
-                                                    amount=loaned_amount, description=description,
-                                                    expense_id=their_expense[0].id)
+    # debit from account
+    our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
 
-                        # update loan links
-                        our_expenses.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
-                        their_expenses.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
-                            
-                    else:
-                        # the other user we WERE sharing with
-                        their_expenses = Expenses(expense[2])
-                        their_accounts = Accounts(expense[2])
+    # edit expense
+    our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id, amount=amount,
+                              description=description, expense_id=expense_id)
 
-                        # credit our account back
-                        our_accounts.modify_user_balance(amount=expense[0].amount, account_id=expense[0].deduct_from)
+    expense = our_expenses.get_expense(expense_id=expense_id)
 
-                        # credit our loan account
-                        our_accounts.modify_loan_balance(amount=expense[4], with_user_id=expense[2])
-
-                        # fetch their expense
-                        their_expense = their_expenses.get_expense(loan_id=expense[1])
-
-                        # delete the shared user's expense
-                        their_expenses.delete_expense(expense_id=their_expense[0].id)
-
-                        # modify their loan status towards us
-                        their_accounts.modify_loan_balance(amount=loaned_then_amount, with_user_id=current_user_id)
-
-                        # unlink expenses to loan entries
-                        our_expenses.unlink_loan(loan_id=expense[1])
-
-                        # delete the original loan
-                        our_loans.delete_loan(loan_id=expense[1])
-
-                        flash('Loan reverted')
-
-                        # the current user we are sharing with
-                        their_expenses = Expenses(shared_with_user)
-                        their_accounts = Accounts(shared_with_user)
-
-                        # figure out percentage split
-                        loaned_amount = round((float(amount)*(100-float(split)))/100, 2)
-
-                        # create a loan from us to the new user
-                        our_loans = Loans(current_user_id)
-                        loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
-                                                     description=description, amount=loaned_amount)
-
-                        # fudge loan 'account' monies for them
-                        their_accounts.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
-
-                        # modify loan monies for us
-                        our_accounts.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
-
-                        flash('Loan given')
-
-                        # add new expenses (borrower)
-                        their_expense_id = their_expenses.add_expense(date=date, amount=loaned_amount,
-                                                                     description=description)
-
-                        # debit from our account the whole amount
-                        our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
-
-                        # create new loan - expense links
-                        our_expenses.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
-                                                  percentage=split, original_amount=amount)
-                        their_expenses.link_to_loan(expense_id=their_expense_id, loan_id=loan_id, shared_with=current_user_id,
-                                                  percentage=split, original_amount=amount)
-
-                    # edit expense (loaner - us)
-                    our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id,
-                                                       amount=float(amount) - loaned_amount, description=description,
-                                                       expense_id=expense_id)
-
-                    # fudge the total for the expense if we have a shared expense after POST
-                    expense = our_expenses.get_expense(expense_id)
-                    if expense[1]: expense[0].amount = expense[4]
-
-                    flash('Expense edited')
-
-                else: error = 'Not a valid user sharing with'
-            else: error = 'Not a valid % split'
-
-    else: # shared expense that is no longer shared
-        our_loans = Loans(current_user_id)
-
-        # credit our loan account
-        our_accounts.modify_loan_balance(amount=-expense[4], with_user_id=expense[2])
-
-        their_expenses = Expenses(expense[2])
-        their_accounts = Accounts(expense[2])
-
-        # fetch their expense
-        their_expense = their_expenses.get_expense(loan_id=expense[1])
-
-        # delete the shared user's expense
-        their_expenses.delete_expense(expense_id=their_expense[0].id)
-
-        # delete their loan status towards us
-        their_accounts.modify_loan_balance(amount=expense[4], with_user_id=current_user_id)
-
-        # unlink expenses to loan entries
-        our_expenses.unlink_loan(loan_id=expense[1])
-
-        # delete the original loan
-        our_loans.delete_loan(loan_id=expense[1])
-
-        flash('Loan reverted')
-        # credit our account back with the full amount (expense amount + loaned amount)
-        our_accounts.modify_user_balance(amount=float(expense[0].amount), account_id=expense[0].deduct_from)
-
-        # debit from account
-        our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
-
-        # edit expense
-        our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id, amount=amount,
-                            description=description, expense_id=expense_id)
-
-        expense = our_expenses.get_expense(expense_id=expense_id)
-
-        flash('Expense edited')
+    flash('Expense edited')
 
     # show the form
     return render_template('admin_edit_expense.html', **locals())
@@ -469,6 +495,9 @@ def __edit_shared_expense(current_user_id, our_expenses, expense, our_accounts, 
 @expenses.route('/expense/category/add', methods=['GET', 'POST'])
 @login_required
 def add_category():
+    '''Add an expense category'''
+
+    error = None
     if request.method == 'POST':
         new_category_name, current_user_id = request.form['name'], session.get('logged_in_user')
 
@@ -480,6 +509,8 @@ def add_category():
     return render_template('admin_add_expense_category.html', error=error)
 
 def __validate_expense_form():
+    '''Basic validation and fetch from an edit expense form'''
+
     error = None
 
     # fetch values and check they are actually provided

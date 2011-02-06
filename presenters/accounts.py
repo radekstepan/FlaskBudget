@@ -27,6 +27,8 @@ accounts = Module(__name__)
 @accounts.route('/account-transfers/with/<account>/for/<date>/page/<int:page>')
 @login_required
 def show_transfers(account=None, date=None, page=1, items_per_page=10):
+    '''Show account transfers for a given user'''
+
     current_user_id = session.get('logged_in_user')
 
     acc = Accounts(current_user_id)
@@ -59,6 +61,8 @@ def show_transfers(account=None, date=None, page=1, items_per_page=10):
 @accounts.route('/account/add', methods=['GET', 'POST'])
 @login_required
 def add_account():
+    '''Add an account'''
+
     error = None
     if request.method == 'POST':
         new_account_name, account_type, account_balance, current_user_id =\
@@ -92,6 +96,8 @@ def add_account():
 @accounts.route('/account/transfer', methods=['GET', 'POST'])
 @login_required
 def add_transfer():
+    '''Add an account transfer'''
+
     current_user_id = session.get('logged_in_user')
 
     acc = Accounts(current_user_id)
@@ -139,6 +145,8 @@ def add_transfer():
 @accounts.route('/account/transfer/edit/<transfer_id>', methods=['GET', 'POST'])
 @login_required
 def edit_transfer(transfer_id):
+    '''Edit account transfer'''
+
     current_user_id = session.get('logged_in_user')
 
     acc = Accounts(current_user_id)
@@ -191,6 +199,8 @@ def edit_transfer(transfer_id):
     else: return redirect(url_for('accounts.show_transfers'))
 
 def __validate_transfer_form():
+    '''Validate add/edit account transfer form'''
+
     error = None
 
     # fetch values and check they are actually provided

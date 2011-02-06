@@ -21,6 +21,8 @@ users = Module(__name__)
 @users.route('/user/add-private', methods=['GET', 'POST'])
 @login_required
 def add_private():
+    '''Add a private user connection for a user'''
+
     error = None
     if request.method == 'POST':
         new_user_name,  current_user_id = request.form['name'], session.get('logged_in_user')
@@ -82,6 +84,8 @@ def add_private():
 @users.route('/user/connect', methods=['GET', 'POST'])
 @login_required
 def connect_with_user():
+    '''Make a connection with a 'normal' user'''
+
     error = None
     current_user_id = session.get('logged_in_user')
 
@@ -113,6 +117,8 @@ def connect_with_user():
 @users.route('/user/generate-key', methods=['GET', 'POST'])
 @login_required
 def generate_key():
+    '''Generate/get a user key for the current user'''
+
     current_user_id = session.get('logged_in_user')
 
     useri = Users(current_user_id)
