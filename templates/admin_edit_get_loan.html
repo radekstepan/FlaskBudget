@@ -28,7 +28,7 @@
             <dt>From User:
             <dd><select name=user>
                 {% for user in users %}
-                    {% if user.id == loan.from_user %}
+                    {% if user.id == loan.other_user %}
                         <option value="{{ user.id }}" selected>{{ user.name }}</option>
                     {% else %}
                         <option value="{{ user.id }}">{{ user.name }}</option>

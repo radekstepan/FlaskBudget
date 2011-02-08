@@ -18,7 +18,7 @@ from models.loans import LoansTable
 from models.users import UsersTable, UsersConnectionsTable, UsersKeysTable, Users
 
 # utils
-from string import capitalize
+from utils import slugify
 
 tests = Module(__name__)
 
@@ -27,7 +27,8 @@ def create_user(name):
     '''A test module for creating users in the system'''
 
     name = name.lower()
-    u = UsersTable(name.capitalize(), False, name, name)
+    slug = slugify(name)
+    u = UsersTable(name.capitalize(), False, slug, slug)
     db_session.add(u)
     db_session.commit()
 

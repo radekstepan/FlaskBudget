@@ -13,6 +13,7 @@ from presenters.auth import login_required
 from models.users import Users
 from models.loans import Loans
 from models.accounts import Accounts
+from models.slugs import Slugs
 
 # utils
 from utils import *
@@ -42,30 +43,30 @@ def index(direction=None, user=None, date=None, page=1, items_per_page=10):
 
     current_user_id = session.get('logged_in_user')
 
-    loa = Loans(current_user_id)
-    usr = Users(current_user_id)
+    our_loans = Loans(current_user_id)
+    our_users = Users(current_user_id)
 
     # fetch loans
-    loans = loa.get_loans()
+    loans = our_loans.get_loans()
 
     # fetch users from connections from us
-    users = usr.get_connections()
+    users = our_users.get_connections()
 
     # provided user?
     if user:
         # valid slug?
-        user_id = usr.is_connection(slug=user)
-        if user_id: loans = loa.get_loans(user_id=user_id)
+        user_id = our_users.is_connection(slug=user)
+        if user_id: loans = our_loans.get_loans(user_id=user_id)
 
     # provided a date range?
     date_range = translate_date_range(date)
     if date_range:
-        loans = loa.get_loans(date_from=date_range['low'], date_to=date_range['high'])
+        loans = our_loans.get_loans(date_from=date_range['low'], date_to=date_range['high'])
     # date ranges for the template
     date_ranges = get_date_ranges()
 
     # provided a direction?
-    if direction: loans = loa.get_loans(direction=direction)
+    if direction: loans = our_loans.get_loans(direction=direction)
 
     # build a paginator
     paginator = Pagination(loans, page, items_per_page, loans.count(),
@@ -80,8 +81,7 @@ def get():
 
     current_user_id = session.get('logged_in_user')
 
-    acc_us = Accounts(current_user_id)
-    usr = Users(current_user_id)
+    our_accounts = Accounts(current_user_id)
 
     if request.method == 'POST':
 
@@ -95,22 +95,34 @@ def get():
                 # valid date?
                 if is_date(date):
                     # valid account?
-                    if acc_us.is_account(account_id=credit_to_account):
+                    if our_accounts.is_account(account_id=credit_to_account):
 
-                        acc_them = Accounts(from_user)
-                        loa = Loans(from_user)
-
-                        # add loans entry
-                        loa.add_loan(other_user_id=current_user_id, date=date, account_id=credit_to_account,
+                        # add our loans entry
+                        our_loans = Loans(current_user_id)
+                        our_loan_id = our_loans.add_loan(other_user_id=from_user, date=date, account_id=credit_to_account,
                                      description=description, amount=amount)
 
+                        # add their loans entry
+                        their_loans = Loans(from_user)
+                        their_loan_id = their_loans.add_loan(other_user_id=current_user_id, date=date,
+                                                             account_id=credit_to_account, description=description,
+                                                             amount=-float(amount))
+
+                        # generate slugs for the new loans
+                        our_slugs = Slugs(current_user_id)
+                        slug = our_slugs.add_slug(type='loan', object_id=our_loan_id, description=description)
+                        their_slugs = Slugs(from_user)
+                        their_slugs.add_slug(type='loan', object_id=their_loan_id, slug=slug)
+
+                        their_accounts = Accounts(from_user)
+
                         # transfer money from/to respective accounts
-                        acc_us.modify_user_balance(account_id=credit_to_account, amount=amount)
-                        acc_them.modify_user_balance(amount=-float(amount))
+                        our_accounts.modify_user_balance(account_id=credit_to_account, amount=amount)
+                        their_accounts.modify_user_balance(amount=-float(amount))
 
                         # fudge loan 'account' monies
-                        acc_us.modify_loan_balance(amount=-float(amount), with_user_id=from_user)
-                        acc_them.modify_loan_balance(amount=amount, with_user_id=current_user_id)
+                        our_accounts.modify_loan_balance(amount=-float(amount), with_user_id=from_user)
+                        their_accounts.modify_loan_balance(amount=amount, with_user_id=current_user_id)
 
                         flash('Loan received')
 
@@ -119,8 +131,9 @@ def get():
             else: error = 'Not a valid amount'
 
     # fetch users from connections from us
-    users = usr.get_connections()
-    accounts = acc_us.get_accounts()
+    our_users = Users(current_user_id)
+    users = our_users.get_connections()
+    accounts = our_accounts.get_accounts()
 
     return render_template('admin_get_loan.html', **locals())
 
@@ -131,8 +144,7 @@ def give():
 
     current_user_id = session.get('logged_in_user')
 
-    acc_us = Accounts(current_user_id)
-    usr = Users(current_user_id)
+    our_accounts = Accounts(current_user_id)
 
     if request.method == 'POST':
 
@@ -146,22 +158,34 @@ def give():
                 # valid date?
                 if is_date(date):
                     # valid account?
-                    if acc_us.is_account(account_id=deduct_from_account):
+                    if our_accounts.is_account(account_id=deduct_from_account):
 
-                        acc_them = Accounts(to_user)
-                        loa = Loans(current_user_id)
+                        # add our loans entry
+                        our_loans = Loans(current_user_id)
+                        our_loan_id = our_loans.add_loan(other_user_id=to_user, date=date, account_id=deduct_from_account,
+                                     description=description, amount=-float(amount))
 
-                        # add loans entry
-                        loa.add_loan(other_user_id=to_user, date=date, account_id=deduct_from_account,
-                                     description=description, amount=amount)
+                        # add their loans entry
+                        their_loans = Loans(to_user)
+                        their_loan_id = their_loans.add_loan(other_user_id=current_user_id, date=date,
+                                                           account_id=deduct_from_account, description=description,
+                                                           amount=amount)
+
+                        # generate slugs for the new loans
+                        our_slugs = Slugs(current_user_id)
+                        slug = our_slugs.add_slug(type='loan', object_id=our_loan_id, description=description)
+                        their_slugs = Slugs(to_user)
+                        their_slugs.add_slug(type='loan', object_id=their_loan_id, slug=slug)
+
+                        their_accounts = Accounts(to_user)
 
                         # transfer money from/to respective accounts
-                        acc_us.modify_user_balance(account_id=deduct_from_account, amount=-float(amount))
-                        acc_them.modify_user_balance(amount=amount)
+                        our_accounts.modify_user_balance(account_id=deduct_from_account, amount=-float(amount))
+                        their_accounts.modify_user_balance(amount=amount)
 
                         # fudge loan 'account' monies
-                        acc_us.modify_loan_balance(amount=amount, with_user_id=to_user)
-                        acc_them.modify_loan_balance(amount=-float(amount), with_user_id=current_user_id)
+                        our_accounts.modify_loan_balance(amount=amount, with_user_id=to_user)
+                        their_accounts.modify_loan_balance(amount=-float(amount), with_user_id=current_user_id)
 
                         flash('Loan given')
 
@@ -170,8 +194,9 @@ def give():
             else: error = 'Not a valid amount'
 
     # fetch users from connections from us
-    users = usr.get_connections()
-    accounts = acc_us.get_accounts()
+    our_users = Users(current_user_id)
+    users = our_users.get_connections()
+    accounts = our_accounts.get_accounts()
 
     return render_template('admin_give_loan.html', **locals())
 
@@ -182,28 +207,24 @@ def edit_loan(loan_id):
 
     current_user_id = session.get('logged_in_user')
 
-    loa = Loans(current_user_id)
+    our_loans = Loans(current_user_id)
 
     # is it valid?
-    loan = loa.get_loan(loan_id)
+    loan = our_loans.get_loan(loan_id)
     if loan:
-
-        # fetch users from connections from us
-        usr = Users(current_user_id)
-        acc = Accounts(current_user_id)
-
-        users = usr.get_connections()
-        accounts = acc.get_accounts()
-
-        if loan.from_user != current_user_id:
+        if float(loan.amount) > 0:
             return __edit_get_loan(**locals())
         else:
+            # make sure we pass absolute value as we don't care about the direction signified anymore
+            loan.amount = abs(loan.amount)
             return __edit_give_loan(**locals())
 
     else: return redirect(url_for('loans.index'))
 
-def __edit_get_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, users):
+def __edit_get_loan(loan_id, our_loans, loan, current_user_id):
     '''Editing of loan entries where we were getting money'''
+
+    our_accounts = Accounts(current_user_id)
 
     if request.method == 'POST': # POST
 
@@ -217,33 +238,55 @@ def __edit_get_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, use
                 # valid date?
                 if is_date(date):
                     # valid account?
-                    if acc.is_account(account_id=credit_to_account):
+                    if our_accounts.is_account(account_id=credit_to_account):
 
-                        acc_them = Accounts(loan.from_user)
+                        their_accounts = Accounts(loan.other_user)
 
                         # first roll back user balances
-                        acc.modify_user_balance(account_id=loan.account, amount=-float(loan.amount))
-                        acc_them.modify_user_balance(amount=amount)
+                        our_accounts.modify_user_balance(account_id=loan.account, amount=-float(loan.amount))
+                        their_accounts.modify_user_balance(amount=loan.amount)
 
                         # now roll back loan account monies
-                        acc.modify_loan_balance(amount=loan.amount, with_user_id=loan.from_user)
-                        acc_them.modify_loan_balance(amount=-float(loan.amount), with_user_id=current_user_id)
+                        our_accounts.modify_loan_balance(amount=loan.amount, with_user_id=loan.other_user)
+                        their_accounts.modify_loan_balance(amount=-float(amount), with_user_id=current_user_id)
 
                         # the user might have changed...
-                        if loan.from_user != from_user:
-                            acc_them = Accounts(from_user)
+                        if loan.other_user != from_user:
+                            their_accounts = Accounts(from_user)
 
                         # transfer money from/to respective accounts
-                        acc.modify_user_balance(account_id=credit_to_account, amount=amount)
-                        acc_them.modify_user_balance(amount=-float(amount))
+                        our_accounts.modify_user_balance(account_id=credit_to_account, amount=amount)
+                        their_accounts.modify_user_balance(amount=-float(amount))
 
                         # fudge loan 'account' monies
-                        acc.modify_loan_balance(amount=-float(amount), with_user_id=from_user)
-                        acc_them.modify_loan_balance(amount=amount, with_user_id=current_user_id)
+                        our_accounts.modify_loan_balance(amount=-float(amount), with_user_id=from_user)
+                        their_accounts.modify_loan_balance(amount=amount, with_user_id=current_user_id)
 
-                        # update loans entry
-                        loa.edit_loan(other_user_id=from_user, date=date, account_id=credit_to_account,
-                                     description=description, amount=amount, loan_id=loan_id)
+                        # get slug as a unique identifier
+                        slug = our_loans.get_loan_slug(loan_id=loan_id)
+
+                        # the user might have changed...
+                        their_loans = Loans(loan.other_user)
+                        if loan.other_user != from_user:
+                            # delete their original loan entry (and its slug)
+                            their_loans.delete_loan(slug=slug)
+
+                            # new user
+                            their_loans = Loans(from_user)
+                            their_loan_id = their_loans.add_loan(other_user_id=current_user_id, date=date,
+                                                                 description=description, amount=amount)
+
+                            # save their new slug
+                            their_slugs = Slugs(from_user)
+                            their_slugs.add_slug(type='loan', object_id=their_loan_id, slug=slug)
+                        else:
+                            # update their loans entry
+                            their_loans.edit_loan(other_user_id=current_user_id, date=date, description=description,
+                                                  amount=amount, slug=slug)
+
+                        # update our loans entry
+                        our_loans.edit_loan(other_user_id=from_user, date=date, description=description,
+                                              amount=amount, account_id=credit_to_account, loan_id=loan_id)
 
                         flash('Loan edited')
 
@@ -251,10 +294,16 @@ def __edit_get_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, use
                 else: error = 'Not a valid date'
             else: error = 'Not a valid amount'
 
+    our_users = Users(current_user_id)
+    users = our_users.get_connections()
+    accounts = our_accounts.get_accounts()
+
     return render_template('admin_edit_get_loan.html', **locals())
 
-def __edit_give_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, users):
+def __edit_give_loan(loan_id, our_loans, loan, current_user_id):
     '''Editing of loan entries where we were giving money'''
+
+    our_accounts = Accounts(current_user_id)
 
     if request.method == 'POST': # POST
 
@@ -268,39 +317,65 @@ def __edit_give_loan(loan_id, loa, loan, current_user_id, acc, usr, accounts, us
                 # valid date?
                 if is_date(date):
                     # valid account?
-                    if acc.is_account(account_id=deduct_from_account):
+                    if our_accounts.is_account(account_id=deduct_from_account):
 
-                        acc_them = Accounts(loan.to_user)
+                        their_accounts = Accounts(loan.other_user)
 
                         # first roll back user balances
-                        acc.modify_user_balance(account_id=loan.account, amount=loan.amount)
-                        acc_them.modify_user_balance(amount=-float(loan.amount))
+                        our_accounts.modify_user_balance(account_id=loan.account, amount=loan.amount)
+                        their_accounts.modify_user_balance(amount=-float(loan.amount))
 
                         # now roll back loan account monies
-                        acc.modify_loan_balance(amount=loan.amount, with_user_id=loan.to_user)
-                        acc_them.modify_loan_balance(amount=amount, with_user_id=current_user_id)
+                        our_accounts.modify_loan_balance(amount=-float(loan.amount), with_user_id=loan.other_user)
+                        their_accounts.modify_loan_balance(amount=amount, with_user_id=current_user_id)
 
                         # the user might have changed...
-                        if loan.to_user != to_user:
-                            acc_them = Accounts(to_user)
+                        if loan.other_user != to_user:
+                            their_accounts = Accounts(to_user)
 
                         # transfer money from/to respective accounts
-                        acc.modify_user_balance(account_id=deduct_from_account, amount=-float(amount))
-                        acc_them.modify_user_balance(amount=amount)
+                        our_accounts.modify_user_balance(account_id=deduct_from_account, amount=-float(amount))
+                        their_accounts.modify_user_balance(amount=amount)
 
                         # fudge loan 'account' monies
-                        acc.modify_loan_balance(amount=amount, with_user_id=to_user)
-                        acc_them.modify_loan_balance(amount=-float(amount), with_user_id=current_user_id)
+                        our_accounts.modify_loan_balance(amount=amount, with_user_id=to_user)
+                        their_accounts.modify_loan_balance(amount=-float(amount), with_user_id=current_user_id)
 
-                        # update loans entry
-                        loa.edit_loan(other_user_id=to_user, date=date, account_id=deduct_from_account,
-                                     description=description, amount=amount, loan_id=loan_id)
+                        # get slug as a unique identifier
+                        slug = our_loans.get_loan_slug(loan_id=loan_id)
+
+                        # the user might have changed...
+                        their_loans = Loans(loan.other_user)
+                        if loan.other_user != to_user:
+                            # delete their original loan entry (and its slug)
+                            their_loans.delete_loan(slug=slug)
+
+                            # new user
+                            their_loans = Loans(to_user)
+                            their_loan_id = their_loans.add_loan(other_user_id=current_user_id, date=date,
+                                                                 description=description, amount=amount)
+
+                            # save their new slug
+                            their_slugs = Slugs(to_user)
+                            their_slugs.add_slug(type='loan', object_id=their_loan_id, slug=slug)
+                        else:
+                            # update their loans entry
+                            their_loans.edit_loan(other_user_id=current_user_id, date=date, description=description,
+                                                  amount=amount, slug=slug)
+
+                        # update our loans entry
+                        our_loans.edit_loan(other_user_id=to_user, date=date, description=description,
+                                            amount=-float(amount), account_id=deduct_from_account, loan_id=loan_id)
 
                         flash('Loan edited')
 
-                    else: error = 'Not a valid source account'
+                    else: error = 'Not a valid target account'
                 else: error = 'Not a valid date'
             else: error = 'Not a valid amount'
+
+    our_users = Users(current_user_id)
+    users = our_users.get_connections()
+    accounts = our_accounts.get_accounts()
 
     return render_template('admin_edit_give_loan.html', **locals())
 

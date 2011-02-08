@@ -28,7 +28,7 @@
             <dt>To User:
             <dd><select name=user>
                 {% for user in users %}
-                    {% if user.id == loan.to_user %}
+                    {% if user.id == loan.other_user %}
                         <option value="{{ user.id }}" selected>{{ user.name }}</option>
                     {% else %}
                         <option value="{{ user.id }}">{{ user.name }}</option>
@@ -54,7 +54,7 @@
             <dd><input type=text name=description value="{{ loan.description }}">
 
             <dt>Amount:
-            <dd><input type=text name=amount value="{{ loan.amount|numberformat }}">
+            <dd><input type=text name=amount value="{{ loan.amount|abs|numberformat }}">
 
             <dd><input type=submit value="Edit">
         </dl>

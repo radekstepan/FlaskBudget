@@ -27,13 +27,13 @@
     {% if loop.first %}
     <ul class="list_1">
         {% endif %}
-        {% if loan.0.from_user|isloggeduserid %}
+        {% if loan.0.amount < 0 %}
         <li class="gray {% if loop.last %}last{% endif %}">
             <p>
-                <span class="amount">&minus; &pound;{{ loan.0.amount|currencyformat }}</span>
+                <span class="amount">&minus; &pound;{{ loan.0.amount|abs|currencyformat }}</span>
                 {{ loan.0.description }}
             </p>
-            <div class="date">to <a href="{{ url_for('loans.index', user=loan.4) }}">{{ loan.3 }}</a>
+            <div class="date">to <a href="{{ url_for('loans.index', user=loan.2) }}">{{ loan.1 }}</a>
                 {{ loan.0.date|datetimeformat }}</div>
         {% else %}
         <li class="red {% if loop.last %}last{% endif %}">

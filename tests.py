@@ -9,6 +9,7 @@ from tests.users import UsersTestCases
 from tests.accounts import AccountsTestCases
 from tests.income import IncomeTestCases
 from tests.expenses import ExpensesTestCases
+from tests.loans import LoansTestCases
 
 if __name__ == '__main__':
     #suite = unittest.TestLoader().loadTestsFromTestCase(UsersTestCases)
@@ -20,6 +21,9 @@ if __name__ == '__main__':
     #suite = unittest.TestLoader().loadTestsFromTestCase(IncomeTestCases)
     #unittest.TextTestRunner(verbosity=3).run(suite)
     #print "\n"
-    suite = unittest.TestLoader().loadTestsFromTestCase(ExpensesTestCases)
+    #suite = unittest.TestLoader().loadTestsFromTestCase(ExpensesTestCases)
+    #unittest.TextTestRunner(verbosity=3).run(suite)
+    #print "\n"
+    suite = unittest.TestLoader().loadTestsFromTestCase(LoansTestCases)
     unittest.TextTestRunner(verbosity=3).run(suite)
     print "\n"

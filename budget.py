@@ -34,6 +34,9 @@ def create_app(db):
     app.register_module(loans)
     app.register_module(users)
 
+    # 'unpresented' models :)
+    from models.slugs import SlugsTable
+
     # initialize the database
     init_engine(db)
 
