@@ -12,7 +12,7 @@ from db.database import Base
 # models
 from models.slugs import SlugsTable
 from models.users import UsersTable
-from models.accounts import AccountsTable
+from models.accounts import AccountsTable, Accounts
 
 class Loans(object):
 
@@ -68,11 +68,12 @@ class LoansBase():
 
     def add_loan(self, other_user_id, date, description, amount, account_id=None):
         # if an account id is not provided, get a 'default' account
-        # TODO what if no account is specified?
         if not account_id:
-            a = AccountsTable.query.filter(AccountsTable.user == self.user_id).filter(AccountsTable.type != "loan")\
-            .order_by(asc(AccountsTable.id)).first()
-            account_id = a.id
+            accounts = Accounts(self.user_id)
+            account_id = accounts.get_default_account()
+            # create a default account if no joy getting a default account
+            if not account_id:
+                account_id = accounts.add_default_account()
         l = LoansTable(self.user_id, other_user_id, date, account_id, description, amount)
         db_session.add(l)
         db_session.commit()

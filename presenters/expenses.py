@@ -15,6 +15,7 @@ from models.expenses import Expenses
 from models.accounts import Accounts
 from models.users import Users
 from models.loans import Loans
+from models.slugs import Slugs
 
 # utils
 from utils import *
@@ -86,11 +87,23 @@ def add_expense():
                                             # figure out percentage split
                                             loaned_amount = round((float(amount)*(100-float(split)))/100, 2)
 
-                                            # create a loan
-                                            loans = Loans(current_user_id)
-                                            loan_id = loans.add_loan(other_user_id=shared_with_user, date=date,
+                                            # create loans
+                                            our_loans = Loans(current_user_id)
+                                            our_loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date,
                                                          account_id=account_id, description=description,
-                                                         amount=loaned_amount)
+                                                         amount=-float(loaned_amount))
+
+                                            our_loans = Loans(shared_with_user)
+                                            their_loan_id = our_loans.add_loan(other_user_id=current_user_id, date=date,
+                                                         description=description, amount=loaned_amount)
+
+                                            # generate slugs for the new loans
+                                            our_slugs = Slugs(current_user_id)
+                                            slug = our_slugs.add_slug(type='loan', object_id=our_loan_id,
+                                                                      description=description)
+                                            their_slugs = Slugs(shared_with_user)
+                                            their_slugs.add_slug(type='loan', object_id=their_loan_id, slug=slug)
+
                                             flash('Loan given')
 
                                             # add new expense (loaner)
@@ -112,10 +125,10 @@ def add_expense():
                                                                          with_user_id=current_user_id)
 
                                             # link loan and the expenses (through us)
-                                            our_expenses.link_to_loan(expense_id=our_expense_id, loan_id=loan_id,
+                                            our_expenses.link_to_loan(expense_id=our_expense_id, loan_id=our_loan_id,
                                                                 shared_with=shared_with_user, percentage=split,
                                                                 original_amount=amount)
-                                            their_expenses.link_to_loan(expense_id=their_expense_id, loan_id=loan_id,
+                                            their_expenses.link_to_loan(expense_id=their_expense_id, loan_id=our_loan_id,
                                                                 shared_with=current_user_id, percentage=split,
                                                                 original_amount=amount)
 
@@ -237,10 +250,23 @@ def __edit_simple_expense_into_shared(current_user_id, our_expenses, expense, ou
                 # figure out percentage split
                 loaned_amount = round((float(amount)*(100-float(split)))/100, 2)
 
-                # create a loan
+                # create loans
                 our_loans = Loans(current_user_id)
-                our_loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
-                                                 description=description, amount=loaned_amount)
+                our_loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date,
+                                                 account_id=account_id, description=description,
+                                                 amount=-float(loaned_amount))
+
+                their_loans = Loans(shared_with_user)
+                their_loan_id = their_loans.add_loan(other_user_id=current_user_id, date=date,
+                                                   description=description, amount=loaned_amount)
+
+                # generate slugs for the new loans
+                our_slugs = Slugs(current_user_id)
+                slug = our_slugs.add_slug(type='loan', object_id=our_loan_id,
+                                          description=description)
+                their_slugs = Slugs(shared_with_user)
+                their_slugs.add_slug(type='loan', object_id=their_loan_id, slug=slug)
+
                 flash('Loan given')
 
                 # is our original and current account the same?
@@ -345,12 +371,20 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
                     our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
 
                 our_loans = Loans(current_user_id)
+                their_loans = Loans(expense[2])
+
+                # get slug as a unique identifier
+                slug = our_loans.get_loan_slug(loan_id=expense[1])
+
                 # are we sharing the expense with the same user as before?
                 if expense[2] == int(shared_with_user):
 
-                    # edit the loan entry
+                    # edit the loan entries
                     our_loans.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
-                                        amount=loaned_amount, date=date, loan_id=expense[1])
+                                        amount=-float(loaned_amount), date=date, loan_id=expense[1])
+
+                    their_loans.edit_loan(other_user_id=current_user_id, description=description,
+                                          amount=loaned_amount, date=date, slug=slug)
 
                     # modify our loan account balance difference with the user
                     our_accounts.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
@@ -396,14 +430,28 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
                     # unlink expenses to loan entries
                     our_expenses.unlink_loan(loan_id=expense[1])
 
-                    # delete the original loan
+                    # delete the original loans
                     our_loans.delete_loan(loan_id=expense[1])
+                    their_loans.delete_loan(slug=slug)
 
                     flash('Loan reverted')
 
                     # create a loan from us to the new user
-                    loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
-                                                 description=description, amount=loaned_amount)
+                    our_loan_id = our_loans.add_loan(other_user_id=shared_with_user, date=date, account_id=account_id,
+                                                 description=description, amount=-float(loaned_amount))
+
+                    # create a loan entry for the new user
+                    their_loans = Loans(shared_with_user)
+                    their_loan_id = their_loans.add_loan(other_user_id=current_user_id, date=date,
+                                                       description=description, amount=loaned_amount)
+
+                    # generate slugs for the new loans
+                    our_slugs = Slugs(current_user_id)
+                    slug = our_slugs.add_slug(type='loan', object_id=our_loan_id, description=description)
+                    their_slugs = Slugs(shared_with_user)
+                    their_slugs.add_slug(type='loan', object_id=their_loan_id, slug=slug)
+
+                    flash('Loan given')
 
                     # modify loan monies for us
                     our_accounts.modify_loan_balance(amount=loaned_amount, with_user_id=shared_with_user)
@@ -414,8 +462,6 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
                     # fudge loan 'account' monies for them
                     their_accounts.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
 
-                    flash('Loan given')
-
                     their_expenses = Expenses(shared_with_user)
 
                     # add new expenses (borrower)
@@ -423,9 +469,9 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
                                                                   description=description)
 
                     # create new loan - expense links
-                    our_expenses.link_to_loan(expense_id=expense_id, loan_id=loan_id, shared_with=shared_with_user,
+                    our_expenses.link_to_loan(expense_id=expense_id, loan_id=our_loan_id, shared_with=shared_with_user,
                                               percentage=split, original_amount=amount)
-                    their_expenses.link_to_loan(expense_id=their_expense_id, loan_id=loan_id, shared_with=current_user_id,
+                    their_expenses.link_to_loan(expense_id=their_expense_id, loan_id=our_loan_id, shared_with=current_user_id,
                                                 percentage=split, original_amount=amount)
 
                 # edit expense (loaner - us)
@@ -457,6 +503,7 @@ def __edit_shared_expense_into_simple(current_user_id, our_expenses, expense, ou
 
     their_expenses = Expenses(expense[2])
     their_accounts = Accounts(expense[2])
+    their_loans = Loans(expense[2])
 
     # fetch their expense
     their_expense = their_expenses.get_expense(loan_id=expense[1])
@@ -470,8 +517,12 @@ def __edit_shared_expense_into_simple(current_user_id, our_expenses, expense, ou
     # unlink expenses to loan entries
     our_expenses.unlink_loan(loan_id=expense[1])
 
-    # delete the original loan
+    # get slug as a unique identifier
+    slug = our_loans.get_loan_slug(loan_id=expense[1])
+
+    # delete the original loans
     our_loans.delete_loan(loan_id=expense[1])
+    their_loans.delete_loan(slug=slug)
 
     flash('Loan reverted')
 
