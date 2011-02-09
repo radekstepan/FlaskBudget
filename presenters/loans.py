@@ -248,7 +248,7 @@ def __edit_get_loan(loan_id, our_loans, loan, current_user_id):
 
                         # now roll back loan account monies
                         our_accounts.modify_loan_balance(amount=loan.amount, with_user_id=loan.other_user)
-                        their_accounts.modify_loan_balance(amount=-float(amount), with_user_id=current_user_id)
+                        their_accounts.modify_loan_balance(amount=-float(loan.amount), with_user_id=current_user_id)
 
                         # the user might have changed...
                         if loan.other_user != from_user:
@@ -274,7 +274,7 @@ def __edit_get_loan(loan_id, our_loans, loan, current_user_id):
                             # new user
                             their_loans = Loans(from_user)
                             their_loan_id = their_loans.add_loan(other_user_id=current_user_id, date=date,
-                                                                 description=description, amount=amount)
+                                                                 description=description, amount=-float(amount))
 
                             # save their new slug
                             their_slugs = Slugs(from_user)
@@ -327,7 +327,7 @@ def __edit_give_loan(loan_id, our_loans, loan, current_user_id):
 
                         # now roll back loan account monies
                         our_accounts.modify_loan_balance(amount=-float(loan.amount), with_user_id=loan.other_user)
-                        their_accounts.modify_loan_balance(amount=amount, with_user_id=current_user_id)
+                        their_accounts.modify_loan_balance(amount=loan.amount, with_user_id=current_user_id)
 
                         # the user might have changed...
                         if loan.other_user != to_user:
