@@ -46,30 +46,32 @@ def add_private():
                 if 'balance' in request.form:
                     # get balance
                     balance = request.form['balance']
-                    # valid amount?
-                    if is_float(balance):
-                        balance = float(balance)
-                        # do we have a pre-existing balance with the user?
-                        if balance != 0:
-                            if balance > 0: # they owe us
-                                # models
-                                loa, acc = Loans(current_user_id), Accounts(current_user_id)
-                                # add loan entry
-                                loa.add_loan(other_user_id=new_user_id, date=today_date(),
-                                             account_id=acc.get_default_account(),
-                                             description="Initial balance with the user", amount=balance)
-                                # fudge loan monies balance
-                                acc.modify_loan_balance(amount=balance, with_user_id=new_user_id)
-                            else: # we owe them
-                                # models
-                                loa, acc = Loans(new_user_id), Accounts(current_user_id)
-                                # add loan entry
-                                loa.add_loan(other_user_id=current_user_id, date=today_date(),
-                                             account_id=acc.get_default_account(),
-                                             description="Initial balance with the user", amount=-balance)
-                                # fudge loan monies balance
-                                acc.modify_loan_balance(amount=balance, with_user_id=new_user_id)
-                    else: error = 'Not a valid amount'
+                    # balance could be "empty"
+                    if balance != "":
+                        # valid amount?
+                        if is_float(balance):
+                            balance = float(balance)
+                            # do we have a pre-existing balance with the user?
+                            if balance != 0:
+                                if balance > 0: # they owe us
+                                    # models
+                                    loa, acc = Loans(current_user_id), Accounts(current_user_id)
+                                    # add loan entry
+                                    loa.add_loan(other_user_id=new_user_id, date=today_date(),
+                                                 account_id=acc.get_default_account(),
+                                                 description="Initial balance with the user", amount=balance)
+                                    # fudge loan monies balance
+                                    acc.modify_loan_balance(amount=balance, with_user_id=new_user_id)
+                                else: # we owe them
+                                    # models
+                                    loa, acc = Loans(new_user_id), Accounts(current_user_id)
+                                    # add loan entry
+                                    loa.add_loan(other_user_id=current_user_id, date=today_date(),
+                                                 account_id=acc.get_default_account(),
+                                                 description="Initial balance with the user", amount=-balance)
+                                    # fudge loan monies balance
+                                    acc.modify_loan_balance(amount=balance, with_user_id=new_user_id)
+                        else: error = 'Not a valid amount'
 
                 # create connections from us to them and back
                 useri.add_connection(new_user_id)

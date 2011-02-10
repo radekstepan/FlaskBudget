@@ -1136,6 +1136,11 @@ class ExpensesTestCases(unittest.TestCase):
         assert 'Default' not in rv.data
         assert '&pound;' not in rv.data
 
+        # check the loans
+        rv = self.app.get('/loans', follow_redirects=True)
+        assert '<div class="date">to <a href="/loans/with/admin">Admin</a>' not in rv.data
+        assert '<div class="date">from <a href="/loans/with/admin">Admin</a>' not in rv.data
+
         # login as nikki
         self.app.get('/logout', follow_redirects=True)
         self.app.post('/login', data=dict(username="nikki", password="nikki"), follow_redirects=True)
@@ -1144,3 +1149,8 @@ class ExpensesTestCases(unittest.TestCase):
         rv = self.app.get('/')
         assert 'Default' not in rv.data
         assert '&pound;' not in rv.data
+
+        # check the loans
+        rv = self.app.get('/loans', follow_redirects=True)
+        assert '<div class="date">to <a href="/loans/with/admin">Admin</a>' not in rv.data
+        assert '<div class="date">from <a href="/loans/with/admin">Admin</a>' not in rv.data
