@@ -175,7 +175,8 @@ class ExpensesBase():
 
     # blindly obey and delete records for all entries associated with this loan
     def unlink_loan(self, loan_id):
-        ExpensesToLoansTable.query.filter(ExpensesToLoansTable.loan == loan_id).delete()
+        ExpensesToLoansTable.query\
+        .filter(ExpensesToLoansTable.loan == loan_id).delete()
         db_session.commit()
 
     # blindly obey and delete records for all entries associated with this loan

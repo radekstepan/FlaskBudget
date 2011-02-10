@@ -416,7 +416,7 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
                     their_accounts = Accounts(expense[2])
 
                     # credit our loan account
-                    our_accounts.modify_loan_balance(amount=expense[4], with_user_id=expense[2])
+                    our_accounts.modify_loan_balance(amount=-float(loaned_then_amount), with_user_id=expense[2])
 
                     # fetch their expense
                     their_expense = their_expenses.get_expense(loan_id=expense[1])
@@ -498,8 +498,11 @@ def __edit_shared_expense_into_simple(current_user_id, our_expenses, expense, ou
 
     our_loans = Loans(current_user_id)
 
+    # percentage split
+    loaned_then_amount = round((float(expense[0].amount) * (100-float(expense[3])))/100, 2)
+
     # credit our loan account
-    our_accounts.modify_loan_balance(amount=-expense[4], with_user_id=expense[2])
+    our_accounts.modify_loan_balance(amount=-float(loaned_then_amount), with_user_id=expense[2])
 
     their_expenses = Expenses(expense[2])
     their_accounts = Accounts(expense[2])

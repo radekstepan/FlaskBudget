@@ -873,6 +873,7 @@ class ExpensesTestCases(unittest.TestCase):
 
         # check the dashboard
         rv = self.app.get('/')
+        print rv.data
         assert '''
                 <span class="amount">&minus; &pound;375.00</span>
                 Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
@@ -1004,17 +1005,98 @@ class ExpensesTestCases(unittest.TestCase):
                            follow_redirects=True)
         assert 'Expense edited' in rv.data
 
+        # check the dashboard
+        rv = self.app.get('/')
+        assert '''
+                <span class="amount">&minus; &pound;375.00</span>
+                Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
+        ''' in rv.data
+        assert 'Tesco' not in rv.data
+
+        assert '''
+            <span class="amount">&pound;125.00</span>
+            Loaned to <a href="/loans/with/nikki">Nikki</a>
+        ''' in rv.data
+        assert 'Loaned to <a href="/loans/with/barunka">Barunka</a>' not in rv.data
+
+        # check the loans
+        rv = self.app.get('/loans', follow_redirects=True)
+        assert '''
+            <p>
+                <span class="amount">&minus; &pound;125.00</span>
+                Bought a PC
+            </p>
+            <div class="date">to <a href="/loans/with/nikki">Nikki</a>
+                2011-01-29</div>
+        ''' in rv.data
+        assert '<div class="date">to <a href="/loans/with/barunka">Barunka</a>' not in rv.data
+        assert '<div class="date">from <a href="/loans/with/barunka">Barunka</a>' not in rv.data
+
         # edit expense post
         rv = self.app.post('/expense/edit/1', data=dict(date="2011-01-30", category=1, deduct_from=4, amount=1000,
                                                        description="Bought a Fridge", is_shared=True, split=50, user=4),
                            follow_redirects=True)
         assert 'Expense edited' in rv.data
 
+        # check the dashboard
+        rv = self.app.get('/')
+        assert '''
+                <span class="amount">&minus; &pound;500.00</span>
+                Bought a Fridge in <a href="/expenses/in/shopping">Shopping</a>
+        ''' in rv.data
+        assert 'PC' not in rv.data
+
+        assert '''
+            <span class="amount">&pound;500.00</span>
+            Loaned to <a href="/loans/with/tommi">Tommi</a>
+        ''' in rv.data
+        assert 'Loaned to <a href="/loans/with/nikki">Nikki</a>' not in rv.data
+
+        # check the loans
+        rv = self.app.get('/loans', follow_redirects=True)
+        assert '''
+            <p>
+                <span class="amount">&minus; &pound;500.00</span>
+                Bought a Fridge
+            </p>
+            <div class="date">to <a href="/loans/with/tommi">Tommi</a>
+                2011-01-30</div>
+        ''' in rv.data
+        assert '<div class="date">to <a href="/loans/with/nikki">Nikki</a>' not in rv.data
+        assert '<div class="date">from <a href="/loans/with/nikki">Nikki</a>' not in rv.data
+
         # edit expense post
         rv = self.app.post('/expense/edit/1', data=dict(date="2011-01-31", category=2, deduct_from=3, amount=250,
                                                        description="Bought an Apple", is_shared=True, split=50, user=5),
                            follow_redirects=True)
         assert 'Expense edited' in rv.data
+
+        # check the dashboard
+        rv = self.app.get('/')
+        assert '''
+                <span class="amount">&minus; &pound;125.00</span>
+                Bought an Apple in <a href="/expenses/in/purchases">Purchases</a>
+        ''' in rv.data
+        assert 'Fridge' not in rv.data
+
+        assert '''
+            <span class="amount">&pound;125.00</span>
+            Loaned to <a href="/loans/with/gunn">Gunn</a>
+        ''' in rv.data
+        assert 'Loaned to <a href="/loans/with/tommi">Tommi</a>' not in rv.data
+
+        # check the loans
+        rv = self.app.get('/loans', follow_redirects=True)
+        assert '''
+            <p>
+                <span class="amount">&minus; &pound;125.00</span>
+                Bought an Apple
+            </p>
+            <div class="date">to <a href="/loans/with/gunn">Gunn</a>
+                2011-01-31</div>
+        ''' in rv.data
+        assert '<div class="date">to <a href="/loans/with/tommi">Tommi</a>' not in rv.data
+        assert '<div class="date">from <a href="/loans/with/tommi">Tommi</a>' not in rv.data
 
         # edit expense post
         rv = self.app.post('/expense/edit/1', data=dict(date="2011-01-29", category=1, deduct_from=4, amount=20,
@@ -1030,19 +1112,20 @@ class ExpensesTestCases(unittest.TestCase):
         ''' in rv.data
 
         assert '''
-        <li class="green last">
             <span class="amount">&pound;1,000.00</span>
             <a>HSBC</a>
-        </li>
         ''' in rv.data
         assert '''
-        <li class="red last">
             <span class="amount">&minus; &pound;20.00</span>
             <a>Credit Card</a>
-        </li>
         ''' in rv.data
-
         assert 'shared with' not in rv.data
+        assert 'Loaned from' not in rv.data
+
+        # check the loans
+        rv = self.app.get('/loans', follow_redirects=True)
+        assert '<div class="date">to <a href="/loans/with/' not in rv.data
+        assert '<div class="date">from <a href="/loans/with/' not in rv.data
 
         # login as barunka
         self.app.get('/logout', follow_redirects=True)

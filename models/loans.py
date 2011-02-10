@@ -127,7 +127,7 @@ class LoansBase():
 
             loan_id = s.object_id
 
-        LoansTable.query.filter(LoansTable.id == loan_id).delete()
+        LoansTable.query.filter(and_(LoansTable.user == self.user_id, LoansTable.id == loan_id)).delete()
 
         SlugsTable.query\
         .filter(and_(SlugsTable.object_id == loan_id, SlugsTable.type == 'loan', SlugsTable.user == self.user_id))\
