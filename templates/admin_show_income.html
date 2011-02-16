@@ -36,7 +36,7 @@
             <div class="actions">
                 <ul>
                     <li class="first"><a href="{{ url_for('income.edit_income', income_id=entry.0.id) }}">Edit</a></li>
-                    <li><a href="#">Delete</a></li>
+                    <li><a href="{{ url_for('income.delete_income', income_id=entry.0.id) }}">Delete</a></li>
                 </ul>
             </div>
         </li>

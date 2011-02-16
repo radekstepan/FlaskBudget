@@ -174,6 +174,11 @@ class AccountsBase():
 
         return self.transfer
 
+    def delete_transfer(self, transfer_id):
+        AccountTransfersTable.query\
+            .filter(and_(AccountTransfersTable.user == self.user_id, AccountTransfersTable.id == transfer_id)).delete()
+        db_session.commit()
+
 class NormalUserAccounts(AccountsBase):
     pass
 

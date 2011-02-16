@@ -29,17 +29,19 @@
             <header>{% block header %}{% endblock %}</header>
             <article class="container_{% block width %}12{% endblock %}">
 
-                {% if error or get_flashed_messages() %}
-                <ul class=messages>
-                    {% if error %}
-                    <li class="error">{{ error }}</li>
-                    {% endif %}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if error or messages %}
+                    <ul class=messages>
+                        {% if error %}
+                            <li class="error">{{ error }}</li>
+                        {% endif %}
 
-                    {% for message in get_flashed_messages() %}
-                    <li class="ok">{{ message }}</li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                {% endwith %}
 
                 {% block body %}{% endblock %}
                 <div class="clear"></div>

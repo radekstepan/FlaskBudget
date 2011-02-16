@@ -198,6 +198,29 @@ def edit_transfer(transfer_id):
 
     else: return redirect(url_for('accounts.show_transfers'))
 
+@accounts.route('/account/transfer/delete/<transfer_id>')
+@login_required
+def delete_transfer(transfer_id):
+    '''Delete account transfer'''
+
+    current_user_id = session.get('logged_in_user')
+    accounts = Accounts(current_user_id)
+
+    # is it valid?
+    transfer = accounts.get_transfer(transfer_id)
+    if transfer:
+        # revert
+        accounts.modify_account_balance(transfer.from_account, transfer.amount)
+        accounts.modify_account_balance(transfer.to_account, -float(transfer.amount))
+        
+        accounts.delete_transfer(transfer_id)
+
+        flash('Transfer deleted')
+    else:
+        flash('Not a valid account transfer', 'error')
+
+    return redirect(url_for('accounts.show_transfers'))
+
 def __validate_transfer_form():
     '''Validate add/edit account transfer form'''
 

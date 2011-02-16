@@ -125,10 +125,12 @@ def edit_income(income_id):
                                 acc.modify_account_balance(account_id, amount)
 
                                 # edit income entry
-                                income = inc.edit_income(account_id=account_id, amount=amount, category_id=category_id,
+                                inc.edit_income(account_id=account_id, amount=amount, category_id=category_id,
                                                              date=date, description=description, income_id=income.id)
 
                                 flash('Income edited')
+
+                                return redirect(url_for('income.edit_income', income_id=income_id))
 
                             else: error = 'Not a valid account'
                         else: error = 'Not a valid category'
@@ -154,6 +156,30 @@ def add_category():
         if not error: flash('Income category added')
 
     return render_template('admin_add_income_category.html', error=error)
+
+@income.route('/income/delete/<income_id>')
+@login_required
+def delete_income(income_id):
+    '''Delete income entry'''
+
+    current_user_id = session.get('logged_in_user')
+    incomes = Income(current_user_id)
+
+    # is it valid?
+    income = incomes.get_income(income_id)
+    if income:
+        # revert
+        accounts = Accounts(current_user_id)
+        accounts.modify_account_balance(amount=-float(income.amount), account_id=income.credit_to)
+
+        incomes.delete_income(income_id)
+
+        flash('Income deleted')
+    else:
+        flash('Not a valid income entry', 'error')
+
+
+    return redirect(url_for('income.index'))
 
 def __validate_income_form():
     '''Perform basic validation/fetch of add/edit income entry form'''

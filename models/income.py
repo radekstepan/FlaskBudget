@@ -89,14 +89,16 @@ class Income():
             db_session.add(i)
             db_session.commit()
 
-            return i # return so we see the updated values
-
     def get_income(self, income_id):
         # if there is no cache or cache id does not match
         if not self.entry or self.entry.id != income_id:
             self.entry = IncomeTable.query.filter(and_(IncomeTable.user == self.user_id, IncomeTable.id == income_id)).first()
 
         return self.entry
+
+    def delete_income(self, income_id):
+        IncomeTable.query.filter(and_(IncomeTable.user == self.user_id, IncomeTable.id == income_id)).delete()
+        db_session.commit()
 
 class IncomeCategoriesTable(Base):
     """Income category of a user"""

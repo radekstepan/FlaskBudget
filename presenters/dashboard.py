@@ -3,7 +3,6 @@
 
 # framework
 from flask import Module, session, render_template
-from sqlalchemy.sql.expression import desc, asc
 
 # presenters
 from presenters.auth import login_required

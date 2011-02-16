@@ -306,10 +306,8 @@ def __edit_simple_expense_into_shared(current_user_id, our_expenses, expense, ou
 
                 flash('Expense edited')
 
-                # for the view...
-                expense = our_expenses.get_expense(expense_id=expense_id)
-                # fudge the total for the expense if we have a shared expense
-                if expense[1]: expense[0].amount = expense[4]
+                # do a GET otherwise category will fail
+                return redirect(url_for('expenses.edit_expense', expense_id=expense_id))
 
             else: error = 'Not a valid user sharing with'
         else: error = 'Not a valid % split'
@@ -334,8 +332,8 @@ def __edit_simple_expense_into_simple(current_user_id, our_expenses, expense, ou
 
     flash('Expense edited')
 
-    # show the form
-    return render_template('admin_edit_expense.html', **locals())
+    # do a GET otherwise category will fail
+    return redirect(url_for('expenses.edit_expense', expense_id=expense_id))
 
 def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, our_accounts, our_users, date, description,
                                       account_id, amount, error, category_id, categories, accounts, users, expense_id,
@@ -479,11 +477,10 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
                                           amount=float(amount) - loaned_amount, description=description,
                                           expense_id=expense_id)
 
-                # fudge the total for the expense if we have a shared expense after POST
-                expense = our_expenses.get_expense(expense_id)
-                if expense[1]: expense[0].amount = expense[4]
-
                 flash('Expense edited')
+
+                # do a GET otherwise category will fail
+                return redirect(url_for('expenses.edit_expense', expense_id=expense_id))
 
             else: error = 'Not a valid user sharing with'
         else: error = 'Not a valid % split'
@@ -539,12 +536,10 @@ def __edit_shared_expense_into_simple(current_user_id, our_expenses, expense, ou
     our_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id, amount=amount,
                               description=description, expense_id=expense_id)
 
-    expense = our_expenses.get_expense(expense_id=expense_id)
-
     flash('Expense edited')
 
-    # show the form
-    return render_template('admin_edit_expense.html', **locals())
+    # do a GET otherwise category will fail
+    return redirect(url_for('expenses.edit_expense', expense_id=expense_id))
 
 @expenses.route('/expense/category/add', methods=['GET', 'POST'])
 @login_required

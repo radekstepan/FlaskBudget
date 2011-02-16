@@ -52,7 +52,8 @@ section.container ul.messages { margin:0 0 20px 10px; }
 section.container ul.messages li { padding-left:30px; line-height:25px; }
 section.container ul.messages li.error { background:#FFFFCC url('../img/error.png') no-repeat 10px;
     border-bottom:1px solid #FFA800; border-top:1px solid #FFA800; }
-section.container ul.messages li.ok { background:url('../img/ok.png') no-repeat 10px; }
+section.container ul.messages li.ok, section.container ul.messages li.message {
+    background:url('../img/ok.png') no-repeat 10px; }
 
 /* pagination */
 section.container div.pagination { font-size:13px; }

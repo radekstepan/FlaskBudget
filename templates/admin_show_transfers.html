@@ -37,7 +37,7 @@
             <div class="actions">
                 <ul>
                     <li class="first"><a href="{{ url_for('accounts.edit_transfer', transfer_id=transfer.0.id) }}">Edit</a></li>
-                    <li><a href="#">Delete</a></li>
+                    <li><a href="{{ url_for('accounts.delete_transfer', transfer_id=transfer.0.id) }}">Delete</a></li>
                 </ul>
             </div>
         </li>

@@ -7,8 +7,11 @@ from sqlalchemy.orm import scoped_session, create_session
 from sqlalchemy.ext.declarative import declarative_base
 
 engine = None
+# autoflush=False will not update items in a database before query call
+# autocommit=False leaves sessions' transaction state on
+# expire_on_commit=False will not give us the most recent state of an item after commit()
 db_session = scoped_session(lambda: create_session(bind=engine,
-                                                   autoflush=False, autocommit=False, expire_on_commit=True))
+                                                   autoflush=False, autocommit=False, expire_on_commit=False))
 
 Base = declarative_base()
 Base.query = db_session.query_property()

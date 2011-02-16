@@ -77,7 +77,7 @@ class AccountsTestCases(unittest.TestCase):
         self.app.post('/account/transfer', data=dict(date="2011-02-01", deduct_from=1, credit_to=2, amount=310.11),
                            follow_redirects=True)
 
-        # make account transfer
+        # edit account transfer
         self.app.post('/account/transfer/edit/1', data=dict(date="2011-02-01", deduct_from=1, credit_to=3,
                                                             amount=412.65), follow_redirects=True)
 
@@ -85,7 +85,7 @@ class AccountsTestCases(unittest.TestCase):
         self.app.post('/account/transfer', data=dict(date="2011-02-01", deduct_from=2, credit_to=3, amount=14.7),
                            follow_redirects=True)
 
-        # make account transfer
+        # edit account transfer
         self.app.post('/account/transfer/edit/1', data=dict(date="2011-02-01", deduct_from=3, credit_to=2,
                                                             amount=255.79), follow_redirects=True)
 
@@ -116,4 +116,30 @@ class AccountsTestCases(unittest.TestCase):
             <span class="amount">&pound;425.56</span>
             <a>Privátní</a>
         ''' in rv.data
-        
+
+    def test_make_and_delete_transfer(self):
+        # login
+        self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
+
+        # create account
+        self.app.post('/account/add', data=dict(name="HSBC", type="asset", balance=1000), follow_redirects=True)
+
+        # create account
+        self.app.post('/account/add', data=dict(name="Credit Card", type="liability", balance=0),
+                           follow_redirects=True)
+
+        # make account transfer
+        self.app.post('/account/transfer', data=dict(date="2011-02-01", deduct_from=1, credit_to=2, amount=310.11),
+                           follow_redirects=True)
+
+        rv = self.app.get('/account/transfer/delete/1', follow_redirects=True)
+        assert '''
+                From <a href="/account-transfers/with/hsbc">HSBC</a>
+                to <a href="/account-transfers/with/credit-card">Credit Card</a>
+        ''' not in rv.data
+        # check out dashboard
+        rv = self.app.get('/')
+        assert '''
+            <span class="amount">&pound;1,000.00</span>
+            <a>HSBC</a>
+        ''' in rv.data

@@ -105,3 +105,35 @@ class IncomeTestCases(unittest.TestCase):
             <span class="amount">&pound;1,000.00</span>
             <a>Credit Card</a>
         ''' in rv.data
+
+    def test_delete_income(self):
+        # login
+        self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
+
+        # create account
+        rv = self.app.post('/account/add', data=dict(name="HSBC", type="asset", balance=1000), follow_redirects=True)
+        assert 'Account added' in rv.data
+
+        # create income category
+        rv = self.app.post('/income/category/add', data=dict(name="Salary"), follow_redirects=True)
+        assert 'Income category added' in rv.data
+
+        # add income
+        rv = self.app.post('/income/add', data=dict(
+                date="2011-01-28", category=1, description="January", credit_to=1, amount=500
+                ), follow_redirects=True)
+        assert 'Income added' in rv.data
+
+        # delete income
+        rv = self.app.get('/income/delete/1', follow_redirects=True)
+        assert '''
+                    <li class="first"><a href="/income/edit/1">Edit</a></li>
+                    <li><a href="/income/delete/1">Delete</a></li>
+        ''' not in rv.data
+
+        # check the dashboard
+        rv = self.app.get('/')
+        assert '''
+            <span class="amount">&pound;1,000.00</span>
+            <a>HSBC</a>
+        ''' in rv.data
