@@ -12,13 +12,13 @@ import entries
 # models
 from models.income import Income
 from models.accounts import Accounts
+from models.totals import Totals
 
 # utils
 from utils import *
 
 income = Module(__name__)
 
-''' Income '''
 @income.route('/income/')
 @income.route('/income/for/<date>')
 @income.route('/income/in/<category>')
@@ -70,6 +70,10 @@ def add_income():
 
                             # credit to account
                             acc.modify_account_balance(account_id, amount)
+
+                            # modify the total for the user
+                            t = Totals(current_user_id)
+                            t.update_income(amount, date)
 
                             flash('Income added')
 

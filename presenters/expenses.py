@@ -22,7 +22,6 @@ from utils import *
 
 expenses = Module(__name__)
 
-''' Expenses '''
 @expenses.route('/expenses/')
 @expenses.route('/expenses/for/<date>')
 @expenses.route('/expenses/in/<category>')

@@ -62,6 +62,16 @@
     {% endfor %}
 </div>
 <div class="right grid_6">
+    <ul>
+    {% for total in totals %}
+        <li>
+        {{ total.month }}
+        {{ total.expense }}
+        {{ total.income }}
+        </li>
+    {% endfor %}
+    </ul>
+
     {% for account in assets %}
     {% if loop.first %}
     <h2>Assets</h2>

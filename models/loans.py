@@ -3,7 +3,7 @@
 
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
-from sqlalchemy.sql.expression import desc, and_, asc
+from sqlalchemy.sql.expression import desc, and_
 
 # db
 from db.database import db_session

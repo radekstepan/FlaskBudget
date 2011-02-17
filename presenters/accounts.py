@@ -16,7 +16,6 @@ from utils import *
 
 accounts = Module(__name__)
 
-''' Accounts '''
 @accounts.route('/account-transfers/')
 @accounts.route('/account-transfers/page/<int:page>')
 @accounts.route('/account-transfers/for/<date>')

@@ -10,7 +10,6 @@ from models.users import UsersTable
 
 auth = Module(__name__)
 
-''' Auth '''
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     '''User login'''

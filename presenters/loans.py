@@ -20,7 +20,6 @@ from utils import *
 
 loans = Module(__name__)
 
-''' Loans '''
 @loans.route('/loans/')
 @loans.route('/loans/made/<direction>')
 @loans.route('/loans/with/<user>')

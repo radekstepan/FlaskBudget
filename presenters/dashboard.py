@@ -10,10 +10,10 @@ from presenters.auth import login_required
 # models
 from models.expenses import Expenses
 from models.accounts import Accounts
+from models.totals import Totals
 
 dashboard = Module(__name__)
 
-''' Dashboard '''
 @dashboard.route('/')
 @login_required
 def index():
@@ -44,10 +44,14 @@ def index():
             liabilities_total += float(a[0].balance)
         elif a[0].type == 'loan':
             # if we owe someone, it is our liability
-            if (float(a[0].balance) < 0):
+            if float(a[0].balance) < 0:
                 liabilities.append(a)
                 liabilities_total += float(a[0].balance)
             else:
                 assets.append(a)
+
+    # get the monthly totals
+    t = Totals(current_user_id)
+    totals = t.get_totals()
 
     return render_template('admin_dashboard.html', **locals())

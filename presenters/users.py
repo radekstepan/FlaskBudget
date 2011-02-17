@@ -17,7 +17,6 @@ from utils import *
 
 users = Module(__name__)
 
-''' Users '''
 @users.route('/user/add-private', methods=['GET', 'POST'])
 @login_required
 def add_private():
