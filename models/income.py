@@ -9,6 +9,9 @@ from sqlalchemy.sql.expression import desc, and_
 from db.database import db_session
 from db.database import Base
 
+# models
+from models.totals import Totals
+
 # utils
 from utils import *
 
@@ -21,8 +24,12 @@ class Income():
 
     entry = None # cache
 
+    totals = None
+
     def __init__(self, user_id):
         self.user_id = user_id
+
+        self.totals = Totals(user_id)
 
     def get_entries(self, category_id=None, category_name=None, date_from=None, date_to=None, limit=None):
         if not self.entries:
@@ -82,12 +89,21 @@ class Income():
         db_session.add(i)
         db_session.commit()
 
+        # update totals
+        self.totals.update_income(amount, date)
+
     def edit_income(self, income_id, account_id, category_id, date, description, amount):
         i = self.get_income(income_id)
         if i:
+            # update totals
+            self.totals.update_income(-float(i.amount), i.date)
+
             i.credit_to, i.category, i.date, i.description, i.amount = account_id, category_id, date, description, amount
             db_session.add(i)
             db_session.commit()
+
+            # update totals
+            self.totals.update_income(amount, date)
 
     def get_income(self, income_id):
         # if there is no cache or cache id does not match
@@ -97,7 +113,12 @@ class Income():
         return self.entry
 
     def delete_income(self, income_id):
-        IncomeTable.query.filter(and_(IncomeTable.user == self.user_id, IncomeTable.id == income_id)).delete()
+        i = self.get_income(income_id=income_id)
+        # update the totals
+        self.totals.update_income(-float(i.amount), i.date)
+
+        # delete
+        IncomeTable.query.filter(IncomeTable.id == income_id).delete()
         db_session.commit()
 
 class IncomeCategoriesTable(Base):

@@ -11,6 +11,7 @@ from db.database import Base
 
 # models
 from models.accounts import Accounts
+from models.totals import Totals
 from models.users import UsersTable
 
 # utils
@@ -43,8 +44,12 @@ class ExpensesBase():
 
     entry = None # cache
 
+    totals = None
+
     def __init__(self, user_id):
         self.user_id = user_id
+
+        self.totals = Totals(user_id)
 
     def get_entries(self, category_id=None, category_name=None, date_from=None, date_to=None, limit=None):
         if not self.entries:
@@ -125,15 +130,24 @@ class ExpensesBase():
         db_session.add(e)
         db_session.commit()
 
+        # update the totals
+        self.totals.update_expense(amount, date)
+
         return e.id
 
     def edit_expense(self, date, description, amount, category_id, account_id, expense_id):
         e = self.get_simple_expense(expense_id)
         if e:
+            # update the totals
+            self.totals.update_expense(-float(e.amount), e.date)
+
             e.date, e.category, e.description, e.deduct_from, e.amount = date, category_id, description, account_id,\
                                                                            amount
             db_session.add(e)
             db_session.commit()
+
+            # update the totals
+            self.totals.update_expense(amount, date)
 
             return e # return so we see the updated values
 
@@ -163,6 +177,11 @@ class ExpensesBase():
         return self.entry
 
     def delete_expense(self, expense_id):
+        e = self.get_expense(expense_id=expense_id)
+        # update the totals
+        self.totals.update_expense(-float(e[0].amount), e[0].date)
+
+        # delete
         ExpensesTable.query.filter(ExpensesTable.id == expense_id).delete()
         db_session.commit()
 

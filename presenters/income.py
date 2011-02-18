@@ -12,7 +12,6 @@ import entries
 # models
 from models.income import Income
 from models.accounts import Accounts
-from models.totals import Totals
 
 # utils
 from utils import *
@@ -71,10 +70,6 @@ def add_income():
                             # credit to account
                             acc.modify_account_balance(account_id, amount)
 
-                            # modify the total for the user
-                            t = Totals(current_user_id)
-                            t.update_income(amount, date)
-
                             flash('Income added')
 
                         else: error = 'Not a valid account'
@@ -124,7 +119,7 @@ def edit_income(income_id):
 
                                 # debit the original account
                                 acc.modify_account_balance(income.credit_to, -float(income.amount))
-                                
+
                                 # credit the 'new' account
                                 acc.modify_account_balance(account_id, amount)
 

@@ -33,7 +33,7 @@ class Totals():
         .filter(and_(TotalsTable.user == self.user, TotalsTable.month.in_(l)))\
         .order_by(asc(TotalsTable.id)).all()
 
-    def update_expenses(self, amount, date):
+    def update_expense(self, amount, date):
         # generate a month/year string
         m = MonthYear(date)
 
