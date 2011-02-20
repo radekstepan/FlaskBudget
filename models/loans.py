@@ -3,7 +3,7 @@
 
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String
-from sqlalchemy.sql.expression import desc, and_
+from sqlalchemy.sql.expression import desc, and_, not_
 
 # db
 from db.database import db_session
@@ -12,7 +12,7 @@ from db.database import Base
 # models
 from models.slugs import SlugsTable
 from models.users import UsersTable
-from models.accounts import AccountsTable, Accounts
+from models.accounts import Accounts
 
 class Loans(object):
 
@@ -53,16 +53,16 @@ class LoansBase():
             .add_columns(UsersTable.name, UsersTable.slug)
 
         if user_id:
-            self.loans = self.loans.filter(LoansTable.other_user == self.user_id)
+            self.loans = self.loans.filter(LoansTable.other_user == user_id)
 
         if date_from and date_to:
             self.loans = self.loans.filter(LoansTable.date >= date_from).filter(LoansTable.date <= date_to)
 
         if direction:
             if direction == 'to-us':
-                self.loans = self.loans.filter(LoansTable.amount.startswith('-'))
+                self.loans = self.loans.filter(not_(LoansTable.amount.startswith('-')))
             elif direction == 'to-them':
-                self.loans = self.loans.filter(not LoansTable.amount.startswith('-'))
+                self.loans = self.loans.filter(LoansTable.amount.startswith('-'))
 
         return self.loans
 

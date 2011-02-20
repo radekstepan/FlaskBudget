@@ -60,8 +60,6 @@
     </ul>
     {% endif %}
     {% endfor %}
-</div>
-<div class="right grid_6">
 
     {% if totals_list %}
     <h2>Monthly Totals</h2>
@@ -75,14 +73,15 @@
             {% if total['income'] %}
             <div class="income" style="height:{{ total['income-height'] }}px;">
                 <b>&pound;{{ total['income']|currencyformat|trimzeroes }}</b></div>
-            <span>{{ total['month'] }}</span>
             {% endif %}
+            <span>{{ total['month'] }}</span>
         </li>
         {% endfor %}
     </ul>
     <div class="clear"></div>
     {% endif %}
-
+</div>
+<div class="right grid_6">
     {% for account in assets %}
     {% if loop.first %}
     <h2>Assets</h2>

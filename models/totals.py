@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # orm
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, Float
 from sqlalchemy.sql.expression import and_, asc
 
 # db
@@ -45,7 +45,7 @@ class Totals():
             t = TotalsTable(self.user, str(m), amount, 0)
         else:
             # update the total
-            t.expenses += int(amount)
+            t.expenses += float(amount)
 
         # save
         db_session.add(t)
@@ -64,7 +64,7 @@ class Totals():
             t = TotalsTable(self.user, str(m), 0, amount)
         else:
             # update the total
-            t.income += int(amount)
+            t.income += float(amount)
 
         # save
         db_session.add(t)
@@ -101,8 +101,8 @@ class TotalsTable(Base):
     id = Column(Integer, primary_key=True)
     user = Column('user_id', Integer, ForeignKey('users.id'))
     month = Column(String(10))
-    expenses = Column(Integer)
-    income = Column(Integer)
+    expenses = Column(Float(precision=2))
+    income = Column(Float(precision=2))
 
     def __init__(self, user=None, month=None, expenses=None, income=None):
         self.user = user
