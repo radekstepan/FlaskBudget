@@ -26,7 +26,6 @@ class Totals():
 
         # generate a list of month/year strings
         l = [m.substract(x) for x in range(wayback)]
-        print l
 
         # pass it as an IS IN query to totals and return
         return TotalsTable.query\

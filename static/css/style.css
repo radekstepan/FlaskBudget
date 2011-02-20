@@ -133,3 +133,14 @@ div.login-box label{color:#FFF;}
 div.login-box input[type="submit"]{display:block;background-color:#ebf0f3;width:130px;color:#246;border:1px solid #ccc;-moz-border-radius:5px;-webkit-border-radius:5px;border-radius:5px;cursor:pointer;margin:20px auto 0;}
 div.login-box input[type="submit"]:hover{background-color:#FFF;}
 div.login-box input[type="submit"]:focus{background:#D3E4EB;}
+
+/* chart */
+ul#chart { text-align:center; font-size:10px; margin-left:25px; }
+ul#chart li { float:left; width:40px; position:relative; height:155px; margin-right:15px; border-right:1px dashed #EEE;
+    padding-right:24px; margin-bottom:15px; }
+ul#chart li div { position:absolute; bottom:0; width:25px; border-width:1px 1px 0 1px; border-style:solid;
+    border-bottom:1px solid #222E4B; padding:20px 0 5px 0; margin-bottom:20px;}
+ul#chart li div.expenses { left:0; background:#F7FAFD; border-color:#B4D2E7; z-index:1; color:#316182; }
+ul#chart li div.income { left:21px; background:#F7FCF7; border-color:#B5E8B9; color:#2F771D; }
+ul#chart li div b { -webkit-transform:rotate(-90deg); -moz-transform:rotate(-90deg); color:#1A1A1A; }
+ul#chart li span { position:absolute; bottom:0; left:7px; }

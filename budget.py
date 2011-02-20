@@ -9,8 +9,11 @@ from flask import Flask, session
 from db.database import db_session, init_engine
 
 DEBUG = True
+app = None
 
 def create_app(db):
+    global app
+
     # create our little application :)
     app = Flask(__name__)
     app.config.from_object(__name__)
@@ -81,6 +84,10 @@ def create_app(db):
     @app.template_filter('numberformat')
     def number_format(value):
         return str(value).rstrip('0').rstrip('.')
+
+    @app.template_filter('trimzeroes')
+    def trimzeroes(value):
+        return value[:len(value)-3]
 
     @app.template_filter('isloggeduserid')
     def is_logged_user_id(value):

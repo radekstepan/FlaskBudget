@@ -50,8 +50,22 @@ def index():
             else:
                 assets.append(a)
 
-    # get the monthly totals
-    t = Totals(current_user_id)
-    totals = t.get_totals()
+    # monthly totals
+    t, totals_list, highest_bar = Totals(current_user_id), [], 0.
+    # object to dict
+    for total in t.get_totals():
+        bar = {}
+        bar['month'] = total.month
+        if (float(total.expenses) > 0): bar['expenses'] = float(total.expenses)
+        if (float(total.income) > 0): bar['income'] = float(total.income)
+        totals_list.append(bar)
+
+        if (total.expenses > highest_bar): highest_bar = total.expenses
+        if (total.income > highest_bar): highest_bar = total.income
+
+    # calculate height for each bar
+    for total in totals_list:
+        if 'expenses' in total: total['expenses-height'] = (total['expenses'] / highest_bar) * 100
+        if 'income' in total: total['income-height'] = (total['income'] / highest_bar) * 100
 
     return render_template('admin_dashboard.html', **locals())
