@@ -26,40 +26,46 @@
     <form action="{{ url_for('expenses.add_expense') }}" method=post class="form_1">
         <dl>
             <dt>Date:
-            <dd><input type=text name=date>
-
+            <dd><input type=text name=date {% if request.form['date'] %}value="{{ date }}"{% endif %}>
+            
             <dt>Category:
             <dd><select name=category>
-                {% for category in categories %}
-                <option value="{{ category.id }}">{{ category.name }}</option>
-                {% endfor %}
-            </select>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}"
+                        {% if request.form['category'] == category.id %}selected{% endif %}
+                        >{{ category.name }}</option>
+                    {% endfor %}
+                </select>
 
             <dt>Description:
-            <dd><input type=text name=description>
+            <dd><input type=text name=description {% if request.form['description'] %}value="{{ description }}"{% endif %}>
 
             <dt>From Account:
             <dd><select name=deduct_from>
                 {% for account in accounts %}
-                <option value="{{ account.id }}">{{ account.name }}</option>
+                <option value="{{ account.id }}"
+                    {% if request.form['deduct_from'] == account.id %}selected{% endif %}
+                    >{{ account.name }}</option>
                 {% endfor %}
             </select>
 
             <dt>Amount:
-            <dd><input type=text name=amount>
+            <dd><input type=text name=amount {% if request.form['amount'] %}value="{{ amount }}"{% endif %}>
 
             <dt>Shared Expense?:
-            <dd><input type=checkbox name=is_shared>
+            <dd><input type=checkbox name=is_shared {% if request.form['is_shared'] %}checked{% endif %}>
 
             <dt>With User:
             <dd><select name=user>
                 {% for user in users %}
-                <option value="{{ user.id }}">{{ user.name }}</option>
+                <option value="{{ user.id }}"
+                    {% if request.form['user'] == user.id %}selected{% endif %}
+                    >{{ user.name }}</option>
                 {% endfor %}
             </select>
 
             <dt>% Split:
-            <dd><input type=text name=split>
+            <dd><input type=text name=split {% if request.form['split'] %}value="{{ split }}"{% endif %}>
 
             <dd><input type=submit value=Add>
         </dl>

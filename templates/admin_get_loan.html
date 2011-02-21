@@ -28,25 +28,29 @@
             <dt>From User:
             <dd><select name=user>
                 {% for user in users %}
-                <option value="{{ user.id }}">{{ user.name }}</option>
+                <option value="{{ user.id }}"
+                    {% if request.form['user'] == user.id %}selected{% endif %}
+                    >{{ user.name }}</option>
                 {% endfor %}
             </select>
 
             <dt>Date:
-            <dd><input type=text name=date>
+            <dd><input type=text name=date {% if request.form['date'] %}value="{{ date }}"{% endif %}>
 
             <dt>To Account:
             <dd><select name=credit_to>
                 {% for account in accounts %}
-                <option value="{{ account.id }}">{{ account.name }}</option>
+                <option value="{{ account.id }}"
+                    {% if request.form['credit_to'] == account.id %}selected{% endif %}
+                    >{{ account.name }}</option>
                 {% endfor %}
             </select>
 
             <dt>Description:
-            <dd><input type=text name=description>
+            <dd><input type=text name=description {% if request.form['description'] %}value="{{ description }}"{% endif %}>
 
             <dt>Amount:
-            <dd><input type=text name=amount>
+            <dd><input type=text name=amount {% if request.form['amount'] %}value="{{ amount }}"{% endif %}>
 
             <dd><input type=submit value=Borrow>
         </dl>

@@ -26,28 +26,32 @@
     <form action="{{ url_for('income.add_income') }}" method=post class="form_1">
         <dl>
             <dt>Date:
-            <dd><input type=text name=date>
+            <dd><input type=text name=date {% if request.form['date'] %}value="{{ date }}"{% endif %}>
 
             <dt>Category:
             <dd>
                 <select name=category>
                     {% for category in categories %}
-                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    <option value="{{ category.id }}"
+                        {% if request.form['category'] == category.id %}selected{% endif %}
+                        >{{ category.name }}</option>
                     {% endfor %}
                 </select>
 
             <dt>Description:
-            <dd><input type=text name=description>
+            <dd><input type=text name=description {% if request.form['description'] %}value="{{ description }}"{% endif %}>
 
             <dt>To Account:
             <dd><select name=credit_to>
                 {% for account in accounts %}
-                <option value="{{ account.id }}">{{ account.name }}</option>
+                <option value="{{ account.id }}"
+                    {% if request.form['credit_to'] == account.id %}selected{% endif %}
+                    >{{ account.name }}</option>
                 {% endfor %}
             </select>
 
             <dt>Amount:
-            <dd><input type=text name=amount>
+            <dd><input type=text name=amount {% if request.form['amount'] %}value="{{ amount }}"{% endif %}>
 
             <dd><input type=submit value=Add>
         </dl>
