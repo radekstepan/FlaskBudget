@@ -114,7 +114,7 @@ def add_expense():
                                             # add new expenses (borrower)
                                             their_expenses = Expenses(shared_with_user)
                                             their_expense_id = their_expenses.add_expense(date=date, amount=loaned_amount,
-                                                                                   description=description)
+                                                                                   description=description, pass_thru=True)
 
                                             # fudge loan 'account' monies
                                             our_accounts.modify_loan_balance(amount=loaned_amount,
@@ -176,6 +176,10 @@ def edit_expense(expense_id):
     if expense:
         error = None
 
+        # early exit for shared expenses from the perspective of the shared with user
+        if (expense[0].pass_thru):
+            return __edit_pass_thru_expense(**locals())
+
         our_accounts = Accounts(current_user_id)
         our_users = Users(current_user_id)
 
@@ -227,6 +231,33 @@ def edit_expense(expense_id):
         return render_template('admin_edit_expense.html', **locals())
 
     else: return redirect(url_for('expenses.index'))
+
+def __edit_pass_thru_expense(current_user_id, our_expenses, expense, expense_id, error):
+    '''Edit shared with expense from the perspective of shared with user'''
+
+    # fetch user's categories
+    categories = our_expenses.get_categories()
+    if not categories: error = 'You need to define at least one category'
+
+    if request.method == 'POST':
+        if 'description' in request.form and request.form['description']: description = request.form['description']
+        else: error = 'You need to provide a description'
+        if 'category' in request.form: category_id = request.form['category']
+        else: error = 'You need to provide a category'
+
+        # valid category?
+        if our_expenses.is_category(id=category_id):
+
+            our_expenses.edit_pass_thru_expense(description, category_id, expense_id)
+            flash('Expense edited')
+
+            # do a GET otherwise category will fail
+            return redirect(url_for('expenses.edit_expense', expense_id=expense_id))
+
+        else: error = 'Not a valid category'
+
+    # show the form
+    return render_template('admin_edit_pass_thru_expense.html', **locals())
 
 def __edit_simple_expense_into_shared(current_user_id, our_expenses, expense, our_accounts, our_users, date, description,
                                       account_id, amount, error, category_id, categories, accounts, users, expense_id,
@@ -289,7 +320,7 @@ def __edit_simple_expense_into_shared(current_user_id, our_expenses, expense, ou
 
                 # add new expenses (borrower)
                 their_expense_id = their_expenses.add_expense(date=date, amount=loaned_amount,
-                                                              description=description)
+                                                              description=description, pass_thru=True)
 
                 # modify their loan account balance
                 their_accounts.modify_loan_balance(amount=-float(loaned_amount), with_user_id=current_user_id)
@@ -380,8 +411,7 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
                     our_loans.edit_loan(other_user_id=shared_with_user, account_id=account_id, description=description,
                                         amount=-float(loaned_amount), date=date, loan_id=expense[1])
 
-                    their_loans.edit_loan(other_user_id=current_user_id, description=description,
-                                          amount=loaned_amount, date=date, slug=slug)
+                    their_loans.edit_loan(other_user_id=current_user_id, amount=loaned_amount, date=date, slug=slug)
 
                     # modify our loan account balance difference with the user
                     our_accounts.modify_loan_balance(amount=loaned_amount - loaned_then_amount,
@@ -399,9 +429,8 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
                                                        with_user_id=current_user_id)
 
                     # edit their expense amount
-                    their_expenses.edit_expense(date=date, category_id=category_id, account_id=account_id,
-                                                amount=loaned_amount, description=description,
-                                                expense_id=their_expense[0].id)
+                    their_expenses.edit_expense(date=date, account_id=account_id, amount=loaned_amount,
+                                                expense_id=their_expense[0].id, pass_thru=True)
 
                     # update loan links
                     our_expenses.modify_loan_link(loan_id=expense[1], percentage=split, original_amount=amount)
@@ -463,7 +492,7 @@ def __edit_shared_expense_into_shared(current_user_id, our_expenses, expense, ou
 
                     # add new expenses (borrower)
                     their_expense_id = their_expenses.add_expense(date=date, amount=loaned_amount,
-                                                                  description=description)
+                                                                  description=description, pass_thru=True)
 
                     # create new loan - expense links
                     our_expenses.link_to_loan(expense_id=expense_id, loan_id=our_loan_id, shared_with=shared_with_user,

@@ -1,0 +1,46 @@
+{% extends "admin_layout.html" %}
+{% block nav %}
+<nav class="nav">
+    <ul>
+        <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('expenses.index') }}" class="active">Expenses</a></li>
+        <li><a href="{{ url_for('income.index') }}">Income</a></li>
+        <li><a href="{{ url_for('loans.index') }}">Loans</a></li>
+        <li><a href="{{ url_for('accounts.show_transfers') }}">Accounts</a></li>
+        <li><a href="{{ url_for('users.add_private') }}">Users</a></li>
+    </ul>
+</nav>
+<nav class="subnav">
+    <ul>
+        <li><a href="{{ url_for('expenses.index') }}">Expenses</a></li>
+        <li><a href="{{ url_for('expenses.add_expense') }}" class="active">Add Expense</a></li>
+        <li><a href="{{ url_for('expenses.add_category') }}">Add Expense Category</a></li>
+    </ul>
+</nav>
+{% endblock %}
+
+{% block header %}<h1>Edit Expense "{{ expense.0.description }}"</h1>{% endblock %}
+
+{% block body %}
+<div class="left grid_6">
+    <form action="{{ url_for('expenses.edit_expense', expense_id=expense.0.id) }}" method=post class="form_1">
+        <dl>
+            <dt>Category:
+            <dd><select name=category>
+                {% for category in categories %}
+                    {% if category.id == expense.0.category %}
+                        <option value="{{ category.id }}" selected="selected">{{ category.name }}</option>
+                    {% else %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+
+            <dt>Description:
+            <dd><input type=text name=description value="{{ expense.0.description }}">
+
+            <dd><input type=submit value=Edit>
+        </dl>
+    </form>
+</div>
+{% endblock %}

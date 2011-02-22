@@ -9,6 +9,7 @@ from presenters.auth import login_required
 
 # models
 from models.expenses import Expenses
+from models.income import Income
 from models.accounts import Accounts
 from models.totals import Totals
 
@@ -28,6 +29,10 @@ def index():
     # get latest expenses
     exp = Expenses(current_user_id)
     latest_expenses = exp.get_entries(limit=5)
+
+    # get latest income
+    inc = Income(current_user_id)
+    latest_income = inc.get_entries(limit=5)
 
     # get accounts
     acc = Accounts(current_user_id)

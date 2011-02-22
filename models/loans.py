@@ -97,7 +97,7 @@ class LoansBase():
 
         return s.slug
 
-    def edit_loan(self, other_user_id, date, description, amount, loan_id=None, slug=None, account_id=None):
+    def edit_loan(self, other_user_id, date, amount, description=None, loan_id=None, slug=None, account_id=None):
         if slug:
             # find object id first
             s = SlugsTable.query\
@@ -108,6 +108,9 @@ class LoansBase():
 
         l = self.get_loan(loan_id=loan_id)
         if l:
+            # description not provided
+            if not description: description = l.description
+
             # save new values
             l.other_user, l.date, l.description, l.amount = other_user_id, date, description, amount
             # changing the account?
@@ -152,7 +155,7 @@ class PrivateUserLoans(LoansBase):
     def get_loan_slug(self, loan_id):
         return None
 
-    def edit_loan(self, other_user_id, date, description, amount, loan_id=None, slug=None, account_id=None):
+    def edit_loan(self, other_user_id, date, amount, description=None, loan_id=None, slug=None, account_id=None):
         return None
 
     def delete_loan(self, loan_id=None, slug=None):

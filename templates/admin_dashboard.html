@@ -53,7 +53,10 @@
                 {{ entry.0.date|datetimeformat }}
             </div>
             <div class="actions">
-                <ul><li class="first"><a href="#">Edit</a></li><li><a href="#">Delete</a></li></ul>
+                <ul>
+                    <li class="first"><a href="{{ url_for('expenses.edit_expense', expense_id=entry.0.id) }}">Edit</a></li>
+                    <li><a href="#">Delete</a></li>
+                </ul>
             </div>
         </li>
         {% if loop.last %}
@@ -61,25 +64,30 @@
     {% endif %}
     {% endfor %}
 
-    {% if totals_list %}
-    <h2>Monthly Totals</h2>
-    <ul id="chart">
-        {% for total in totals_list %}
-        <li>
-            {% if total['expenses'] %}
-            <div class="expenses" style="height:{{ total['expenses-height'] }}px;">
-                <b>&minus;&nbsp;&pound;{{ total['expenses']|currencyformat|trimzeroes }}</b></div>
-            {% endif %}
-            {% if total['income'] %}
-            <div class="income" style="height:{{ total['income-height'] }}px;">
-                <b>&pound;{{ total['income']|currencyformat|trimzeroes }}</b></div>
-            {% endif %}
-            <span>{{ total['month'] }}</span>
+    {% for entry in latest_income %}
+    {% if loop.first %}
+    <h2>Latest Income</h2>
+    <ul class="list_1">
+        {% endif %}
+        <li class="green {% if loop.last %}last{% endif %}">
+            <p>
+                <span class="amount">&pound;{{ entry.0.amount|currencyformat }}</span>
+                {{ entry.0.description }} in <a href="{{ url_for('income.index', category=entry.2) }}">{{ entry.1 }}</a>
+            </p>
+            <div class="date">
+                {{ entry.0.date|datetimeformat }}
+            </div>
+            <div class="actions">
+                <ul>
+                    <li class="first"><a href="{{ url_for('income.edit_income', income_id=entry.0.id) }}">Edit</a></li>
+                    <li><a href="#">Delete</a></li>
+                </ul>
+            </div>
         </li>
-        {% endfor %}
+        {% if loop.last %}
     </ul>
-    <div class="clear"></div>
     {% endif %}
+    {% endfor %}
 </div>
 <div class="right grid_6">
     {% for account in assets %}
@@ -139,5 +147,26 @@
     </ul>
     {% endif %}
     {% endfor %}
+
+
+    {% if totals_list %}
+    <h2>Monthly Totals</h2>
+    <ul id="chart">
+        {% for total in totals_list %}
+        <li>
+            {% if total['expenses'] %}
+            <div class="expenses" style="height:{{ total['expenses-height'] }}px;">
+                <b>&minus;&nbsp;&pound;{{ total['expenses']|currencyformat|trimzeroes }}</b></div>
+            {% endif %}
+            {% if total['income'] %}
+            <div class="income" style="height:{{ total['income-height'] }}px;">
+                <b>&pound;{{ total['income']|currencyformat|trimzeroes }}</b></div>
+            {% endif %}
+            <span>{{ total['month'] }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="clear"></div>
+    {% endif %}
 </div>
 {% endblock %}

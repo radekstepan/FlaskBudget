@@ -217,6 +217,160 @@ class ExpensesTestCases(unittest.TestCase):
                 2011-01-28</div>
         ''' in rv.data
 
+    def test_edit_shared_expense_with_normal_from_their_perspective(self):
+        # add normal user
+        self.app.get('/test/create-user/Barunka')
+
+        # login
+        self.app.post('/login', data=dict(username="barunka", password="barunka"), follow_redirects=True)
+
+        # fetch their key
+        rv = self.app.get('/test/get-key')
+        user_key = rv.data
+
+        # create expense category
+        self.app.post('/expense/category/add', data=dict(name="Shopping"), follow_redirects=True)
+
+        # create expense category
+        self.app.post('/expense/category/add', data=dict(name="Groceries"), follow_redirects=True)
+
+        # logout
+        self.app.get('/logout', follow_redirects=True)
+
+        # login
+        self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
+
+        # link with us
+        self.app.post('/user/connect', data=dict(key=user_key), follow_redirects=True)
+
+        # create account
+        self.app.post('/account/add', data=dict(name="HSBC", type="asset", balance=1000), follow_redirects=True)
+
+        # create expense category
+        self.app.post('/expense/category/add', data=dict(name="Shopping"), follow_redirects=True)
+
+        # create expense category
+        self.app.post('/expense/category/add', data=dict(name="Groceries"), follow_redirects=True)
+
+        # add expense
+        rv = self.app.post('/expense/add', data=dict(
+                date="2011-01-28", category=3, description="Tesco", deduct_from=1, amount=20, is_shared=True, split=50,
+                user=2), follow_redirects=True)
+        assert 'Expense added' in rv.data
+
+        # edit expense post, changing desc and category
+        self.app.post('/expense/edit/1', data=dict(date="2011-01-29", category=4, deduct_from=1, amount=20,
+                                                   description="Sainsbury's", is_shared=True, split=50, user=2),
+                      follow_redirects=True)
+
+        # check the dashboard
+        rv = self.app.get('/')
+        assert '''
+                <span class="amount">&minus; &pound;10.00</span>
+                Sainsbury&#39;s in <a href="/expenses/in/groceries">Groceries</a>
+        ''' in rv.data
+        assert '''
+            <span class="amount">&pound;980.00</span>
+            <a>HSBC</a>
+        ''' in rv.data
+        assert '''
+            <span class="amount">&pound;10.00</span>
+            Loaned to <a href="/loans/with/barunka">Barunka</a>
+        ''' in rv.data
+
+        # logout
+        self.app.get('/logout', follow_redirects=True)
+
+        # login as the other user
+        self.app.post('/login', data=dict(username="barunka", password="barunka"), follow_redirects=True)
+
+        # check the dashboard
+        rv = self.app.get('/')
+        assert '''
+                <span class="amount">&minus; &pound;10.00</span>
+                Tesco in <a href="/expenses/in/uncategorized">Uncategorized</a>
+        ''' in rv.data
+        assert '''
+            <span class="amount">&minus; &pound;10.00</span>
+            Loaned from <a href="/loans/with/admin">Admin</a>
+        ''' in rv.data
+
+        # check the expenses listing
+        rv = self.app.get('/expenses', follow_redirects=True)
+        assert '''
+                <span class="amount">&minus; &pound;10.00</span>
+                Tesco in <a href="/expenses/in/uncategorized">Uncategorized</a>
+        ''' in rv.data
+
+        # check the loans listing
+        rv = self.app.get('/loans', follow_redirects=True)
+        assert '''
+        <li class="red last">
+            <p>
+                <span class="amount">&pound;10.00</span>
+                Tesco
+            </p>
+            <div class="date">from <a href="/loans/with/admin">Admin</a>
+                2011-01-29</div>
+        ''' in rv.data
+
+        # edit expense from our perspective as a "pass_thru" expense
+        rv = self.app.post('/expense/edit/2', data=dict(category=1, description="Sainsbury's"), follow_redirects=True)
+        assert 'Expense edited' in rv.data
+        assert '<option value="1" selected="selected">Shopping</option>' in rv.data
+        assert '<header><h1>Edit Expense "Sainsbury&#39;s"</h1></header>' in rv.data
+
+        # check the dashboard
+        rv = self.app.get('/')
+        assert '''
+                <span class="amount">&minus; &pound;10.00</span>
+                Sainsbury&#39;s in <a href="/expenses/in/shopping">Shopping</a>
+        ''' in rv.data
+        assert '''
+            <span class="amount">&minus; &pound;10.00</span>
+            Loaned from <a href="/loans/with/admin">Admin</a>
+        ''' in rv.data
+
+        # check the expenses listing
+        rv = self.app.get('/expenses', follow_redirects=True)
+        assert '''
+                <span class="amount">&minus; &pound;10.00</span>
+                Sainsbury&#39;s in <a href="/expenses/in/shopping">Shopping</a>
+        ''' in rv.data
+
+        # check the loans listing
+        rv = self.app.get('/loans', follow_redirects=True)
+        assert '''
+        <li class="red last">
+            <p>
+                <span class="amount">&pound;10.00</span>
+                Tesco
+            </p>
+            <div class="date">from <a href="/loans/with/admin">Admin</a>
+                2011-01-29</div>
+        ''' in rv.data
+
+        # logout
+        self.app.get('/logout', follow_redirects=True)
+
+        # login as the other user
+        self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
+
+        # check the dashboard
+        rv = self.app.get('/')
+        assert '''
+                <span class="amount">&minus; &pound;10.00</span>
+                Sainsbury&#39;s in <a href="/expenses/in/groceries">Groceries</a>
+        ''' in rv.data
+        assert '''
+            <span class="amount">&pound;980.00</span>
+            <a>HSBC</a>
+        ''' in rv.data
+        assert '''
+            <span class="amount">&pound;10.00</span>
+            Loaned to <a href="/loans/with/barunka">Barunka</a>
+        ''' in rv.data
+
     def test_edit_simple_expense_to_shared_with_private(self):
         # login
         self.app.post('/login', data=dict(username="admin", password="admin"), follow_redirects=True)
@@ -698,7 +852,7 @@ class ExpensesTestCases(unittest.TestCase):
         rv = self.app.get('/')
         assert '''
                 <span class="amount">&minus; &pound;125.00</span>
-                Bought a PC in <a href="/expenses/in/purchases">Purchases</a>
+                Tesco in <a href="/expenses/in/uncategorized">Uncategorized</a>
         ''' in rv.data
         assert 'shared with <a href="/loans/with/admin">Admin</a>' in rv.data
 

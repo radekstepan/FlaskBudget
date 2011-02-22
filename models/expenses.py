@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # orm
-from sqlalchemy import Column, ForeignKey, Integer, Float, String
+from sqlalchemy import Column, ForeignKey, Integer, Float, String, Boolean
 from sqlalchemy.sql.expression import desc, and_
 
 # db
@@ -107,7 +107,7 @@ class ExpensesBase():
         db_session.add(c)
         db_session.commit()
 
-    def add_expense(self, date, description, amount, category_id=None, account_id=None):
+    def add_expense(self, date, description, amount, category_id=None, account_id=None, pass_thru=False):
         # add into uncategorized expenses if category not provided
         if not category_id:
             category_id = self.is_category(name="Uncategorized")
@@ -126,7 +126,7 @@ class ExpensesBase():
                 account_id = acc.add_default_account()
 
         # add the actual expense
-        e = ExpensesTable(self.user_id, date, category_id, description, account_id, amount)
+        e = ExpensesTable(self.user_id, date, category_id, description, account_id, amount, pass_thru)
         db_session.add(e)
         db_session.commit()
 
@@ -135,14 +135,18 @@ class ExpensesBase():
 
         return e.id
 
-    def edit_expense(self, date, description, amount, category_id, account_id, expense_id):
+    def edit_expense(self, date, amount, account_id, expense_id, description=None, category_id=None, pass_thru=False):
         e = self.get_simple_expense(expense_id)
         if e:
             # update the totals
             self.totals.update_expense(-float(e.amount), e.date)
 
-            e.date, e.category, e.description, e.deduct_from, e.amount = date, category_id, description, account_id,\
-                                                                           amount
+            # category and description not provided?
+            if not description: description = e.description
+            if not category_id: category_id = e.category
+
+            e.date, e.category, e.description, e.deduct_from, e.amount, e.pass_thru\
+            = date, category_id, description, account_id, amount, pass_thru
             db_session.add(e)
             db_session.commit()
 
@@ -150,6 +154,13 @@ class ExpensesBase():
             self.totals.update_expense(amount, date)
 
             return e # return so we see the updated values
+
+    def edit_pass_thru_expense(self, description, category_id, expense_id):
+        e = self.get_simple_expense(expense_id)
+        if e:
+            e.description, e.category = description, category_id
+            db_session.add(e)
+            db_session.commit()
 
     def get_simple_expense(self, expense_id):
         return ExpensesTable.query\
@@ -212,7 +223,7 @@ class NormalUserExpenses(ExpensesBase):
 
 class PrivateUserExpenses(ExpensesBase):
     
-    def add_expense(self, date, description, amount, category_id=None, account_id=None):
+    def add_expense(self, date, description, amount, category_id=None, account_id=None, pass_thru=False):
         return None
 
     def link_to_loan(self, expense_id, loan_id, shared_with, percentage, original_amount):
@@ -223,7 +234,7 @@ class PrivateUserExpenses(ExpensesBase):
         class Temp(): id=None
         return [Temp()]
 
-    def edit_expense(self, date, description, amount, category_id, account_id, expense_id):
+    def edit_expense(self, date, amount, account_id, expense_id, description=None, category_id=None, pass_thru=False):
         return None
 
     def delete_expense(self, expense_id):
@@ -254,14 +265,16 @@ class ExpensesTable(Base):
     description = Column(String(50))
     deduct_from = Column('account_id', Integer, ForeignKey('accounts.id'))
     amount = Column(Float(precision=2))
+    pass_thru = Column(Boolean)
 
-    def __init__(self, user=None, date=None, category=None, description=None, deduct_from=None, amount=None):
+    def __init__(self, user=None, date=None, category=None, description=None, deduct_from=None, amount=None, pass_thru=None):
         self.user = user
         self.date = date
         self.category = category
         self.description = description
         self.deduct_from = deduct_from
         self.amount = amount
+        self.pass_thru = pass_thru
 
 class ExpensesToLoansTable(Base):
     """Linking shared expenses together"""
