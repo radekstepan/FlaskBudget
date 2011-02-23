@@ -4,7 +4,7 @@
 # framework
 from datetime import date
 from flask import Module, session, render_template, redirect, request, flash
-from flask.helpers import url_for
+from flask.helpers import url_for, make_response
 
 # presenters
 from presenters.auth import login_required
@@ -40,6 +40,28 @@ def index(date=None, category=None, page=1, items_per_page=10):
     for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
     return render_template('admin_show_expenses.html', **locals())
+
+@expenses.route('/export/expenses/')
+@expenses.route('/export/expenses/for/<date>')
+@expenses.route('/export/expenses/in/<category>')
+@expenses.route('/export/expenses/page/<int:page>')
+@expenses.route('/export/expenses/for/<date>/in/<category>')
+@expenses.route('/export/expenses/for/<date>/page/<int:page>')
+@expenses.route('/export/expenses/in/<category>/page/<int:page>')
+@expenses.route('/export/expenses/for/<date>/in/<category>/page/<int:page>')
+@login_required
+def export(date=None, category=None, page=1, items_per_page=10):
+    '''Export expenses on a filter'''
+
+    model = Expenses(session.get('logged_in_user'))
+
+    dict = entries.index(**locals())
+    for key in dict.keys(): exec(key + " = dict['" + key + "']")
+
+    response = make_response(render_template('admin_export_expenses.html', **locals()))
+    response.headers['Content-type'] = 'text/csv'
+    response.headers['Content-disposition'] = 'attachment;filename=' + 'expenses-' + str(today_date()) + '.csv'
+    return response
 
 @expenses.route('/expense/add', methods=['GET', 'POST'])
 @login_required

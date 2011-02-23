@@ -1,0 +1,3 @@
+Date,Description,User,Amount
+{% for loan in loans %}{{ loan.0.date|datetimeformat }},{{ loan.0.description }},{{ loan.1 }},{{ loan.0.amount|currencyformat }}
+{% endfor %}

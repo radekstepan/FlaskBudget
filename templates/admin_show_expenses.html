@@ -98,5 +98,10 @@
     </ul>
     {% endif %}
     {% endfor %}
+
+    <h2>Actions</h2>
+    <ul class="list_2">
+        <li><a target="new" href="{{ url_for('expenses.export', date=date, category=category) }}">Export to CSV</a></li>
+    </ul>
 </div>
 {% endblock %}

@@ -3,7 +3,7 @@
 
 # framework
 from flask import Module, session, render_template, redirect, request, flash
-from flask.helpers import url_for
+from flask.helpers import url_for, make_response
 
 # presenters
 from presenters.auth import login_required
@@ -36,6 +36,28 @@ def index(date=None, category=None, page=1, items_per_page=10):
     for key in dict.keys(): exec(key + " = dict['" + key + "']")
 
     return render_template('admin_show_income.html', **locals())
+
+@income.route('/export/income/')
+@income.route('/export/income/for/<date>')
+@income.route('/export/income/in/<category>')
+@income.route('/export/income/page/<int:page>')
+@income.route('/export/income/for/<date>/in/<category>')
+@income.route('/export/income/for/<date>/page/<int:page>')
+@income.route('/export/income/in/<category>/page/<int:page>')
+@income.route('/export/income/for/<date>/in/<category>/page/<int:page>')
+@login_required
+def export(date=None, category=None, page=1, items_per_page=10):
+    '''Export income entries on a filter'''
+
+    model = Income(session.get('logged_in_user'))
+
+    dict = entries.index(**locals())
+    for key in dict.keys(): exec(key + " = dict['" + key + "']")
+
+    response = make_response(render_template('admin_export_income.html', **locals()))
+    response.headers['Content-type'] = 'text/csv'
+    response.headers['Content-disposition'] = 'attachment;filename=' + 'income-' + str(today_date()) + '.csv'
+    return response
 
 @income.route('/income/add', methods=['GET', 'POST'])
 @login_required

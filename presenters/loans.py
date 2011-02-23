@@ -3,7 +3,7 @@
 
 # framework
 from flask import Module, session, render_template, redirect, request, flash
-from flask.helpers import url_for
+from flask.helpers import url_for, make_response
 from flaskext.sqlalchemy import Pagination
 
 # presenters
@@ -72,6 +72,50 @@ def index(direction=None, user=None, date=None, page=1, items_per_page=10):
                            loans.offset((page - 1) * items_per_page).limit(items_per_page))
 
     return render_template('admin_show_loans.html', **locals())
+
+@loans.route('/export/loans/')
+@loans.route('/export/loans/made/<direction>')
+@loans.route('/export/loans/with/<user>')
+@loans.route('/export/loans/for/<date>')
+@loans.route('/export/loans/made/<direction>/with/<user>')
+@loans.route('/export/loans/made/<direction>/for/<date>')
+@loans.route('/export/loans/with/<user>/for/<date>')
+@loans.route('/export/loans/made/<direction>/with/<user>/for/<date>')
+@login_required
+def export(direction=None, user=None, date=None):
+    '''Export loan entries'''
+
+    current_user_id = session.get('logged_in_user')
+
+    our_loans = Loans(current_user_id)
+    our_users = Users(current_user_id)
+
+    # fetch loans
+    loans = our_loans.get_loans()
+
+    # fetch users from connections from us
+    users = our_users.get_connections()
+
+    # provided user?
+    if user:
+        # valid slug?
+        user_id = our_users.is_connection(slug=user)
+        if user_id: loans = our_loans.get_loans(user_id=user_id)
+
+    # provided a date range?
+    date_range = translate_date_range(date)
+    if date_range:
+        loans = our_loans.get_loans(date_from=date_range['low'], date_to=date_range['high'])
+    # date ranges for the template
+    date_ranges = get_date_ranges()
+
+    # provided a direction?
+    if direction: loans = our_loans.get_loans(direction=direction)
+
+    response = make_response(render_template('admin_export_loans.html', **locals()))
+    response.headers['Content-type'] = 'text/csv'
+    response.headers['Content-disposition'] = 'attachment;filename=' + 'loans-' + str(today_date()) + '.csv'
+    return response
 
 @loans.route('/loan/get', methods=['GET', 'POST'])
 @login_required

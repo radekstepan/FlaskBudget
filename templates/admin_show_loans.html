@@ -116,5 +116,10 @@
             {% else %}<a href="{{ url_for('loans.index', direction='to-them', user=user, date=date) }}">To them</a>
             {% endif %}</li>
     </ul>
+    
+    <h2>Actions</h2>
+    <ul class="list_2">
+        <li><a target="new" href="{{ url_for('loans.export', direction=direction, user=user, date=date) }}">Export to CSV</a></li>
+    </ul>
 </div>
 {% endblock %}
