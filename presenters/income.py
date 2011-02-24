@@ -10,7 +10,7 @@ from presenters.auth import login_required
 import entries
 
 # models
-from models.income import Income
+from models.income import Income, IncomeTable
 from models.accounts import Accounts
 
 # utils
@@ -58,6 +58,30 @@ def export(date=None, category=None, page=1, items_per_page=10):
     response.headers['Content-type'] = 'text/csv'
     response.headers['Content-disposition'] = 'attachment;filename=' + 'income-' + str(today_date()) + '.csv'
     return response
+
+@income.route('/income/search', methods=['POST'])
+@login_required
+def search():
+    '''Search income'''
+
+    model = Income(session.get('logged_in_user'))
+
+    # query
+    query = request.form['q'] if 'q' in request.form else ""
+
+    # fetch entries
+    entries = model.get_entries()
+
+    # filter
+    entries = entries.filter(IncomeTable.description.like("%"+query+"%"))
+
+    # categories
+    categories = model.get_categories()
+
+    # date ranges for the template
+    date_ranges = get_date_ranges()
+
+    return render_template('admin_search_income.html', **locals())
 
 @income.route('/income/add', methods=['GET', 'POST'])
 @login_required

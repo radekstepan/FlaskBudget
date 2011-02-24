@@ -11,7 +11,7 @@ from presenters.auth import login_required
 
 # models
 from models.users import Users
-from models.loans import Loans
+from models.loans import Loans, LoansTable
 from models.accounts import Accounts
 from models.slugs import Slugs
 
@@ -116,6 +116,33 @@ def export(direction=None, user=None, date=None):
     response.headers['Content-type'] = 'text/csv'
     response.headers['Content-disposition'] = 'attachment;filename=' + 'loans-' + str(today_date()) + '.csv'
     return response
+
+@loans.route('/loans/search', methods=['POST'])
+@login_required
+def search():
+    '''Search loans'''
+
+    current_user_id = session.get('logged_in_user')
+
+    our_loans = Loans(current_user_id)
+    our_users = Users(current_user_id)
+
+    # query
+    query = request.form['q'] if 'q' in request.form else ""
+
+    # fetch loans
+    loans = our_loans.get_loans()
+
+    # filter
+    loans = loans.filter(LoansTable.description.like("%"+query+"%"))
+
+    # fetch users from connections from us
+    users = our_users.get_connections()    
+
+    # date ranges for the template
+    date_ranges = get_date_ranges()
+
+    return render_template('admin_search_loans.html', **locals())
 
 @loans.route('/loan/get', methods=['GET', 'POST'])
 @login_required

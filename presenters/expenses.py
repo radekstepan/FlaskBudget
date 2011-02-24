@@ -8,10 +8,10 @@ from flask.helpers import url_for, make_response
 
 # presenters
 from presenters.auth import login_required
-import entries
 
 # models
-from models.expenses import Expenses
+import entries
+from models.expenses import Expenses, ExpensesTable
 from models.accounts import Accounts
 from models.users import Users
 from models.loans import Loans
@@ -62,6 +62,30 @@ def export(date=None, category=None, page=1, items_per_page=10):
     response.headers['Content-type'] = 'text/csv'
     response.headers['Content-disposition'] = 'attachment;filename=' + 'expenses-' + str(today_date()) + '.csv'
     return response
+
+@expenses.route('/expense/search', methods=['POST'])
+@login_required
+def search():
+    '''Search expenses'''
+
+    model = Expenses(session.get('logged_in_user'))
+
+    # query
+    query = request.form['q'] if 'q' in request.form else ""
+
+    # fetch entries
+    entries = model.get_entries()
+
+    # filter
+    entries = entries.filter(ExpensesTable.description.like("%"+query+"%"))
+
+    # categories
+    categories = model.get_categories()
+
+    # date ranges for the template
+    date_ranges = get_date_ranges()
+
+    return render_template('admin_search_expenses.html', **locals())
 
 @expenses.route('/expense/add', methods=['GET', 'POST'])
 @login_required
