@@ -67,6 +67,14 @@ class AccountsBase():
             .order_by(asc(AccountsTable.type)).order_by(asc(AccountsTable.id))
         return self.accounts_and_loans
 
+    def change_account_balance(self, account_id, amount):
+        a = AccountsTable.query.filter(AccountsTable.id == account_id).first()
+        if a:
+            a.balance = float(amount)
+
+            db_session.add(a)
+            db_session.commit()
+
     def modify_account_balance(self, account_id, amount):
         a = AccountsTable.query.filter(AccountsTable.id == account_id).first()
         if a:

@@ -13,32 +13,30 @@
 <nav class="subnav">
     <ul>
         <li><a href="{{ url_for('accounts.show_transfers') }}">Transfers</a></li>
-        <li><a href="{{ url_for('accounts.add_account') }}" class="active">Add Account</a></li>
-        <li><a href="{{ url_for('accounts.edit_account') }}">Edit Account</a></li>
+        <li><a href="{{ url_for('accounts.add_account') }}">Add Account</a></li>
+        <li><a href="{{ url_for('accounts.edit_account') }}" class="active">Edit Account</a></li>
         <li><a href="{{ url_for('accounts.add_transfer') }}">Account Transfer</a></li>
     </ul>
 </nav>
 {% endblock %}
 
-{% block header %}<h1>Add Account</h1>{% endblock %}
+{% block header %}<h1>Account Transfer</h1>{% endblock %}
 
 {% block body %}
 <div class="left grid_6">
-    <form action="{{ url_for('accounts.add_account') }}" method=post class="form_1">
+    <form action="{{ url_for('accounts.edit_account') }}" method=post class="form_1">
         <dl>
-            <dt>Name
-            <dd><input type=text name=name>
-
-            <dt>Type
-            <dd><select name=type>
-                <option value="asset">Asset</option>
-                <option value="liability">Liability</option>
+            <dt>Account:
+            <dd><select name=account>
+                {% for account in accounts %}
+                <option value="{{ account.id }}">{{ account.name }}</option>
+                {% endfor %}
             </select>
 
-            <dt>Balance
+            <dt>New Balance:
             <dd><input type=text name=balance>
 
-            <dd><input type=submit value=Add>
+            <dd><input type=submit value=Save>
         </dl>
     </form>
 </div>

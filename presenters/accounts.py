@@ -92,6 +92,41 @@ def add_account():
 
     return render_template('admin_add_account.html', **locals())
 
+@accounts.route('/account/edit', methods=['GET', 'POST'])
+@login_required
+def edit_account():
+    '''Edit an account balance'''
+
+    current_user_id = session.get('logged_in_user')
+
+    acc = Accounts(current_user_id)
+
+    if request.method == 'POST':
+        error = None
+        
+        if 'balance' in request.form: balance = request.form['balance']
+        else: error = 'You need to provide a balance'
+        if 'account' in request.form: account = request.form['account']
+        else: error = 'You need to provide an account'
+
+        if not error:
+            # valid amount?
+            if is_float(balance):
+                # valid account?
+                if acc.is_account(account_id=account):
+
+                    # modify accounts
+                    acc.change_account_balance(account, balance)
+
+                    flash('Balance modified')
+                    
+                else: error = 'Not a valid account'
+            else: error = 'Not a valid amount'
+
+    accounts = acc.get_accounts()
+
+    return render_template('admin_edit_account.html', **locals())
+
 @accounts.route('/account/transfer', methods=['GET', 'POST'])
 @login_required
 def add_transfer():
