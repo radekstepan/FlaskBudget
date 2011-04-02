@@ -2,184 +2,117 @@
 # -*- coding: utf -*-
 
 # orm
-from sqlalchemy import Column, ForeignKey, Integer, Float, String
-from sqlalchemy.sql.expression import desc, and_, not_
+from sqlalchemy import Column, ForeignKey, Integer, String, Float
+from sqlalchemy.sql.expression import and_, asc
 
 # db
 from db.database import db_session
 from db.database import Base
 
-# models
-from models.slugs import SlugsTable
-from models.users import UsersTable
-from models.accounts import Accounts
+# utils
+from datetime import datetime, date
 
-class Loans(object):
+class Totals():
+    '''Totals for a given user'''
 
-    object = None
+    user = None
 
-    def __init__(self, user_id, user_type=None):
-        # determine user type
-        if not user_type:
-            user_type = 'private' if UsersTable.query\
-            .filter(and_(UsersTable.id == user_id, UsersTable.is_private == True)).first() else 'normal'
-        if user_type == 'normal':
-            self.object = NormalUserLoans(user_id)
+    def __init__(self, user):
+        self.user = user
+
+    def get_totals(self, wayback=6):
+        # generate today's month/year string
+        m = MonthYear("today")
+
+        # generate a list of month/year strings
+        l = [m.substract(x) for x in range(wayback)]
+
+        print l
+
+        # pass it as an IS IN query to totals and return
+        return TotalsTable.query\
+        .filter(and_(TotalsTable.user == self.user, TotalsTable.month.in_(l)))\
+        .order_by(asc(TotalsTable.id)).all()
+
+    def update_expense(self, amount, date):
+        # generate a month/year string
+        m = MonthYear(date)
+
+        # get the corresponding entry
+        t = TotalsTable.query\
+        .filter(and_(TotalsTable.user == self.user, TotalsTable.month == str(m))).first()
+
+        if not t:
+            # brand spanking new
+            t = TotalsTable(self.user, str(m), amount, 0)
         else:
-            self.object = PrivateUserLoans(user_id)
+            # update the total
+            t.expenses += float(amount)
 
-    def __getattr__(self, name):
-        print "calling: ", name, ' on ', self.object
-        return getattr(self.object, name)
-
-class LoansBase():
-
-    user_id = None
-
-    loans = None
-
-    loan = None # cache
-
-    def __init__(self, user_id):
-        self.user_id = user_id
-
-    def get_loans(self, user_id=None, date_from=None, date_to=None, direction=None):
-        if not self.loans:
-            # table referred to twice, create alias
-            self.loans = LoansTable.query\
-            .filter(LoansTable.user == self.user_id)\
-            .order_by(desc(LoansTable.date)).order_by(desc(LoansTable.id))\
-            .join((UsersTable, (LoansTable.other_user == UsersTable.id)))\
-            .add_columns(UsersTable.name, UsersTable.slug)
-
-        if user_id:
-            self.loans = self.loans.filter(LoansTable.other_user == user_id)
-
-        if date_from and date_to:
-            self.loans = self.loans.filter(LoansTable.date >= date_from).filter(LoansTable.date <= date_to)
-
-        if direction:
-            if direction == 'to-us':
-                self.loans = self.loans.filter(not_(LoansTable.amount.startswith('-')))
-            elif direction == 'to-them':
-                self.loans = self.loans.filter(LoansTable.amount.startswith('-'))
-
-        return self.loans
-
-    def add_loan(self, other_user_id, date, description, amount, account_id=None):
-        # if an account id is not provided, get a 'default' account
-        if not account_id:
-            accounts = Accounts(self.user_id)
-            account_id = accounts.get_default_account()
-            # create a default account if no joy getting a default account
-            if not account_id:
-                account_id = accounts.add_default_account()
-        l = LoansTable(self.user_id, other_user_id, date, account_id, description, amount)
-        db_session.add(l)
+        # save
+        db_session.add(t)
         db_session.commit()
 
-        return l.id
+    def update_income(self, amount, date):
+        # generate a month/year string
+        m = MonthYear(date)
 
-    def get_loan(self, loan_id):
-        # if there is no cache or cache id does not match
-        if loan_id:
-            if not self.loan or self.loan.id != loan_id:
-                self.loan = LoansTable.query\
-                .filter(and_(LoansTable.user == self.user_id, LoansTable.id == loan_id))\
-                .first()
+        # get the corresponding entry
+        t = TotalsTable.query\
+        .filter(and_(TotalsTable.user == self.user, TotalsTable.month == str(m))).first()
 
-        return self.loan
+        if not t:
+            # brand spanking new
+            t = TotalsTable(self.user, str(m), 0, amount)
+        else:
+            # update the total
+            t.income += float(amount)
 
-    def get_loan_slug(self, loan_id):
-        s = SlugsTable.query\
-        .filter(and_(SlugsTable.object_id == loan_id, SlugsTable.type == 'loan', SlugsTable.user == self.user_id))\
-        .first()
-
-        return s.slug
-
-    def edit_loan(self, other_user_id, date, amount, description=None, loan_id=None, slug=None, account_id=None):
-        if slug:
-            # find object id first
-            s = SlugsTable.query\
-            .filter(and_(SlugsTable.slug == slug, SlugsTable.type == 'loan', SlugsTable.user == self.user_id))\
-            .first()
-
-            loan_id = s.object_id
-
-        l = self.get_loan(loan_id=loan_id)
-        if l:
-            # description not provided
-            if not description: description = l.description
-
-            # save new values
-            l.other_user, l.date, l.description, l.amount = other_user_id, date, description, amount
-            # changing the account?
-            if account_id: l.account = account_id
-
-            db_session.add(l)
-            db_session.commit()
-
-            return l # return so we see the updated values
-
-    def delete_loan(self, loan_id=None, slug=None):
-        if slug:
-            # find object id first
-            s = SlugsTable.query\
-            .filter(and_(SlugsTable.slug == slug, SlugsTable.type == 'loan', SlugsTable.user == self.user_id))\
-            .first()
-
-            loan_id = s.object_id
-
-        LoansTable.query.filter(and_(LoansTable.user == self.user_id, LoansTable.id == loan_id)).delete()
-
-        SlugsTable.query\
-        .filter(and_(SlugsTable.object_id == loan_id, SlugsTable.type == 'loan', SlugsTable.user == self.user_id))\
-        .delete()
-
+        # save
+        db_session.add(t)
         db_session.commit()
 
-class NormalUserLoans(LoansBase):
-    pass
+class MonthYear():
+    '''Represents a wrapper around month/year string'''
 
-class PrivateUserLoans(LoansBase):
+    date = None
 
-    def get_loans(self, user_id=None, date_from=None, date_to=None, direction=None):
-        return None
+    def __init__(self, date):
+        # setup as a custom month from an entry date string or generate one from today's date
+        if date == "today":
+            self.date = datetime.now().strftime("%Y-%m")
+        else:
+            dt = datetime.strptime(date, "%Y-%m-%d")
+            self.date = dt.strftime("%Y-%m")
 
-    def add_loan(self, other_user_id, date, description, amount, account_id=None):
-        return None
+    def __repr__(self):
+        # return a string representation of the month
+        return self.date
 
-    def get_loan(self, loan_id):
-        return None
+    def substract(self, months):
+        # perform arithmetic on a date, -1 will get a correct previous month etc.
+        month = int(self.date[-2:]) - months
+        year = int(self.date[:4])
+        if (month < 1):
+            # end of year
+            month += 12
+            year -= 1
 
-    def get_loan_slug(self, loan_id):
-        return None
+        # convert back, return
+        return date(year, month, 1).strftime("%Y-%m")
 
-    def edit_loan(self, other_user_id, date, amount, description=None, loan_id=None, slug=None, account_id=None):
-        return None
+class TotalsTable(Base):
+    """Monthly expense/income totals for a user"""
 
-    def delete_loan(self, loan_id=None, slug=None):
-        return None
-
-class LoansTable(Base):
-    """A loan entry for the user
-    A loan between two users will correspond to two loan entries where the direction of transfer
-    is signified by the positive (user to other_user)/negative (other_user to user)
-    """
-
-    __tablename__ = 'loans'
+    __tablename__ = 'totals'
     id = Column(Integer, primary_key=True)
     user = Column('user_id', Integer, ForeignKey('users.id'))
-    other_user = Column('other_user_id', Integer, ForeignKey('users.id'))
-    date = Column(Integer)
-    account = Column('account_id', Integer, ForeignKey('accounts.id'))
-    description = Column(String(50))
-    amount = Column(Float(precision=2))
+    month = Column(String(10))
+    expenses = Column(Float(precision=2))
+    income = Column(Float(precision=2))
 
-    def __init__(self, user=None, other_user=None, date=None, account=None, description=None, amount=None):
+    def __init__(self, user=None, month=None, expenses=None, income=None):
         self.user = user
-        self.other_user = other_user
-        self.date = date
-        self.account = account
-        self.description = description
-        self.amount = amount
+        self.month = month
+        self.expenses = expenses
+        self.income = income
