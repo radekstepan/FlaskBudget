@@ -10,7 +10,7 @@ from db.database import db_session
 from db.database import Base
 
 # utils
-from datetime import datetime, timedelta
+from datetime import datetime, date
 
 class Totals():
     '''Totals for a given user'''
@@ -26,6 +26,8 @@ class Totals():
 
         # generate a list of month/year strings
         l = [m.substract(x) for x in range(wayback)]
+
+        print l
 
         # pass it as an IS IN query to totals and return
         return TotalsTable.query\
@@ -89,10 +91,15 @@ class MonthYear():
 
     def substract(self, months):
         # perform arithmetic on a date, -1 will get a correct previous month etc.
-        # convert to datetime and substract 1 month
-        dt = datetime.strptime(self.date, "%Y-%m")-timedelta(30*months)
-        # convert back to string, return
-        return dt.strftime("%Y-%m")
+        month = int(self.date[-2:]) - months
+        year = int(self.date[:4])
+        if (month < 1):
+            # end of year
+            month += 12
+            year -= 1
+
+        # convert back, return
+        return date(year, month, 1).strftime("%Y-%m")
 
 class TotalsTable(Base):
     """Monthly expense/income totals for a user"""
