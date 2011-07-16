@@ -100,6 +100,12 @@ def create_app(db):
         value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
         return re.sub('[-\s]+', '-', value)
 
+    @app.template_filter('csvfilter')
+    def csv_filter(value):
+        # double quotes
+        value = value.replace('"', '""')
+        return value
+
     return app
 
 if __name__ == '__main__':
