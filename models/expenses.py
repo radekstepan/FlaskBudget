@@ -76,7 +76,7 @@ class ExpensesBase():
 
         # provided count
         if limit:
-            self.entries = self.entries.limit(5)
+            self.entries = self.entries.limit(limit)
 
         return self.entries
 
