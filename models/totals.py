@@ -20,14 +20,12 @@ class Totals():
     def __init__(self, user):
         self.user = user
 
-    def get_totals(self, wayback=6):
+    def get_totals(self, wayback=5):
         # generate today's month/year string
         m = MonthYear("today")
 
         # generate a list of month/year strings
         l = [m.substract(x) for x in range(wayback)]
-
-        print l
 
         # pass it as an IS IN query to totals and return
         return TotalsTable.query\
