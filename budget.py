@@ -81,6 +81,10 @@ def create_app(db):
 
         return locale.format("%.2f", value, grouping=True)
 
+    @app.template_filter('csvcurrencyfilter')
+    def csv_currency_filter(value):
+        return value.replace(',', "")
+
     @app.template_filter('numberformat')
     def number_format(value):
         return str(value).rstrip('0').rstrip('.')

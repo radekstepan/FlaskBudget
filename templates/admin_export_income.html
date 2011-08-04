@@ -2,5 +2,5 @@ Date,Description,Category,Amount
 {% for entry in entries %}
     {{- entry.0.date|datetimeformat -}},"
     {{- entry.0.description|csvfilter|safe -}},"
-    {{- entry.1|csvfilter|safe }}", -{{ entry.0.amount|currencyformat }}
+    {{- entry.1|csvfilter|safe }}", -{{ entry.0.amount|currencyformat|csvcurrencyfilter }}
 {% endfor %}
