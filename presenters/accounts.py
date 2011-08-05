@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # framework
-from flask import Module, session, render_template, redirect, request, flash, url_for
+from flask import Blueprint, session, render_template, redirect, request, flash, url_for
 from flaskext.sqlalchemy import Pagination
 
 # presenters
@@ -14,7 +14,7 @@ from models.accounts import Accounts
 # utils
 from utils import *
 
-accounts = Module(__name__)
+accounts = Blueprint('accounts', __name__)
 
 @accounts.route('/account-transfers/')
 @accounts.route('/account-transfers/page/<int:page>')
@@ -103,7 +103,7 @@ def edit_account():
 
     if request.method == 'POST':
         error = None
-        
+
         if 'balance' in request.form: balance = request.form['balance']
         else: error = 'You need to provide a balance'
         if 'account' in request.form: account = request.form['account']
@@ -119,7 +119,7 @@ def edit_account():
                     acc.change_account_balance(account, balance)
 
                     flash('Balance modified')
-                    
+
                 else: error = 'Not a valid account'
             else: error = 'Not a valid amount'
 
@@ -246,7 +246,7 @@ def delete_transfer(transfer_id):
         # revert
         accounts.modify_account_balance(transfer.from_account, transfer.amount)
         accounts.modify_account_balance(transfer.to_account, -float(transfer.amount))
-        
+
         accounts.delete_transfer(transfer_id)
 
         flash('Transfer deleted')

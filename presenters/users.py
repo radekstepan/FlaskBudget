@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # framework
-from flask import Module, session, render_template, redirect, request, flash
+from flask import Blueprint, session, render_template, redirect, request, flash
 
 # presenters
 from presenters.auth import login_required
@@ -15,7 +15,7 @@ from models.loans import Loans
 # utils
 from utils import *
 
-users = Module(__name__)
+users = Blueprint('users', __name__)
 
 @users.route('/user/add-private', methods=['GET', 'POST'])
 @login_required

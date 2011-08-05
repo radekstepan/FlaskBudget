@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # framework
-from flask import Module, session, render_template
+from flask import Blueprint, session, render_template
 
 # presenters
 from presenters.auth import login_required
@@ -13,7 +13,7 @@ from models.income import Income
 from models.accounts import Accounts
 from models.totals import Totals
 
-dashboard = Module(__name__)
+dashboard = Blueprint('dashboard', __name__)
 
 @dashboard.route('/')
 @login_required

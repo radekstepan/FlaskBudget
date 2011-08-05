@@ -28,14 +28,14 @@ def create_app(db):
     from presenters.loans import loans
     from presenters.users import users
 
-    # register modules (presenters)
-    app.register_module(dashboard)
-    app.register_module(auth)
-    app.register_module(accounts)
-    app.register_module(income)
-    app.register_module(expenses)
-    app.register_module(loans)
-    app.register_module(users)
+    # register blueprints (presenters)
+    app.register_blueprint(dashboard)
+    app.register_blueprint(auth)
+    app.register_blueprint(accounts)
+    app.register_blueprint(income)
+    app.register_blueprint(expenses)
+    app.register_blueprint(loans)
+    app.register_blueprint(users)
 
     # 'unpresented' models :)
     from models.slugs import SlugsTable
@@ -46,7 +46,7 @@ def create_app(db):
     # testing module
     if DEBUG:
         from presenters.tests import tests
-        app.register_module(tests)
+        app.register_blueprint(tests)
 
     @app.after_request
     def shutdown_session(response):

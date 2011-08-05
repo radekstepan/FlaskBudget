@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # framework
-from flask import Module, session
+from flask import Blueprint, session
 from flask.helpers import make_response
 
 # db
@@ -20,7 +20,7 @@ from models.users import UsersTable, UsersConnectionsTable, UsersKeysTable, User
 # utils
 from utils import slugify
 
-tests = Module(__name__)
+tests = Blueprint('tests', __name__)
 
 @tests.route('/test/create-user/<name>')
 def create_user(name):
@@ -67,7 +67,7 @@ def wipe_tables():
 @tests.route('/test/dashboard')
 def dashboard():
     '''Test budget dashboard'''
-    
+
     u = UsersTable(u"Admin", False, u"admin", u"admin")
     db_session.add(u)
     db_session.commit()

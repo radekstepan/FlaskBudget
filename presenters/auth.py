@@ -2,13 +2,13 @@
 # -*- coding: utf -*-
 
 # framework
-from flask import Module, session, render_template, redirect, request, flash, url_for
+from flask import Blueprint, session, render_template, redirect, request, flash, url_for
 from functools import wraps
 
 # models
 from models.users import UsersTable
 
-auth = Module(__name__)
+auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():

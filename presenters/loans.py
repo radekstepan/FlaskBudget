@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # framework
-from flask import Module, session, render_template, redirect, request, flash
+from flask import Blueprint, session, render_template, redirect, request, flash
 from flask.helpers import url_for, make_response
 from flaskext.sqlalchemy import Pagination
 
@@ -18,7 +18,7 @@ from models.slugs import Slugs
 # utils
 from utils import *
 
-loans = Module(__name__)
+loans = Blueprint('loans', __name__)
 
 @loans.route('/loans/')
 @loans.route('/loans/made/<direction>')
@@ -137,7 +137,7 @@ def search():
     loans = loans.filter(LoansTable.description.like("%"+query+"%"))
 
     # fetch users from connections from us
-    users = our_users.get_connections()    
+    users = our_users.get_connections()
 
     # date ranges for the template
     date_ranges = get_date_ranges()

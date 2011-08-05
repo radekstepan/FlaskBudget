@@ -2,7 +2,7 @@
 # -*- coding: utf -*-
 
 # framework
-from flask import Module, session, render_template, redirect, request, flash
+from flask import Blueprint, session, render_template, redirect, request, flash
 from flask.helpers import url_for, make_response
 
 # presenters
@@ -16,7 +16,7 @@ from models.accounts import Accounts
 # utils
 from utils import *
 
-income = Module(__name__)
+income = Blueprint('income', __name__)
 
 @income.route('/income/')
 @income.route('/income/for/<date>')
@@ -94,7 +94,7 @@ def add_income():
     acc = Accounts(current_user_id)
 
     if request.method == 'POST':
-        
+
         dict = __validate_income_form()
         for key in dict.keys(): exec(key + " = dict['" + key + "']")
 

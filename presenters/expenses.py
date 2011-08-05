@@ -3,7 +3,7 @@
 
 # framework
 from datetime import date
-from flask import Module, session, render_template, redirect, request, flash
+from flask import Blueprint, session, render_template, redirect, request, flash
 from flask.helpers import url_for, make_response
 
 # presenters
@@ -20,7 +20,7 @@ from models.slugs import Slugs
 # utils
 from utils import *
 
-expenses = Module(__name__)
+expenses = Blueprint('expenses', __name__)
 
 @expenses.route('/expenses/')
 @expenses.route('/expenses/for/<date>')
@@ -188,7 +188,7 @@ def add_expense():
                             if not error:
                                 # debit from account
                                 our_accounts.modify_user_balance(amount=-float(amount), account_id=account_id)
-                                
+
                                 flash('Expense added')
 
                         else: error = 'Not a valid category'
