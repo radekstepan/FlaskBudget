@@ -147,8 +147,27 @@
     </ul>
     {% endif %}
     {% endfor %}
+</div>
 
+<div class="clear"></div>
 
+<div class="left grid_6">
+    {% if averages_list %}
+    <h2>Monthly Averages</h2>
+    <ul class="list_1">
+        {% for category in averages_list %}
+        <li class="blue {% if loop.last %}last{% endif %}">
+            <p>
+                <span class="amount">&minus; &pound;{{ category.average|currencyformat }}</span>
+                 <a href="{{ url_for('expenses.index', category=category.slug) }}">{{ category.name }}</a>
+            </p>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
+<div class="right grid_6">
     {% if totals_list %}
     <h2>Monthly Totals</h2>
     <ul id="chart">
@@ -169,4 +188,5 @@
     <div class="clear"></div>
     {% endif %}
 </div>
+
 {% endblock %}

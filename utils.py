@@ -77,3 +77,15 @@ def today_timestamp():
 
 def tomorrow_timestamp():
     return today_timestamp() + (60*60*24)
+
+def date_difference(begin, end, separator='-'):
+    '''Get the time difference in days between two dates'''
+    import datetime
+    
+    def parse(date, separator):
+        '''Deal with dates that are already in datetime format or parse them from string'''
+        if type(date).__name__ == 'date': return date
+        a, b, c = (int(x) for x in date.split(separator))
+        return datetime.date(a, b, c)
+
+    return (parse(end, separator) - parse(begin, separator)).days

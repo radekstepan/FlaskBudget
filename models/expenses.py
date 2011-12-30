@@ -3,7 +3,7 @@
 
 # orm
 from sqlalchemy import Column, ForeignKey, Integer, Float, String, Boolean
-from sqlalchemy.sql.expression import desc, and_
+from sqlalchemy.sql.expression import desc, asc, and_
 
 # db
 from db.database import db_session
@@ -217,6 +217,52 @@ class ExpensesBase():
                 i.percentage, i.original_amount = percentage, original_amount
                 db_session.add(i)
             db_session.commit()
+    
+    def get_category_averages(self):
+        '''Get monthly averages of all Expense categories'''
+        # SQL
+        entries = ExpensesTable.query\
+            .filter(ExpensesTable.user == self.user_id)\
+            .join(ExpenseCategoriesTable)\
+            .add_columns(ExpenseCategoriesTable.name, ExpenseCategoriesTable.slug)\
+            .order_by(asc(ExpenseCategoriesTable.name)).order_by(asc(ExpensesTable.date))\
+            .outerjoin((ExpensesToLoansTable, (ExpensesTable.id == ExpensesToLoansTable.expense)))\
+            .add_columns(ExpensesToLoansTable.percentage)
+        
+        # up until today
+        today = today_date()
+
+        # beautify and calculate
+        result, last_category = {}, None
+        for entry in entries:
+            category, slug, split = entry[1], entry[2], entry[3]
+            if slug not in result:
+                if last_category:
+                    # calculate the average of the last category
+                    result[last_category]["average"] = self.__get_category_average(result[last_category]["begin"],
+                    today, result[last_category]["total"])
+                # init new one
+                result[slug] = {"total": 0, "begin": entry[0].date, "name": category, "slug": slug}
+                last_category = slug
+            # deal with shared expenses
+            if split:
+                result[slug]["total"] += entry[0].amount * (split/100)
+            else:
+                result[slug]["total"] += entry[0].amount
+        # do not forget to calculate the average for the very last category
+        if last_category:
+            result[last_category]["average"] = self.__get_category_average(result[last_category]["begin"],
+            today, result[last_category]["total"])
+
+        # descending sort based on the average amount
+        return sorted(result.values(), key=lambda x: -x["average"])
+    
+    def __get_category_average(self, begin, end, total):
+        '''Give us an average spending based on a range between dates and a total over that period'''
+        diff = date_difference(begin, end)
+        # assume 29.5 days per month
+        if diff: return total/(diff/29.5)
+        return total
 
 class NormalUserExpenses(ExpensesBase):
     pass

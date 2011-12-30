@@ -113,5 +113,5 @@ def create_app(db):
     return app
 
 if __name__ == '__main__':
-    app = create_app(db='sqlite:////var/www/html/python/flask/budget/db/database.sqlite3')
+    app = create_app(db='sqlite:////Volumes/Data/git/budget/db/database.sqlite3')
     app.run()
