@@ -96,15 +96,17 @@
     <ul class="list_1">
         {% endif %}
         {% if account.0.type == "asset" %}
-        <li class="green {% if loop.last %}last{% endif %}">
             {% if account.0.balance < 0 %}
-            <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
-            <a>{{ account.0.name }}</a>
+            <li class="red {% if loop.last %}last{% endif %}">
+                <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
+                <a>{{ account.0.name }}</a>
+            </li>
             {% else %}
-            <span class="amount">&pound;{{ account.0.balance|abs|currencyformat }}</span>
-            <a>{{ account.0.name }}</a>
+            <li class="green {% if loop.last %}last{% endif %}">
+                <span class="amount">&plus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
+                <a>{{ account.0.name }}</a>
+            </li>
             {% endif %}
-        </li>
         {% else %}
         <li class="gray {% if loop.last %}last{% endif %}">
             <span class="amount">&pound;{{ account.0.balance|currencyformat }}</span>
@@ -113,7 +115,13 @@
         {% endif %}
         {% if loop.last %}
         <li class="sum">
-            <span class="amount"><strong>&pound;{{ assets_total|currencyformat }}</strong></span>
+            <span class="amount">
+            {% if assets_total > 0 %}
+                <strong>&plus; &pound;{{ assets_total|abs|currencyformat }}</strong>
+            {% else %}
+                <strong>&minus; &pound;{{ assets_total|abs|currencyformat }}</strong>
+            {% endif %}
+            </span>
         </li>
     </ul>
     {% endif %}
@@ -125,15 +133,17 @@
     <ul class="list_1">
         {% endif %}
         {% if account.0.type == "liability" %}
-        <li class="red {% if loop.last %}last{% endif %}">
             {% if account.0.balance < 0 %}
-            <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
-            <a>{{ account.0.name }}</a>
+            <li class="red {% if loop.last %}last{% endif %}">
+                <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
+                <a>{{ account.0.name }}</a>
+            </li>
             {% else %}
-            <span class="amount">&pound;{{ account.0.balance|abs|currencyformat }}</span>
-            <a>{{ account.0.name }}</a>
+            <li class="green {% if loop.last %}last{% endif %}">
+                <span class="amount">&plus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
+                <a>{{ account.0.name }}</a>
+            </li>
             {% endif %}
-        </li>
         {% else %}
         <li class="red {% if loop.last %}last{% endif %}">
             <span class="amount">&minus; &pound;{{ account.0.balance|abs|currencyformat }}</span>
@@ -142,7 +152,13 @@
         {% endif %}
         {% if loop.last %}
         <li class="sum">
-            <span class="amount"><strong>&minus; &pound;{{ liabilities_total|abs|currencyformat }}</strong></span>
+            <span class="amount">
+                {% if liabilities_total > 0 %}
+                    <strong>&plus; &pound;{{ liabilities_total|abs|currencyformat }}</strong>
+                {% else %}
+                    <strong>&minus; &pound;{{ liabilities_total|abs|currencyformat }}</strong>
+                {% endif %}
+            </span>
         </li>
     </ul>
     {% endif %}
