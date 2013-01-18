@@ -1,5 +1,5 @@
 # framework
-from flaskext.sqlalchemy import Pagination
+from flask.ext.sqlalchemy import Pagination
 
 # utils
 from utils import *

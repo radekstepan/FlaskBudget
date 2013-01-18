@@ -1,3 +1,6 @@
+# python noise
+*.pyc
+
 # osx noise
 .DS_Store
 profile

@@ -3,7 +3,7 @@
 
 # framework
 from flask import Blueprint, session, render_template, redirect, request, flash, url_for
-from flaskext.sqlalchemy import Pagination
+from flask.ext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required

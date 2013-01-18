@@ -4,7 +4,7 @@
 # framework
 from flask import Blueprint, session, render_template, redirect, request, flash
 from flask.helpers import url_for, make_response
-from flaskext.sqlalchemy import Pagination
+from flask.ext.sqlalchemy import Pagination
 
 # presenters
 from presenters.auth import login_required
