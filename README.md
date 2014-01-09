@@ -9,7 +9,7 @@ A Budget application for couples in Flask
 Edit the `budget.py` file setting an SQLite3 database path in `__main__` function.
 
 ```bash
-$ sudo apt-get install python-pip
+$ sudo apt-get install python-pip python-cherrypy3
 $ pip install Flask
 $ pip install SQLAlchemy
 $ pip install Flask-SQLAlchemy
